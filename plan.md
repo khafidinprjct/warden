@@ -245,7 +245,7 @@ README (masalah → diagram → spin-up 30 mnt → kontrak harness → kebijakan
 **→ Potret hackathon = fase terakhir yang lulus gerbangnya pada 31 Agu 20:00 WIB.** Kalau tertinggal, urutan yang dilepas: foto HP → tombol Always → halaman Policies/Audit → bonus. Yang tidak dilepas: denyut, cek silang, verifier, deadman, izin Discord, tiga adegan.
 
 ### Fase 12 — Pengerasan industrial (~12 jam)
-IAM condition diperketat; dashboard di balik IAP/OAuth; rate limit; circuit breaker untuk Gemini/provider (5× gagal → buka 5 mnt, model cadangan); retry/backoff; Pub/Sub dead-letter; rotasi secret; `bandit` + `pip-audit` di CI; kekacauan infra (Gemini 500, Firestore lambat, Discord mati).
+IAM condition diperketat; rate limit; circuit breaker untuk Gemini/provider (5× gagal → buka 5 mnt, model cadangan); retry/backoff; Pub/Sub dead-letter; rotasi secret; `bandit` + `pip-audit` di CI; kekacauan infra (Gemini 500, Firestore lambat, Discord mati).
 **Gerbang:** semua kekacauan berdegradasi terkendali; tinjauan keamanan bersih.
 
 ### Fase 13 — Observability Warden (~6 jam)
