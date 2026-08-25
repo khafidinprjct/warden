@@ -12,6 +12,7 @@ from warden.config import settings
 from warden.core.models import now
 from warden.signals import ingest as ing
 from warden.store import firestore as db
+from warden.executor import approvals
 from warden.watcher.tick import run_tick
 
 app = FastAPI(title="warden-core", version="0.1.0")
@@ -34,7 +35,27 @@ def healthz():
 def tick(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
+    approvals.expire_stale()
     return run_tick(notify=_notify)
+
+
+@app.post("/decisions/{decision_id}/{verb}")
+def decide(decision_id: str, verb: str, who: str = "dashboard", x_warden_signature: str | None = Header(default=None)):
+    """Dipakai dashboard (Fase 8) & Discord (Fase 7). HMAC atas decision_id."""
+    if not ing.verify(decision_id.encode(), x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    if verb == "approve":
+        return approvals.approve(decision_id, who)
+    if verb == "deny":
+        return approvals.deny(decision_id, who)
+    raise HTTPException(400, "verb: approve|deny")
+
+
+@app.post("/freeze")
+def freeze(on: bool = True, who: str = "dashboard", x_warden_signature: str | None = Header(default=None)):
+    if not ing.verify(b"freeze", x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    return approvals.freeze(who, on)
 
 
 @app.post("/ingest/heartbeat")

@@ -121,7 +121,16 @@ def host_stats() -> dict:
     return d
 
 
+import re
+_RX_PHASE = re.compile(r"=== \[(F[0-9A-Za-z-]+)\]")
+_RX_STEP = re.compile(r"(?:step|iter)[ =:]+(\d+)", re.I)
+_RX_LOSS = re.compile(r"loss[ =:]+(nan|inf|[0-9]*\.?[0-9]+)", re.I)
+_RX_LGB = re.compile(r"^\[(\d+)\]\s+valid_0's \w+: ([0-9.]+|nan|inf)")   # baris LightGBM: [121] valid_0's binary_logloss: 0.49
+
+
 def train_stats() -> dict:
+    """Utama: train.json dari warden.beat(). Cadangan (mode legacy): parse ekor run.log →
+    denyut sintetis (phase dari '=== [Fx] ===', step/loss dari pola umum), ditandai synthetic=True."""
     p = os.path.join(DIR, "train.json")
     if os.path.exists(p):
         try:
@@ -129,7 +138,32 @@ def train_stats() -> dict:
             return {k: t.get(k) for k in ("run_id", "phase", "step", "epoch", "loss", "lr", "grad_norm", "step_per_s")}
         except Exception:
             return {}
-    return {}
+    logp = os.path.join(DIR, "run.log")
+    if not os.path.exists(logp):
+        return {}
+    try:
+        with open(logp, "rb") as f:
+            f.seek(0, 2); size = f.tell(); f.seek(max(0, size - 65536))
+            tail = f.read().decode(errors="ignore").splitlines()
+    except Exception:
+        return {}
+    out: dict = {"synthetic": True}
+    for line in tail:
+        m = _RX_PHASE.search(line)
+        if m: out["phase"] = m.group(1)
+        m = _RX_LGB.match(line)
+        if m:
+            out["step"] = int(m.group(1)); out["loss"] = float(m.group(2)) if m.group(2) not in ("nan", "inf") else float(m.group(2))
+            continue
+        m = _RX_STEP.search(line)
+        if m: out["step"] = int(m.group(1))
+        m = _RX_LOSS.search(line)
+        if m: out["loss"] = float(m.group(1))
+    rs = os.path.join(DIR, "markers", "RUN_START.json")
+    if os.path.exists(rs):
+        try: out["run_id"] = json.load(open(rs)).get("run_id", "")
+        except Exception: pass
+    return out
 
 
 def send_markers() -> None:
