@@ -19,7 +19,7 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 /* layout */
 .layout { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
 .nav { display: flex; flex-direction: column; gap: 4px; padding: 20px 12px; background: var(--surface); border-right: 1px solid var(--border); }
-.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; color: var(--text); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; color: var(--text); } .nav .close { display: none; }
 .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 6px; color: var(--text-2); }
 .nav-item.active { background: var(--accent-bg); color: var(--text); font-weight: 600; }
 .nav-item .count { font-size: 11px; color: var(--muted); }
@@ -97,8 +97,15 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .chart { width: 100%; height: 170px; }
 
 /* phone */
+.topbar { display: none; }
 @media (max-width: 720px) {
-  .layout { grid-template-columns: 1fr; } .nav { display: none; }
+  .layout { grid-template-columns: 1fr; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
+  .topbar .brand { padding: 0; }
+  .menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--control); border-radius: 6px; background: var(--surface); }
+  .nav { display: none; position: fixed; inset: 0; z-index: 30; overflow-y: auto; }
+  .nav.open { display: flex; }
+  .nav .close { display: inline-flex; margin-left: auto; }
   .main { padding: 16px 14px 32px; gap: 16px; }
   .two, .split { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .stat .v { font-size: 22px; }
   .cols-incidents { grid-template-columns: 90px minmax(0, 1fr); } .cols-incidents > :nth-child(n+3) { display: none; }

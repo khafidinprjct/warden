@@ -37,5 +37,6 @@
     t.style.cssText = "position:fixed;right:20px;bottom:20px;padding:10px 14px;border-radius:6px;font-weight:500;color:#fff;background:" + (ok ? "#1f7a3d" : "#b42323") + ";z-index:99";
     document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
   }
+  document.querySelectorAll("[data-menu]").forEach(b => b.addEventListener("click", () => document.getElementById("nav").classList.toggle("open")));
   const rf = Number(document.body.dataset.refresh || 0); if (rf > 0) setTimeout(() => location.reload(), rf * 1000);
 })();
