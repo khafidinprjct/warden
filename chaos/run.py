@@ -154,7 +154,8 @@ def s15():
 def s16():
     fake, inst, job = healthy(); fake.fail_next[inst.ref] = "ZONE_RESOURCE_POOL_EXHAUSTED"; fake.preempt(inst.ref); T.run_tick(); T.run_tick()
     inc = db.incidents.list(rule="preempted")[0]; dec = db.decisions.get(inc.decision_ids[0])
-    return dec.status == "FAILED" and "ZONE_RESOURCE_POOL_EXHAUSTED" in dec.result.get("error", "") and str(inc.state) == "ESCALATED", {"error": dec.result.get("error")}
+    nxt = db.decisions.get(inc.decision_ids[-1])   # start failed structurally → next hypothesis (relocate_zone, L1) is proposed, not a dead end
+    return dec.status == "FAILED" and "ZONE_RESOURCE_POOL_EXHAUSTED" in dec.result.get("error", "") and str(inc.state) == "AWAITING_APPROVAL" and nxt.action == "relocate_zone", {"error": dec.result.get("error")}
 
 @scenario(17, "kuota global vs regional terbaca terpisah")
 def s17():
@@ -206,7 +207,8 @@ def s23():
 def s24():
     fake, inst, job = healthy(); from warden.core.models import Action, Decision; from warden.executor import registry as ex
     d = Decision(job_id="j1", action=Action.RESUME_JOB, params={"instance_ref": inst.ref, "run_id": "r1"}); r = ex.execute(d, fake)
-    return r.ok and any(c[0] == "set_metadata" for c in fake.calls), {"plan": r.plan}
+    doc = db.client().collection("cmd").document("j1").get().to_dict()   # signed mailbox, no ssh anywhere
+    return r.ok and r.plan.get("channel") == "mailbox" and bool(doc and doc.get("sig")), {"plan": r.plan}
 
 @scenario(25, "operator sedang di mesin → tindakan ditahan")
 def s25():
