@@ -96,5 +96,5 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25. Live GCE test of D2/D7 pendi
 
 ## N. Documentation & reproducibility
 - ◐ N1 README + ADR-0014/15/16 updated; diagram still shows the pre-recovery loop (redraw pending).
-- ☐ N2 Clean machine follows README → Warden live ≤ 30 min (tested).
+- ◐ N2 Clean clone → venv → 76 tests + chaos 25/25 in 36 s (26 Aug); the full deploy-to-live timing is measured at the next fresh project.
 - ✅ N3 Operator runbook (docs/RUNBOOK.md, English, incl. Warden self-recovery).

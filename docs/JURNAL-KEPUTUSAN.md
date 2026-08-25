@@ -181,3 +181,8 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Hasil (Gemini 3.5 Flash, Vertex): 11/11, 0 bukti palsu, $0,068 per putaran. Scheduler `warden-gold-eval` tiap 02:00 WIB → `/eval` → health `gold_eval` + notifikasi bila < 0,9.
 - UI: kartu Recovery (percobaan, verifikasi thd dunia, hipotesis berikutnya, rujukan memori, tombol false positive), jejak penalaran Investigator (tool call+argumen+hasil) di tab Evidence, halaman detail job (spec, laporan akhir, baseline, override, hold, minta aksi lewat jalur kebijakan yang sama), form Launch.
 - Deploy core+ui berjalan (rev berikutnya). Uji hidup M2/M4 menyusul setelah deploy.
+
+## 26 Agu 2026 03:10 WIB — Drill hidup #1 GAGAL (katalog #29), diperbaiki, drill #2 dijalankan
+- Gagal: `live-1800-oom` diluncurkan Warden dari spec ✔ (VM `warden-live-1800-oom`, denyut pertama 65 dtk → RUNNING ✔), tetapi training melapor sebagai `toy-train`: startup.sh hanya mengekspor WARDEN_HMAC ke perintah resume, bootstrap memakai default job id. Harga: ≈$0,01 VM + 10 mnt. Dampak: nol pada arah — ini persis jenis cacat yang hanya ketahuan di gerbang hidup.
+- Ganti: startup mengekspor WARDEN_JOB/CORE_URL/BUCKET/ENTRY/DIR; bootstrap menolak tanpa WARDEN_JOB (`${WARDEN_JOB:?}`); tes unit; core rev berikutnya; job lama → ABANDONED, insiden nyasar toy-train ditutup; VM lama STOPPED (tidak dihapus).
+- N2 terbukti: clone bersih → venv 3.12 → 76 tes + chaos 25/25 dalam 36 dtk.
