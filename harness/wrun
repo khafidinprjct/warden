@@ -65,6 +65,8 @@ echo "EXIT=$EXIT" >> "$LOG"
 if [ -n "${WARDEN_BUCKET:-}" ] && command -v gcloud >/dev/null 2>&1; then
   gcloud storage cp -r "$DIR/artifacts/"* "gs://$WARDEN_BUCKET/jobs/$JOB/artifacts/" -q 2>/dev/null || echo "wrun: unggah artefak GAGAL" | tee -a "$LOG"
   gcloud storage cp "$DIR/markers/RUN_FIN.json" "gs://$WARDEN_BUCKET/jobs/$JOB/markers/RUN_FIN_$RUN.json" -q 2>/dev/null || true
+  # log per run id: bukti run yang gagal tidak tertimpa run berikutnya (Investigator membaca log/<run_id>.log)
+  tail -c 1048576 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/$RUN.log" -q 2>/dev/null || echo "wrun: unggah log per run GAGAL" | tee -a "$LOG"
   echo "wrun: artefak+RUN_FIN diunggah ke gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
 fi
 if [ "$POWEROFF" = 1 ] && [ "$EXIT" = 0 ]; then sleep 90; sudo poweroff; fi   # 90 dtk: beri agent waktu mengirim RUN_FIN
