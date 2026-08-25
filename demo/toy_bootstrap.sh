@@ -6,4 +6,5 @@ mkdir -p /opt/job && cd /opt/job && gcloud storage cp "gs://$BUCKET/demo/toy_tra
 python3 -c "import numpy" 2>/dev/null || { apt-get -o DPkg::Lock::Timeout=300 install -y -q python3-numpy >/dev/null 2>&1 || pip3 install -q --break-system-packages numpy; }
 mkdir -p "/var/lib/warden/$JOB/artifacts"
 WARDEN_BUCKET="$BUCKET" WARDEN_HMAC="$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/warden-hmac)" \
-  /usr/local/bin/wrun --job "$JOB" --phase train -- python3 /opt/job/toy_train.py --steps "${TOY_STEPS:-3000}" --sleep 0.1
+  /usr/local/bin/wrun --job "$JOB" --phase train -- python3 /opt/job/toy_train.py --steps "${TOY_STEPS:-3000}" --sleep "${TOY_SLEEP:-0.1}" ${TOY_ARGS:-}
+# WARDEN_BATCH_SCALE / WARDEN_LR_SCALE / WARDEN_RESUME_CKPT arrive in the environment from the harness (mailbox resume/rollback) and are read by toy_train.py

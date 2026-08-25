@@ -5,6 +5,10 @@ set -uo pipefail
 md() { curl -sf -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" || true; }
 JOB=$(md warden-job); CORE=$(md warden-core-url); HMAC=$(md warden-hmac); BUCKET=$(md warden-bucket); ENTRY=$(md warden-entry)
 RESUME=$(md warden-resume-cmd); WORKDIR=$(md warden-workdir); HURL=$(md warden-harness-url)
+# job environment from the launch spec: metadata keys warden-env-<NAME> → exported to the harness and the resume command
+for k in $(curl -sf -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/" | tr ' ' '\n' | grep '^warden-env-'); do
+  export "${k#warden-env-}=$(md "$k")"
+done
 [ -n "$JOB" ] || { echo "startup: metadata warden-job kosong — bukan mesin Warden"; exit 0; }
 mkdir -p /opt/warden-src && cd /opt/warden-src
 [ -n "$HURL" ] && gcloud storage cp -r "$HURL/*" /opt/warden-src/ -q 2>/dev/null || true
