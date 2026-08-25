@@ -164,11 +164,13 @@ if __name__ == "__main__":
     import urllib.request
     for _ in range(40):   # drill #2 (26 Aug) was served by the previous revision two minutes after "deployed": wait for the new one
         try:
-            rev = json.loads(urllib.request.urlopen(CORE + "/healthz", timeout=20).read()).get("revision", "")
+            rev = json.loads(urllib.request.urlopen(CORE + "/health", timeout=20).read()).get("revision", "")
         except Exception:  # noqa: BLE001
             rev = ""
-        if rev in ("", "local") or rev == LATEST:
+        if rev == "local" or rev == LATEST:
             break
+        if rev == "":
+            log("health endpoint unreadable — not treating that as ready")
         log(f"core still serving {rev}, waiting for {LATEST}"); time.sleep(15)
     log("core", url=CORE, latest=LATEST)
     bad = {d.id: (d.to_dict() or {}).get("last_error", "")[:80] for d in FS.collection("health").stream() if (d.to_dict() or {}).get("ok") is False}

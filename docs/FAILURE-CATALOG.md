@@ -57,3 +57,7 @@ Semua pernah terjadi pada kami (harga = yang benar-benar dibayar). Kolom "uji" =
 - **Symptom:** the run log was in Storage (1,094 B, OOM traceback visible with `gcloud storage cat`), yet Diagnostician and Investigator both saw `total_lines: 0`; health `gcs` had 25 consecutive failures that nobody looked at.
 - **Cause:** `Blob.download_as_text(errors="ignore")` — the installed google-cloud-storage rejects the keyword (`TypeError`); the exception was caught and turned into a health record and an empty log.
 - **Fix:** `download_as_bytes().decode("utf-8", errors="ignore")` everywhere; unit test with a stub blob; **operator rule**: a red `gcs`/`gemini`/`memory` health row is a failed drill, not a footnote — the live drill script now prints the health table at the start.
+
+## #34 · `/healthz` is answered by Google's frontend with a 404, never by the container (26 Aug 2026)
+- **Symptom:** `GET /healthz` on the Cloud Run URL returns Google's HTML 404 (also with an identity token), while `/health` returns the JSON. The live drill's revision wait parsed the 404 as "" and treated it as ready — a silent false pass.
+- **Fix:** use `/health`; an unreadable health response is "not ready", never "ready".
