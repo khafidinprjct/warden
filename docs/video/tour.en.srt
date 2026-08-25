@@ -1,0 +1,40 @@
+1
+00:00:09,536 --> 00:00:17,536
+Warden — an SRE agent for long-running compute jobs on Google Cloud.
+RUNNING is not the same as training correctly; DONE is not the same as intact.
+
+2
+00:00:24,539 --> 00:00:32,539
+Every incident carries evidence, cost and an audit trail — no LLM ever holds the button.
+
+3
+00:00:41,478 --> 00:00:55,478
+Scene 1 — a real Spot preemption today: TERMINATED without RUN_FIN
+→ policy level L2 → START → resumed from the last phase. Loss: 348 seconds.
+
+4
+00:01:02,559 --> 00:01:14,559
+Scene 2 — finished is not intact: the verifier OPENS pred.csv
+(1030 rows, sha256 match) before the job becomes COMPLETE.
+
+5
+00:01:21,655 --> 00:01:31,655
+Scene 3 — an idle machine after its job completed: orphan detected,
+STOP proposed with the projected cost, a human is asked.
+
+6
+00:01:39,325 --> 00:01:49,325
+Ledger, projection, ETTR (effective training time ratio) and the budget kill-switch.
+
+7
+00:01:56,238 --> 00:02:04,238
+Graduated autonomy per action type.
+Delete does not exist as an action — not even with approval.
+
+8
+00:02:11,142 --> 00:02:19,142
+Intent before, result after: requested-vs-actual for every action.
+
+9
+00:02:26,035 --> 00:02:34,035
+Success leaves a trace: Warden's own heartbeat is watched by an external dead-man service.

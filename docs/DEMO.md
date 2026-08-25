@@ -18,3 +18,7 @@ Persiapan 30 menit sebelum rekam: `demo-train-1` sedang menjalankan pipeline (fa
 | 3:50–4:00 | dashboard | penutup: otonomi bertahap, FREEZE, ETTR |
 
 Rekam dari HP (Chrome mode desktop) satu take; narasi Indonesia + subtitle Inggris sebagai track CC (video tak diedit).
+
+## Cadangan headless (25 Agu 2026 17:50 WIB) — `docs/video/rekam_tur.py`
+`docs/video/tour_cc.mp4` (2:47, CC terbakar) dan `tour.mp4` (+ track `tour.en.srt`): tur 9 halaman dashboard di atas data insiden nyata hari ini (preempt climate-demo → START L2 → resume; verifier membuka pred.csv; mesin yatim; Anggaran/ETTR; Kebijakan; Audit; Kesehatan). Ini **bukan** pengganti video submisi 3 adegan satu take (Console harus terlihat) — itu tetap direkam user, atau versi headless panjang setelah START toy-train disetujui.
+Temuan audit UI dari bingkai: sparkline "Denyut" untuk job legacy (climate-demo, tanpa step/loss) tergambar datar 100/0,5 — menyesatkan; harus menampilkan cpu% atau "tidak ada step/loss (legacy)". Dicatat untuk Fase 8.

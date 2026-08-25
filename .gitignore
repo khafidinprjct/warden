@@ -10,3 +10,6 @@ __pycache__/
 *.log
 data/emulator/
 .secrets/
+docs/video/raw/
+docs/video/*.webm
+docs/video/rekam.log

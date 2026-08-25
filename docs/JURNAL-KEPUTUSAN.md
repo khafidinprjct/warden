@@ -80,3 +80,9 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 **Keputusan:** (1) TIDAK menyetujui sendiri secara terprogram — L1 memang berarti manusia; keputusan dibiarkan menunggu (kedaluwarsa 30 mnt → ESCALATED, itu pun gerbang yang diuji). (2) Perbaikan produk kecil: `notify` tidak lagi dihitung breaker (`watcher/tick.py`), karena tidak mengubah keadaan; 41 tes + chaos 25/25. Dua karantina tetap terhitung — itu benar.
 **Harga:** mesin demo-train-2 mati sejak 15:02; tidak ada biaya berjalan. Uji live_toy putaran-2 akan gagal di langkah 3c (batas waktu) — dicatat sebagai bukti bahwa breaker bekerja, bukan sebagai gerbang lulus preempt-resume toy.
 **Cara lanjut (user):** buka `https://warden-ui-hfgre6y7ta-uc.a.run.app/incidents/inc_01M0VZ5C3N5ZEPHTKB4CHK19TP` → Approve; atau beri izin ke saya untuk menyetujui atas nama operator.
+
+## 25 Agu 2026 17:50 WIB — Fase 11 cadangan: video tur headless; Fase 12: audit keamanan pertama
+- Video tur `docs/video/tour_cc.mp4` 2:47 via Playwright+ffmpeg (skrip `docs/video/rekam_tur.py`). Take-1 dibuang: caption bergeser ±10 s (stopwatch dimulai setelah cold start) — ketahuan hanya karena bingkai dibuka (P3). Take-2 diverifikasi 4 bingkai tengah adegan.
+- Keamanan: `pip-audit` 0 kerentanan; `bandit` HIGH 0 / MEDIUM 1 (bind 0.0.0.0, wajib Cloud Run) — `docs/SECURITY-REVIEW.md`, `make audit`.
+- Temuan UI untuk audit user: sparkline denyut job legacy datar (lihat DEMO.md).
+- Perintah rekam pertama terbunuh (exit 137, batas waktu alat) → dipindah ke skrip bernama + nohup. Biaya $0.
