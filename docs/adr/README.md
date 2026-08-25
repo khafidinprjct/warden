@@ -15,3 +15,4 @@ Short records of the decisions that shape Warden — context, decision, conseque
 | [0010](0010-no-login-competition-scope.md) | No login in front of the dashboard (competition scope) |
 | [0011](0011-utc-storage-browser-timezone.md) | Store UTC, render in the viewer's time zone |
 | [0012](0012-one-minute-tick.md) | One-minute tick and measured SLOs |
+| [0013](0013-investigator-and-incident-memory.md) | An Investigator agent and incident memory, in front of the Diagnostician |
