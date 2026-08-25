@@ -141,7 +141,8 @@ def steward(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
     from warden.steward import ledger
-    out = {"accrue": ledger.accrue(600), "projection": ledger.projection()}
+    out = {"accrue": ledger.accrue(600), "projection": ledger.projection(), "overrides_expired": ledger.expire_overrides(),
+           "promotion_candidates": ledger.promotion_candidates()}
     db.heartbeat_self("steward", out)
     return out
 

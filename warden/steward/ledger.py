@@ -91,3 +91,34 @@ def digest() -> str:
     inc = [i for i in db.incidents.list(limit=200) if i.created_at > now() - timedelta(days=1)]
     lines.append(f"insiden 24 jam: {len(inc)} (RESOLVED {sum(1 for i in inc if str(i.state)=='RESOLVED')}, menunggu izin {sum(1 for i in inc if str(i.state)=='AWAITING_APPROVAL')})")
     return "\n".join(lines)
+
+
+def expire_overrides() -> int:
+    """Override 'Always 24h' yang lewat masa berlakunya dicabut (job.autonomy_overrides dikembalikan)."""
+    import time
+    n = 0
+    for d in db.client().collection("policy_overrides").stream():
+        o = d.to_dict()
+        if float(o.get("until", 0)) < time.time():
+            job_id, action = d.id.split(":", 1)
+            job = db.jobs.get(job_id)
+            if job and action in job.autonomy_overrides:
+                job.autonomy_overrides.pop(action); db.jobs.put(job)
+            d.reference.delete(); n += 1
+    return n
+
+
+def promotion_candidates(min_streak: int = 10) -> list[dict[str, Any]]:
+    """Tindakan L1 yang disetujui manusia ≥ min_streak kali berturut tanpa kegagalan → USUL naik ke L2 (keputusan manusia)."""
+    from collections import defaultdict
+    streak: dict[tuple[str, str], int] = defaultdict(int); broken: set[tuple[str, str]] = set()
+    decs = sorted([d for d in db.decisions.list(limit=1000) if d.verdict == "NEED_APPROVAL"], key=lambda d: d.created_at, reverse=True)
+    for d in decs:
+        k = (d.job_id, d.action.value)
+        if k in broken:
+            continue
+        if d.status == "DONE" and d.approved_by:
+            streak[k] += 1
+        elif d.status in ("FAILED", "REJECTED"):
+            broken.add(k)
+    return [{"job_id": j, "action": a, "streak": n, "usul": "L1 → L2"} for (j, a), n in streak.items() if n >= min_streak]
