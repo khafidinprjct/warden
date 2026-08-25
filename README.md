@@ -57,7 +57,7 @@ Prasyarat: `gcloud` login pada akun dengan billing aktif, Python 3.12+, Java 21 
 
 ```bash
 git clone <repo> warden && cd warden
-python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt   # runtime + pytest
 make emulators && make test                # 41 tes unit + end-to-end di emulator
 make smoke                                 # komponen ASLI: emulator + fake GCE + Gemini 3.5 nyata pada log nyata
 ```

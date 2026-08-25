@@ -184,8 +184,12 @@ def s20():
 @scenario(21, "selesai tapi artefak tidak mendarat → verifikasi menandai hilang")
 def s21():
     from warden.verifier.run import process_pending
-    fake, inst, job = healthy(); fin(job, 0, artifacts=[{"path": "/x/pred.csv", "bytes": 10, "sha256": "0" * 64}]); T.run_tick(); r = process_pending()
-    return r["ok"] == 0 and db.jobs.get("j1").status == JobStatus.FINISHED_UNVERIFIED, {"hasil": r}
+    fake, inst, job = healthy(); fin(job, 0, artifacts=[{"path": "/x/pred.csv", "bytes": 10, "sha256": "0" * 64}]); T.run_tick()
+    r1 = process_pending()   # RUN_FIN masih muda → masa tenggang unggahan: TUNDA (bukan gagal), job tetap RUNNING
+    tenggang = r1["ok"] == 0 and db.jobs.get("j1").status == JobStatus.RUNNING
+    mk = db.get_marker("j1", "r1", "RUN_FIN"); mk.ts = now() - timedelta(seconds=700); db.put_marker(mk)   # tenggang 10 mnt lewat
+    r2 = process_pending()
+    return tenggang and r2["ok"] == 0 and db.jobs.get("j1").status == JobStatus.FINISHED_UNVERIFIED, {"tenggang": r1, "lewat": r2}
 
 @scenario(22, "smoke lolos palsu → SMOKE_FIN tanpa member yang dideklarasikan")
 def s22():
