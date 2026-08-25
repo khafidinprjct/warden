@@ -13,12 +13,12 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 7 Concierge Discord | kartu <5 s, Approve → tindakan → kartu diperbarui | ⏳ **butuh user** | kode + tes Ed25519 lulus; menunggu public key/bot token/channel id → Secret Manager, lalu `infra/discord_register.py` |
 | 8 Dashboard NiceGUI | audit user lulus; websocket ≥10 mnt; cold start <8 s | ⏳ **butuh user** | UI hidup; tangkapan layar `docs/screenshots/`; temuan-1 (sparkline legacy datar) diperbaiki di kode 25 Agu 17:05, bukti `desktop_incident_sparkline_fix.png`, LIVE di ui-00002 17:40 |
 | 9 Multimodal | 5/6 gambar benar, ≤$0,005/gambar | ✅ | kurva loss dibaca Gemini (`concierge/images.py`) |
-| 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25 (3 s); chaos.live 4/4 langkah pada climate-demo; live_toy: lihat baris di bawah |
+| 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
 | 12 Pengerasan | rate limit, circuit breaker Gemini/provider, IAM | ◐ | rate limit ingest + circuit breaker Gemini ada; IAP/OAuth dashboard belum |
 | 13 Observability | metrik+alert core basi; adapter Slack | ◐ | metrik `warden_heartbeat` + alert absence → email; adapter Slack ada, belum end-to-end |
 | 14 Operasi berkelanjutan | 2 job berbeda dipantau 7 hari | ◐ | 2 job (climate-demo, toy-train) dipantau sejak 25 Agu; 7 hari belum genap |
 
-**Uji preempt jujur toy-train (live_toy):** putaran-1 tidak sah (resume pada job tamat selesai seketika); putaran-2 dimulai 14:56 WIB dengan run baru 20.000 langkah, `simulate-maintenance-event` pada step 1250 → `stopped_external` terbuka 15:04, **circuit breaker** (3 aksi otomatis/jam: 2 karantina + 1 notify) menurunkan START ke L1 → menunggu izin manusia (`inc_01M0VZ5C3N5ZEPHTKB4CHK19TP`). Perbaikan: notify tak lagi dihitung (commit, belum deploy).
+**Uji preempt jujur toy-train:** ✅ lulus 25 Agu 18:1x — lihat jurnal 18:30 (rantai bukti) — setelah START disetujui pemilik.
 
 **Yang hanya bisa dilakukan user:** kredensial Discord (Fase 7), audit UI (Fase 8), rekam video (Fase 11), memilih 2 submisi final Zindi.
