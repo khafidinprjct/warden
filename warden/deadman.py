@@ -15,6 +15,7 @@ app = FastAPI(title="warden-deadman")
 STALE_MIN = 15
 
 
+@app.get("/health")
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "role": "deadman"}

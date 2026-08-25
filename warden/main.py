@@ -26,6 +26,7 @@ def _oidc_ok(auth: str | None) -> bool:
     return bool(auth and auth.startswith("Bearer "))
 
 
+@app.get("/health")
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "ts": now().isoformat(), "provider": settings.provider, "project": settings.project}

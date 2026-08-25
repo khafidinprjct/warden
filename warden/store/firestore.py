@@ -18,7 +18,7 @@ _client: firestore.Client | None = None
 def client() -> firestore.Client:
     global _client
     if _client is None:
-        _client = firestore.Client(project=settings.project, database=settings.firestore_db)
+        _client = firestore.Client(project=settings.project, database=(settings.firestore_db if settings.firestore_db and settings.firestore_db != "(default)" else None))
     return _client
 
 

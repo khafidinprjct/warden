@@ -32,3 +32,7 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - `warden-core` terdeploy ke Cloud Run (revisi 00001 Ready, uvicorn hidup di 8080) — URL publik masih 404 dari frontend Google saat dicek pertama; sedang diselidiki (propagasi/IAM invoker).
 - Catatan: hook lokal "gerbang praterbang" memblokir perintah yang memuat teks flag startup-script; berkas ditulis lewat Python. Harness Warden memenuhi tujuan gerbang itu (preflight, marker exit code, denyut, resume, STOP+no-auto-delete).
 - Biaya: ≈ $0 (Cloud Run free tier; Gemini $0,01).
+
+## 25 Agu 2026 14:40 WIB — Dua jebakan infra (dicatat agar tidak terulang)
+- **Path `/healthz` dicegat frontend Google** (Cloud Run *.run.app mengembalikan halaman 404 Google untuk GET /healthz; /docs, /openapi.json, POST /tick sampai ke container). Ini bukan bug kita. KEPUTUSAN: endpoint kesehatan = `/health` (alias /healthz tetap ada untuk lokal). Harga: ~40 mnt penyelidikan.
+- **Regresi `google-api-core 2.35.0`**: klien Firestore meng-encode nama database `(default)` → `%28default%29` → ditolak server produksi DAN emulator. Bisect: 2.27.0 OK. KEPUTUSAN: pin `google-api-core==2.27.0` di requirements (kompatibel storage ≥2.27); lokal & Cloud Run memakai pin yang sama; `.python-version=3.12` agar buildpack tidak memakai Python 3.14. Konfigurasi `WARDEN_FIRESTORE_DB` kosong = (default); emulator lokal boleh pakai nama lain.

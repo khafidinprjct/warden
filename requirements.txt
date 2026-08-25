@@ -1,8 +1,9 @@
 fastapi==0.141.1
 google-adk==2.7.1
+google-api-core==2.27.0
 google-cloud-billing-budgets==1.21.0
 google-cloud-compute==1.51.0
-google-cloud-firestore==2.29.0
+google-cloud-firestore==2.21.0
 google-cloud-logging==3.16.3
 google-cloud-monitoring==2.31.0
 google-cloud-pubsub==2.39.2
