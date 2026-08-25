@@ -63,8 +63,8 @@ def main():
             pg = b.new_page(viewport={"width": 1440, "height": 1000})
             pg.goto("http://127.0.0.1:8098/", wait_until="networkidle", timeout=90000); pg.wait_for_timeout(2500)
             pg.screenshot(path=f"{S}/ui_overview_desktop.png", full_page=True)
-            res["overview_has_approval"] = "AWAITING APPROVAL" in pg.content()
-            res["overview_has_gemini"] = "GEMINI" in pg.content()
+            res["overview_has_approval"] = "Approval Required" in pg.content()
+            res["overview_has_gemini"] = ">Gemini<" in pg.content()
             for path, name in (("/incidents/" + dec.incident_id, "incident"), ("/jobs", "jobs"), ("/budget", "budget"), ("/approvals", "approvals"), ("/audit", "audit")):
                 pg.goto("http://127.0.0.1:8098" + path, wait_until="networkidle", timeout=90000); pg.wait_for_timeout(1500)
                 pg.screenshot(path=f"{S}/ui_{name}_desktop.png", full_page=True)
