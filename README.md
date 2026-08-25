@@ -99,7 +99,7 @@ Prerequisites: `gcloud` on an account with billing, Python 3.12+, Java 21 (local
 ```bash
 git clone <repo> warden && cd warden
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-make emulators && make test        # 49 unit / end-to-end tests on the emulator
+make emulators && make test        # 76 unit / end-to-end tests on the emulator
 make smoke                         # real components: emulator + fake fleet + real Gemini on a real crash log
 python -m chaos.run                # 25 deterministic failure scenarios (25/25)
 ```
