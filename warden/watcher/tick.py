@@ -2,6 +2,8 @@
 Menulis denyut Warden di jalur SUKSES (P4). LLM hanya untuk temuan needs_llm (dipanggil pipeline, bukan di sini)."""
 from __future__ import annotations
 
+import json as _j
+
 from datetime import timedelta
 from typing import Any
 
@@ -136,6 +138,10 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
     transition(inc, S.TRIAGED, note=f"rule {f.rule}")
     stats["incidents_new"] += 1
+    _lag = None
+    if inst is not None and getattr(inst, "last_stop_at", None):
+        _lag = int((now() - inst.last_stop_at).total_seconds() * 1000)
+    print(_j.dumps({"event": "warden.incident", "severity": "INFO", "phase": "opened", "rule": f.rule, "sev": f.severity, "job": job.job_id if job else "", "incident_id": inc.incident_id, "detect_ms": _lag}), flush=True)
     if f.suggested_action == "verify":
         db.incidents.put(inc); stats["incidents_new"] += 0
         return
@@ -153,6 +159,7 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
         dec.dry_run_plan = ex.dry_run(dec, compute())
     db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
     transition(inc, S.DECIDED, note=f"{action}: {dec.verdict}")
+    print(_j.dumps({"event": "warden.decision", "severity": "INFO", "action": str(action), "verdict": str(dec.verdict), "autonomy": str(dec.autonomy), "incident_id": inc.incident_id, "decision_ms": int((now() - inc.created_at).total_seconds() * 1000)}), flush=True)
     if dec.verdict == Verdict.AUTO:
         stats["auto"] += 1
         transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)

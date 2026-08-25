@@ -2,6 +2,8 @@
 (opsional vonis kedua) → kebijakan → eksekusi/izin. LLM tidak memegang tombol (P1)."""
 from __future__ import annotations
 
+import json as _json
+
 from pathlib import Path
 from typing import Any, Callable
 
@@ -78,9 +80,12 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         findings = [{"rule": inc.rule, "summary": inc.summary}] + [db.evidence.get(e).payload for e in inc.evidence_ids if db.evidence.get(e)]
         hbsum = _hb_summary(inc.job_id)
         try:
+            _t0 = now()
             diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"])
+            print(_json.dumps({"event": "warden.llm", "severity": "INFO", "ok": True, "model": usage.get("model", ""), "ms": int((now() - _t0).total_seconds() * 1000), "cost_usd": usage.get("cost_usd", 0.0), "incident_id": inc.incident_id, "category": diag.category}), flush=True)
         except Exception as e:
             db.health("gemini", False, str(e)[:200])
+            print(_json.dumps({"event": "warden.llm", "severity": "WARNING", "ok": False, "error": str(e)[:160], "incident_id": inc.incident_id}), flush=True)
             transition(inc, S.ESCALATED, note=f"Gemini failed: {e}"[:200]); db.incidents.put(inc)
             if notify: notify(inc, None, f"⚠️ {inc.summary} — LLM diagnosis failed: {str(e)[:120]}")
             continue
