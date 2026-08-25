@@ -1,5 +1,5 @@
 """Investigator (Phase A-1): an ADK agent that gathers its own evidence with read-only tools before the Diagnostician decides.
-The tools read Firestore / Cloud Storage only; nothing here can act on infrastructure. The agent decides how much to read; ADK's own max_llm_calls is the only loop guard.
+The tools read Firestore / Cloud Storage only; nothing here can act on infrastructure. The agent decides how much to read; ADK's own max_llm_calls is the only loop guard."""
 from __future__ import annotations
 
 import asyncio
