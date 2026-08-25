@@ -39,13 +39,18 @@ def _context(job_id: str, incident_id: str) -> dict:
     return ctx
 
 
-async def ask_async(question: str, job_id: str = "", incident_id: str = "", model: str | None = None) -> dict:
+async def ask_async(question: str, job_id: str = "", incident_id: str = "", model: str | None = None, image: bytes | None = None, image_mime: str = "image/png") -> dict:
     agent = LlmAgent(name="concierge", model=model or settings.gemini_model, instruction=SYSTEM, tools=TOOLS, output_key="answer",
                      generate_content_config=types.GenerateContentConfig(temperature=0.2))
     runner = InMemoryRunner(agent=agent, app_name="warden")
     session = await runner.session_service.create_session(app_name="warden", user_id="operator")
     ctx = _context(job_id, incident_id)
-    msg = types.Content(role="user", parts=[types.Part(text="## context\n" + json.dumps(ctx, ensure_ascii=False, default=str)[:6000] + "\n\n## question\n" + question[:1000])])
+    parts = [types.Part(text="## context\n" + json.dumps(ctx, ensure_ascii=False, default=str)[:6000] + "\n\n## question\n" + question[:1000])]
+    if image:
+        parts.append(types.Part(text="## attached image (a screenshot or photo from the operator's phone — read it, quote what you can see, label every finding "
+                                     "'from the image' with a confidence ≤ 0.6, and never treat it as ground truth over Warden's own data)"))
+        parts.append(types.Part.from_bytes(data=image, mime_type=image_mime))
+    msg = types.Content(role="user", parts=parts)
     usage = {"prompt_tokens": 0, "output_tokens": 0}; tools_used: list[str] = []; answer = ""
     async for ev in runner.run_async(user_id="operator", session_id=session.id, new_message=msg):
         if getattr(ev, "usage_metadata", None):
@@ -59,7 +64,7 @@ async def ask_async(question: str, job_id: str = "", incident_id: str = "", mode
     cost = round(usage["prompt_tokens"] / 1e6 * pin + usage["output_tokens"] / 1e6 * pout, 6)
     from warden.core.models import now
     db.cost_add(now().strftime("%Y-%m-%d"), "llm_usd", cost, job_id or "concierge")
-    return {"ok": True, "answer": answer.strip(), "tools_used": tools_used, "cost_usd": cost, "model": model or settings.gemini_model}
+    return {"ok": True, "answer": answer.strip(), "tools_used": tools_used, "cost_usd": cost, "model": model or settings.gemini_model, "image": bool(image)}
 
 
 def ask(*a, **kw) -> dict:

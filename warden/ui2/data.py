@@ -228,7 +228,7 @@ def incident_context(incident_id: str) -> dict | None:
         ev = db.evidence.get(eid)
         if not ev:
             continue
-        kind = {"rule": "Rule evidence", "log_window": "Log excerpt", "artifact_check": "Artifact verification", "heartbeat": "Heartbeat evidence", "investigation": "Investigation (agent reasoning trace)"}.get(ev.kind, ev.kind)
+        kind = {"rule": "Rule evidence", "log_window": "Log excerpt", "artifact_check": "Artifact verification", "heartbeat": "Heartbeat evidence", "investigation": "Investigation (agent reasoning trace)", "image": "Training curves (image shown to Gemini)"}.get(ev.kind, ev.kind)
         if ev.kind == "investigation" and isinstance(ev.payload, dict):
             evidence.append({"kind": kind, "summary": ev.summary, "created_iso": iso(ev.created_at), "results": None, "rows": [],
                              "notes": ev.payload.get("notes", ""), "cost": usd(float(ev.payload.get("cost_usd", 0.0)), 4),

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -164,13 +164,19 @@ def ask_get(request: Request):
 
 
 @app.post("/ask", response_class=HTMLResponse)
-def ask_post(request: Request, question: str = Form(""), job_id: str = Form("")):
+async def ask_post(request: Request, question: str = Form(""), job_id: str = Form(""), photo: UploadFile | None = File(default=None)):
+    import base64 as _b64
     ctx = data.base_context()
     q = question.strip()[:1000]
     answer = None; error = ""
+    payload = {"question": q, "job_id": job_id}
+    if photo is not None and photo.filename:
+        raw = await photo.read()
+        if raw:
+            payload["image_b64"] = _b64.b64encode(raw[:6_000_000]).decode(); payload["image_mime"] = photo.content_type or "image/jpeg"
     if q:
         try:
-            r = httpx.post(f"{CORE}/ask", json={"question": q, "job_id": job_id}, headers={"X-Warden-Signature": sign(q.encode())}, timeout=120)
+            r = httpx.post(f"{CORE}/ask", json=payload, headers={"X-Warden-Signature": sign(q.encode())}, timeout=180)
             j = r.json()
             if j.get("ok"):
                 answer = j

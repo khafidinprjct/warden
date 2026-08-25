@@ -103,9 +103,19 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
             except Exception as e:  # noqa: BLE001 — investigation is optional; diagnosis proceeds on the log tail alone
                 print(_json.dumps({"event": "warden.llm", "severity": "WARNING", "ok": False, "role": "investigator", "error": str(e)[:160], "incident_id": inc.incident_id}), flush=True)
                 notes = ""
+        image = None
+        if inc.rule in ("plateau", "throughput_drop", "grad_spike", "vram_creep", "nan_loss", "stuck", "slow"):
+            try:
+                from warden.agents.charts import render_curves
+                image = render_curves(db.recent_heartbeats(inc.job_id, 120), title=f"{inc.job_id} · {inc.rule}")
+                if image:
+                    ev_c = Evidence(incident_id=inc.incident_id, kind="image", summary=f"training curves, {len(image):,} B PNG", payload={"bytes": len(image), "rule": inc.rule})
+                    db.evidence.put(ev_c); inc.evidence_ids.append(ev_c.evidence_id)
+            except Exception as e:  # noqa: BLE001 — the chart is extra evidence, never a blocker
+                print(_json.dumps({"event": "warden.llm", "severity": "WARNING", "ok": False, "role": "charts", "error": str(e)[:120]}), flush=True)
         try:
             _t0 = now()
-            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"], investigation=notes)
+            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"], investigation=notes, image_png=image)
             print(_json.dumps({"event": "warden.llm", "severity": "INFO", "ok": True, "model": usage.get("model", ""), "ms": int((now() - _t0).total_seconds() * 1000), "cost_usd": usage.get("cost_usd", 0.0), "incident_id": inc.incident_id, "category": diag.category}), flush=True)
         except Exception as e:
             db.health("gemini", False, str(e)[:200])

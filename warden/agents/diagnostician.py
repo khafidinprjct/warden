@@ -25,7 +25,9 @@ SYSTEM = (
     "resize_disk {grow_pct: 50}, relocate_zone {target_zone: '<zone>'} (optional). remembered_incidents in deterministic_findings "
     "are past postmortems of similar cases: prefer an action that resolved the same pattern before and say so in human_summary. "
     "human_summary: English, ≤280 characters, mention the cost when it is present in job_card. "
-    "falsifiable_check: one sentence of the form 'if this diagnosis is right, after action X the number Y changes'."
+    "falsifiable_check: one sentence of the form 'if this diagnosis is right, after action X the number Y changes'. "
+    "If an image is attached it is the training curves (loss, grad_norm, step rate, disk) over the last heartbeats; use it to judge "
+    "plateau vs. slow convergence, divergence vs. a single spike, and a throughput collapse — and say what you saw in root_cause."
 )
 
 

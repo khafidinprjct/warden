@@ -107,8 +107,14 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
     if not q.strip():
         raise HTTPException(400, "question required")
     from warden.agents.concierge import ask as _ask
+    img = None; mime = str(body.get("image_mime", "image/png"))
+    if body.get("image_b64"):
+        try:
+            img = base64.b64decode(str(body["image_b64"]))[:6_000_000]
+        except Exception:  # noqa: BLE001
+            raise HTTPException(400, "image_b64 invalid")
     try:
-        return _ask(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")))
+        return _ask(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")), image=img, image_mime=mime)
     except Exception as e:  # noqa: BLE001
         db.health("gemini", False, str(e)[:200])
         return {"ok": False, "error": str(e)[:200]}
