@@ -116,3 +116,9 @@ Hasil bersih hari ini dari satu uji jujur: **3 cacat nyata ditemukan & ditutup**
 **Bukti fungsional:** `chaos/ui_live.py` (emulator + provider palsu persisten `WARDEN_FAKE_STATE`): FREEZE→frozen ✓, Thaw ✓, klik Approve → keputusan DONE + mesin STOPPED ✓, HP tanpa hscroll ✓. Tangkapan layar `docs/screenshots/ui_*.png`.
 **Deploy:** `warden-ui` **00004-njt**, `warden-core` **00011-xww**; UI prod diverifikasi headless di viewport 390 (`hp_prod_overview.png`). Tanpa alarm palsu.
 **Sisa Fase 8:** audit pemilik di HP (sedang); IAP/OAuth tetap Fase 12.
+
+## 25 Agu 2026 19:30 WIB — Koreksi pemilik atas UI Fase 8: bahasa produk standar, tanpa komentar, migrasi data lama
+**Koreksi:** (1) masih ada teks komentar di layar; (2) masih ada Bahasa Indonesia (data lama); (3) informasi sulit dipahami; (4) istilah "deadman" tak dipahami. Usul saya memakai "bahasa awam" **ditolak** — yang diminta bahasa aplikasi standar, rapi, format jelas (dicatat sebagai aturan memori).
+**Tindakan:** panduan gaya tetap di kepala `dashboard.py` (kosakata SRE: Incident, Decision, Autonomy Level, Blast Radius, Heartbeat, Deadman Watchdog; heading Title Case, label UPPERCASE; blok label–nilai `kv()` menggantikan kalimat sambung; waktu `25 Aug 2026, 18:51 WIB (2 min ago)`; uang `$0.034/h`). Semua subtitle/komentar/footer dihapus. Peta label untuk rule/state/action/verdict/blast radius/job status. Rencana eksekusi ditampilkan sebagai baris label–nilai, bukan JSON. Health: sumber periodik → Healthy/Stale, sumber berbasis-kejadian → Healthy/Failing. Bug pemformat desimal (`0.0335` → `0335`) diperbaiki.
+**Data lama:** `infra/migrate_english.py` (regex idempoten) menerjemahkan 49 dokumen Firestore prod (summary, timeline, explain, evidence, audit); pemindaian residu = 0.
+**Bukti:** `chaos/ui_live.py` OK (Approve → DONE + STOPPED, Freeze/Thaw, HP tanpa hscroll); tangkapan `docs/screenshots/ui_*.png`. Deploy `warden-ui` 00005.
