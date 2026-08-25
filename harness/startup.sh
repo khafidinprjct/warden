@@ -29,5 +29,7 @@ PY
 )
 if [ "$SELESAI" != "ya" ] && [ -n "$RESUME" ]; then
   echo "startup: belum ada RUN_FIN ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START ada = lanjut setelah terputus' || echo 'boot pertama')) → $RESUME"
-  mkdir -p "${WORKDIR:-/}"; (cd "${WORKDIR:-/}" && WARDEN_HMAC="$HMAC" nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
+  # the resume command runs with the FULL Warden environment (job id, core URL, bucket, entry) — a bootstrap that falls back to a
+  # default job id would otherwise report under the wrong job (live drill 26 Aug: training ran as "toy-train" instead of the launched job)
+  mkdir -p "${WORKDIR:-/}"; (cd "${WORKDIR:-/}" && WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BUCKET" WARDEN_ENTRY="$ENTRY" WARDEN_DIR=/var/lib/warden nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
 fi

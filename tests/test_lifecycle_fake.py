@@ -109,3 +109,11 @@ def test_two_jobs_guarded_concurrently_without_interference():
     cmd_b = db.client().collection("cmd").document("job-b").get().to_dict(); assert cmd_b["cmd"] == "clean_disk"
     assert not db.client().collection("cmd").document("job-a").get().exists
     assert all(d.job_id == "job-a" for i in a for d in [db.decisions.get(x) for x in i.decision_ids]) and all(d.job_id == "job-b" for i in b for d in [db.decisions.get(x) for x in i.decision_ids])
+
+
+def test_startup_script_exports_job_env_to_resume():
+    """Live drill 26 Aug: the resume command ran without WARDEN_JOB and reported under the wrong job id."""
+    md = lifecycle._metadata(lifecycle.validate(SPEC))
+    st = md["startup-script"]
+    assert 'WARDEN_JOB="$JOB"' in st and 'WARDEN_BUCKET="$BUCKET"' in st and 'WARDEN_CORE_URL="$CORE"' in st
+    assert md["warden-job"] == "toy-1" and md["warden-resume-cmd"] == SPEC["command"]

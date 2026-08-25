@@ -2,7 +2,7 @@
 # Dijalankan di mesin demo oleh startup (lewat warden-resume-cmd) — memasang dependensi sekali, menarik payload
 # pipeline climate dari GCS, lalu menjalankan pipeline di bawah wrun (marker+denyut+artefak).
 set -uo pipefail
-JOB="${WARDEN_JOB:-climate-demo}"; BUCKET="$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/warden-bucket)"
+JOB="${WARDEN_JOB:?WARDEN_JOB must be set by the harness — refusing to guess a job id}"; BUCKET="$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/warden-bucket)"
 WD=/opt/job; mkdir -p "$WD"; cd "$WD"
 if [ ! -f .deps_ok ]; then
   export DEBIAN_FRONTEND=noninteractive
