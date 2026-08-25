@@ -65,7 +65,8 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
     stats = {"processed": 0, "auto": 0, "approval": 0, "escalated": 0, "llm_usd": 0.0}
     today = db.cost_today()
     if float(today.get("llm_usd", 0.0)) >= settings.llm_daily_cap_usd:
-        db.health("llm_budget", False, "daily LLM cap reached — deterministic only")
+        db.health("llm_budget", False, f"daily LLM cap ${settings.llm_daily_cap_usd:.0f} reached — deterministic only until midnight UTC")
+        print(_json.dumps({"event": "warden.limit", "severity": "WARNING", "limit": "llm_daily_cap_usd", "value": float(today.get("llm_usd", 0.0)), "cap": settings.llm_daily_cap_usd}), flush=True)
         return stats
     frozen = _is_frozen()
     gh = db.client().collection("health").document("gemini").get()
@@ -89,7 +90,9 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
                 ev_i = Evidence(incident_id=inc.incident_id, kind="investigation", summary=notes[:200] or "no note", payload={"notes": notes, "tool_calls": tool_log, "cost_usd": usage_i.get("cost_usd", 0.0)})
                 db.evidence.put(ev_i); inc.evidence_ids.append(ev_i.evidence_id); inc.llm_cost_usd += usage_i.get("cost_usd", 0.0)
                 stats["llm_usd"] += usage_i.get("cost_usd", 0.0); db.cost_add(now().strftime("%Y-%m-%d"), "llm_usd", usage_i.get("cost_usd", 0.0), inc.job_id)
-                inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"investigated: {len(tool_log)} tool calls, {usage_i.get('cost_usd', 0.0):.4f} USD", "actor": "warden"})
+                inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"investigated: {len(tool_log)} tool calls, {usage_i.get('cost_usd', 0.0):.4f} USD" + (" — stopped by the runaway guard" if usage_i.get("guard_hit") else ""), "actor": "warden"})
+                if usage_i.get("guard_hit"):
+                    print(_json.dumps({"event": "warden.limit", "severity": "WARNING", "limit": "investigator_tool_guard", "incident_id": inc.incident_id, "tool_calls": len(tool_log)}), flush=True)
                 print(_json.dumps({"event": "warden.llm", "severity": "INFO", "ok": True, "role": "investigator", "model": usage_i.get("model", ""), "ms": int((now() - _ti).total_seconds() * 1000), "cost_usd": usage_i.get("cost_usd", 0.0), "tool_calls": len(tool_log), "incident_id": inc.incident_id}), flush=True)
             except Exception as e:  # noqa: BLE001 — investigation is optional; diagnosis proceeds on the log tail alone
                 print(_json.dumps({"event": "warden.llm", "severity": "WARNING", "ok": False, "role": "investigator", "error": str(e)[:160], "incident_id": inc.incident_id}), flush=True)

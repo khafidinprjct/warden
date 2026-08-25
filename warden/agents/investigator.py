@@ -154,7 +154,7 @@ async def investigate_async(job_id: str, incident_summary: str, instance_ref: st
     used = model or settings.gemini_model
     pin, pout = PRICE.get(used, (1.5, 9.0))
     usage["cost_usd"] = round(usage["prompt_tokens"] / 1e6 * pin + usage["output_tokens"] / 1e6 * pout, 6)
-    usage["model"] = used; usage["tool_calls"] = len(tool_log)
+    usage["model"] = used; usage["tool_calls"] = len(tool_log); usage["guard_hit"] = any("tool budget exhausted" in str(t.get("result_preview", "")) for t in tool_log)
     return final_text.strip(), tool_log, usage
 
 
