@@ -16,7 +16,7 @@ limits:
   resume_job:       {per_hour: 3, per_day: 12}
   stop_instance:    {per_hour: 1}
   rollback_last_good: {per_day: 2}
-  relocate_zone:    {per_day: 1}
+  relocate_zone:    {per_day: 2, max_price_increase_pct: 50}   # on-demand exit (+233 %) is denied unless the job's policy raises this
   resize_disk:      {per_day: 1, max_cost_usd: 2.0}
   change_machine_type: {max_price_increase_pct: 50, per_day: 2}
   clean_disk:       {per_hour: 2}

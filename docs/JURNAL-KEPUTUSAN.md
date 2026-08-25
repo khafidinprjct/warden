@@ -213,3 +213,7 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Binding `wardenInstanceOperator` untuk SA core kini bersyarat: hanya instance bernama `warden-*`. Uji impersonasi: `add-labels demo-train-1` → 403 (negatif ✔), `add-labels warden-live-1923-oom` → label tertulis (positif ✔), `instances list` tetap jalan, health compute_api Warden tetap hijau. Akun pemilik diberi serviceAccountTokenCreator pada SA core untuk uji semacam ini.
 - Konsekuensi: VM lama `demo-train-1/2` tidak lagi bisa disentuh Warden (memang pensiun). VM buatan tangan harus bernama `warden-*` + label managed.
 - CATATAN BIAYA untuk pemilik: 9 VM drill/demo TERMINATED menyisakan 9 disk 20 GB pd-balanced ≈ $0,08/GB-bulan → ≈ $14/bulan + 1 snapshot. Menghapus = keputusan pemilik (aturan STOP≠DELETE); saya tidak menghapus apa pun.
+
+## 26 Agu 2026 05:45 WIB — B4 badai preempt; status ceklis
+- B4: aturan `preempt_storm` (≥3 preempt/60 mnt dari operasi GCE nyata — deteksi #31) → langsung relocate (L1), tidak start ke-4; anak tangga berikutnya relocate dengan spot=False (keluar ke on-demand) yang harganya +233 % → ditolak penjaga harga 50 % kecuali kebijakan per-job menaikkannya. Tes 79/79, chaos 25/25.
+- Ceklis: 61 butir → ✅ 55 · ◐ 5 (A4 fase eval live, H5 soak 7 hari s/d 1 Sep, J4 butuh ekspor billing oleh pemilik, K1 audit desktop oleh pemilik, N2 waktu deploy-ke-hidup di project segar) · ☐ 1 (K4 Discord — terakhir, butuh kredensial pemilik).

@@ -26,9 +26,14 @@ LADDERS: dict[str, list[dict[str, Any]]] = {
     "preempted": [
         {"action": "start_instance", "params": {}, "why": "spot VM was preempted; start it, the harness resumes from the last intact checkpoint"},
         {"action": "relocate_zone", "params": {}, "why": "start failed on stock-out; move the disk to another zone"},
+        {"action": "relocate_zone", "params": {"spot": False}, "why": "no zone holds a Spot machine: leave Spot for on-demand (policy decides whether the price increase is allowed)"},
     ],
     "stopped_external": [
         {"action": "start_instance", "params": {}, "why": "VM stopped outside Warden without a RUN_FIN"},
+    ],
+    "preempt_storm": [
+        {"action": "relocate_zone", "params": {}, "why": "preempted 3× in an hour: this zone is not worth another start — move the disk to another zone"},
+        {"action": "relocate_zone", "params": {"spot": False}, "why": "storm follows the job: leave Spot for on-demand (policy decides whether the price increase is allowed)"},
     ],
     "preempt": [
         {"action": "start_instance", "params": {}, "why": "preempt confirmed by diagnosis"},
@@ -275,6 +280,8 @@ def advance(inc, notify=None, reason: str = "") -> None:
         mt = rung["params"].get("machine_type") or bigger_machine(inst.machine_type)
         if mt and inst.hourly_price_usd:
             ctx.price_increase_pct = max(0.0, (compute().price_of(mt, inst.spot) / inst.hourly_price_usd - 1) * 100)
+    if action == Action.RELOCATE_ZONE and inst and rung["params"].get("spot") is False and inst.hourly_price_usd:
+        ctx.price_increase_pct = max(0.0, (compute().price_of(inst.machine_type, False) / inst.hourly_price_usd - 1) * 100)
     from warden.watcher.tick import _policy_for
     dec = policy_eval(action, ctx, _policy_for(job))
     dec.incident_id = inc.incident_id; dec.job_id = inc.job_id

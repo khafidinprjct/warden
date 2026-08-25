@@ -20,7 +20,7 @@ from warden.watcher.rules import Facts, Finding, evaluate as rules_eval
 POLICY = load_policy()
 _prev_status: dict[str, InstanceStatus] = {}
 SUGGEST = {"start_instance": Action.START_INSTANCE, "stop_instance": Action.STOP_INSTANCE, "resume_job": Action.RESUME_JOB,
-           "kill_process": Action.KILL_PROCESS, "notify": Action.NOTIFY, "clean_disk": Action.CLEAN_DISK}
+           "kill_process": Action.KILL_PROCESS, "notify": Action.NOTIFY, "clean_disk": Action.CLEAN_DISK, "relocate_zone": Action.RELOCATE_ZONE}
 
 
 def _dedupe_recent(key: str, minutes: int = 30) -> bool:

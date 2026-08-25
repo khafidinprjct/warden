@@ -161,3 +161,17 @@ def test_notify_on_critical_or_unknown_escalates_not_resolves():
     dec2 = Decision(job_id="j1", incident_id=info.incident_id, action=Action.NOTIFY); db.decisions.put(dec2)
     recovery.after_execute(info, dec2, OpResult(True, "notify", observed="sent"))
     assert info.state == S.RESOLVED
+
+
+def test_preempt_storm_skips_start_and_relocates():
+    """B4: three preemptions within an hour → no fourth start; relocate (L1) is proposed with the storm as the reason."""
+    fake = registry.compute(); inst, job = _job(fake)
+    for _ in range(3):
+        fake.preempt(inst.ref)
+    T.run_tick(); s = T.run_tick()
+    inc = [i for i in db.incidents.list(job_id="j1") if i.rule == "preempt_storm"][0]
+    assert "3× in 60 min" in inc.summary and inc.state == S.AWAITING_APPROVAL
+    dec = db.decisions.get(inc.decision_ids[0]); assert dec.action == "relocate_zone"
+    assert not any(c[0] == "start" and c[2] is False for c in fake.calls)
+    # the on-demand exit rung exists but is priced: +233 % > 50 % → denied by policy when reached
+    assert inc.ladder and inc.ladder[0]["params"].get("spot") is False

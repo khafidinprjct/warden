@@ -63,10 +63,20 @@ def evaluate(f: Facts) -> list[Finding]:
     if inst and job and job.status == JobStatus.RUNNING and inst.status == InstanceStatus.TERMINATED \
             and f.prev_status == InstanceStatus.TERMINATED and f.run_fin is None:
         preempted = any(e.get("type", "").endswith("preempted") for e in f.preempt_events)
-        out.append(Finding("preempted" if preempted else "stopped_external", "critical",
-                           f"{inst.ref} TERMINATED without RUN_FIN ({'preempted' if preempted else 'stopped externally'}); job {job.job_id} phase {job.phase}",
-                           f"down:{inst.ref}:{inst.boot_id}", suggested_action="start_instance",
-                           evidence={"preempt_events": f.preempt_events[-3:], "phase": job.phase, "last_step": job.last_step}))
+        recent = 0
+        for e in f.preempt_events:
+            try:
+                ts = datetime.fromisoformat(str(e.get("ts", "")).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=f.t.tzinfo)
+                recent += (f.t - ts) <= timedelta(minutes=60)
+            except ValueError:
+                pass
+        storm = preempted and recent >= 3          # B4: a zone that preempts 3× in an hour is not worth another start
+        out.append(Finding("preempt_storm" if storm else "preempted" if preempted else "stopped_external", "critical",
+                           f"{inst.ref} TERMINATED without RUN_FIN ({f'preempted {recent}× in 60 min — storm' if storm else 'preempted' if preempted else 'stopped externally'}); job {job.job_id} phase {job.phase}",
+                           f"down:{inst.ref}:{inst.boot_id}", suggested_action="relocate_zone" if storm else "start_instance",
+                           evidence={"preempt_events": f.preempt_events[-3:], "preempts_last_hour": recent, "phase": job.phase, "last_step": job.last_step}))
 
     # R3 marker
     if f.done_legacy and f.run_fin is None:

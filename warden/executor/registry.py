@@ -113,7 +113,7 @@ def _relocate(dec: Decision, compute, dry_run: bool) -> OpResult:
         rs = compute.stop(ref)            # relocation moves the disk: the source must be stopped first (the job resumes from its checkpoint on the new machine)
         if not rs.ok:
             return OpResult(False, f"relocate {ref}", error=f"stop before relocation failed: {rs.error}")
-    r = compute.relocate(ref, target, dry_run=dry_run)
+    r = compute.relocate(ref, target, dry_run=dry_run, spot=dec.params.get("spot"))
     if r.ok and not dry_run:
         job = db.jobs.get(dec.job_id) if dec.job_id else None
         if job:

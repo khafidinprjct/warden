@@ -159,7 +159,7 @@ class FakeGCE:
         inst.job_id = spec.get("job_id", ""); inst.boot_id = f"boot-{len(self.calls)}"; self._save()
         return OpResult(True, f"create {zone}/{name}", observed=inst.ref, op_id=f"op-{len(self.calls)}", plan=plan)
 
-    def relocate(self, ref: str, target_zone: str, dry_run: bool = False) -> OpResult:
+    def relocate(self, ref: str, target_zone: str, dry_run: bool = False, spot: bool | None = None) -> OpResult:
         self.calls.append(("relocate", ref, dry_run, target_zone)); self._load()
         inst = self.instances.get(ref)
         if inst is None:
@@ -171,7 +171,7 @@ class FakeGCE:
             return OpResult(True, f"relocate {ref}", dry_run=True, plan=plan)
         if inst.status == InstanceStatus.RUNNING:
             return OpResult(False, f"relocate {ref}", error="instance must be stopped before relocation", plan=plan)
-        r = self.create({"zone": target_zone, "name": new_name, "machine_type": inst.machine_type, "spot": inst.spot, "job_id": inst.job_id,
+        r = self.create({"zone": target_zone, "name": new_name, "machine_type": inst.machine_type, "spot": (inst.spot if spot is None else bool(spot)), "job_id": inst.job_id,
                          "labels": {"warden-relocated-from": inst.name}}, dry_run=False)
         if not r.ok:
             return OpResult(False, f"relocate {ref}", error=r.error, plan=plan)

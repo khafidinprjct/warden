@@ -258,15 +258,16 @@ class GCE:
             msg = f"{type(e).__name__}: {e}"
             return OpResult(False, f"create {zone}/{name}", error=msg, plan=plan)
 
-    def relocate(self, ref: str, target_zone: str, dry_run: bool = False) -> OpResult:
+    def relocate(self, ref: str, target_zone: str, dry_run: bool = False, spot: bool | None = None) -> OpResult:
         """Move a stopped VM to another zone WITHOUT losing job state: snapshot boot disk → disk in target zone → new instance with the
         same machine type, labels, metadata and service account. The old instance stays STOPPED (never deleted, P8)."""
         zone, name = self._split(ref)
         inst = self._guard(ref)
         stamp = now().strftime("%Y%m%d%H%M%S")
         new_name = f"{name}-{target_zone.rsplit('-', 1)[-1]}{stamp[-4:]}"
+        use_spot = inst.spot if spot is None else bool(spot)
         plan = {"api": "disks.createSnapshot + disks.insert + instances.insert", "from": ref, "to": f"{target_zone}/{new_name}",
-                "machine_type": inst.machine_type, "spot": inst.spot, "old_instance": "kept STOPPED (never deleted)",
+                "machine_type": inst.machine_type, "spot": use_spot, "hourly_usd": self.price_of(inst.machine_type, use_spot), "old_instance": "kept STOPPED (never deleted)",
                 "snapshot_usd_per_month_est": 0.5}
         if dry_run:
             return OpResult(True, f"relocate {ref}", dry_run=True, plan=plan)
@@ -281,7 +282,7 @@ class GCE:
                 name=new_name, source_snapshot=f"global/snapshots/{snap}", type_=f"zones/{target_zone}/diskTypes/{disk.type_.rsplit('/', 1)[-1]}", size_gb=disk.size_gb))
             self._wait(op, target_zone, timeout_s=600)
             md = {it.key: it.value for it in (src.metadata.items or [])}
-            spec = {"name": new_name, "zone": target_zone, "machine_type": inst.machine_type, "spot": inst.spot, "job_id": inst.job_id,
+            spec = {"name": new_name, "zone": target_zone, "machine_type": inst.machine_type, "spot": use_spot, "job_id": inst.job_id,
                     "labels": {**{k: v for k, v in inst.labels.items() if not k.startswith("warden-relocated")}, "warden-relocated-from": name},
                     "metadata": md, "service_account": (src.service_accounts[0].email if src.service_accounts else ""),
                     "source_disk": f"zones/{target_zone}/disks/{new_name}"}

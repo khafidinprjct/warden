@@ -6,7 +6,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ A1 One job spec is enough: Warden creates the machine, installs the harness, runs the job. *Gate: spec → training running + first heartbeat, zero human commands.*
 - ✅ A2 Machine choice by Warden (type/zone from quota, stock, price, preempt history). *Gate: empty zone → Warden picks another by itself.*
 - ✅ A3 Preflight before expensive work (disk, CUDA, deps, .so) — failure stops loudly.
-- ◐ A4 Phase-aware resume for training, eval, harvest (harness exists; eval/harvest phases not re-tested).
+- ◐ A4 Phase-aware resume: training resume proven live (drill #5: resumed from ckpt_000600 after OOM, then eval + export ran to completion). A preemption *during* eval/export re-runs that phase from its start (bounded: minutes for the toy job); the climate pipeline's F-phase markers cover the long-phase case — not re-tested live this round.
 - ✅ A5 Harvest: every promised artifact lands in Storage, is opened, verified, VERIFIED by Warden (verifier exists; automatic harvest at job end missing).
 - ✅ A6 Close-out: machine STOPPED, final cost, final report + postmortem, human notified — automatically when the job completes.
 - ✅ A7 Smoke must load the real components; a smoke that omits declared members is rejected.
@@ -15,7 +15,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ B1 Machine heartbeat + training heartbeat + phase markers + preempt notice.
 - ✅ B2 Deterministic detection: VM down, invalid marker, bad artifact, orphan, idle, two-condition stuck, duplicate process.
 - ✅ B3 Trends: throughput vs baseline, loss plateau/rise, grad-norm spike, disk-to-full projection, VRAM creep. *Gate: each raises a warning before it becomes an incident.*
-- ☐ B4 Preempt storm: backoff, zone rotation, on-demand exit when budget allows.
+- ✅ B4 Preempt storm: 3 preemptions in 60 min → no further start, relocate to another zone (L1); persistent storm → on-demand exit rung, denied by the price guard unless the job's policy allows it. Start rate limits (3/h, 8/day) remain the backoff.
 - ✅ B5 Expectations learned per job (artifact size, step rate, heartbeat interval) — not guessed thresholds.
 
 ## C. Diagnosis & investigation
@@ -95,6 +95,6 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 - ✅ M4 Full lifecycle without a human touch (26 Aug, drill #5): spec → VM in 22 s → RUNNING 64 s → OOM at step 600 → diagnosis oom_gpu → resume batch 0.5 (47 s after the incident) → verified → COMPLETE, 22 artifacts opened → report (ETTR 0.73, $0.0017) → machine stopped by close-out. Five earlier drills each found one real defect (catalog #29–#33).
 
 ## N. Documentation & reproducibility
-- ◐ N1 README + ADR-0014/15/16 updated; diagram still shows the pre-recovery loop (redraw pending).
+- ✅ N1 README, ADR-0014/15/16, architecture diagram (recovery loop, lifecycle API calls, signed mailbox) updated 26 Aug.
 - ◐ N2 Clean clone → venv → 76 tests + chaos 25/25 in 36 s (26 Aug); the full deploy-to-live timing is measured at the next fresh project.
 - ✅ N3 Operator runbook (docs/RUNBOOK.md, English, incl. Warden self-recovery).
