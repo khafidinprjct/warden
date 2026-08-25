@@ -19,7 +19,7 @@ DEC_LABEL = {"PENDING": "Pending", "APPROVED": "Approved", "REJECTED": "Rejected
 VERDICT_LABEL = {"AUTO": "Automatic", "NEED_APPROVAL": "Approval required", "HELD": "Held", "DENY": "Denied"}
 RADIUS_LABEL = {"none": "Nothing", "this_run": "This run only", "this_job": "This job only", "budget": "Budget", "artifacts": "Artifacts"}
 ACTION_LABEL = {"notify": "Notify", "start_instance": "Start instance", "resume_job": "Resume job", "stop_instance": "Stop instance",
-                "quarantine_artifact": "Quarantine artifact", "rollback_ckpt": "Roll back checkpoint", "relocate_zone": "Relocate zone",
+                "quarantine_artifact": "Quarantine artifact", "rollback_last_good": "Roll back to last good checkpoint", "relocate_zone": "Relocate zone",
                 "resize_disk": "Resize disk", "kill_process": "Kill process", "resume_smaller_batch": "Resume with smaller batch", "change_machine_type": "Change machine type"}
 ACTION_VERB = {"start_instance": "start", "stop_instance": "stop", "resume_job": "resume", "quarantine_artifact": "quarantine", "rollback_ckpt": "roll back", "kill_process": "kill", "notify": "notify"}
 ACTION_CHANGE = {"start_instance": "TERMINATED → RUNNING", "stop_instance": "RUNNING → TERMINATED", "resume_job": "Job resumed from last verified checkpoint",

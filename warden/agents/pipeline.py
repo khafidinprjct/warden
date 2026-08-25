@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from warden.agents.crosscheck import crosscheck
 from warden.agents.diagnostician import diagnose
+from warden.agents.investigator import investigate
 from warden.agents.schemas import Diagnosis, Recommended
 from warden.config import settings
 from warden.core.models import Action, DecisionStatus, Evidence, IncidentState as S, Verdict, now
@@ -79,9 +80,22 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         lines = read_log_tail(inc.job_id)
         findings = [{"rule": inc.rule, "summary": inc.summary}] + [db.evidence.get(e).payload for e in inc.evidence_ids if db.evidence.get(e)]
         hbsum = _hb_summary(inc.job_id)
+        notes = ""
+        if settings.investigate_enabled:
+            try:
+                _ti = now()
+                notes, tool_log, usage_i = investigate(inc.job_id, inc.summary, inc.instance_ref, findings)
+                ev_i = Evidence(incident_id=inc.incident_id, kind="investigation", summary=notes[:200] or "no note", payload={"notes": notes, "tool_calls": tool_log, "cost_usd": usage_i.get("cost_usd", 0.0)})
+                db.evidence.put(ev_i); inc.evidence_ids.append(ev_i.evidence_id); inc.llm_cost_usd += usage_i.get("cost_usd", 0.0)
+                stats["llm_usd"] += usage_i.get("cost_usd", 0.0); db.cost_add(now().strftime("%Y-%m-%d"), "llm_usd", usage_i.get("cost_usd", 0.0), inc.job_id)
+                inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"investigated: {len(tool_log)} tool calls, {usage_i.get('cost_usd', 0.0):.4f} USD", "actor": "warden"})
+                print(_json.dumps({"event": "warden.llm", "severity": "INFO", "ok": True, "role": "investigator", "model": usage_i.get("model", ""), "ms": int((now() - _ti).total_seconds() * 1000), "cost_usd": usage_i.get("cost_usd", 0.0), "tool_calls": len(tool_log), "incident_id": inc.incident_id}), flush=True)
+            except Exception as e:  # noqa: BLE001 — investigation is optional; diagnosis proceeds on the log tail alone
+                print(_json.dumps({"event": "warden.llm", "severity": "WARNING", "ok": False, "role": "investigator", "error": str(e)[:160], "incident_id": inc.incident_id}), flush=True)
+                notes = ""
         try:
             _t0 = now()
-            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"])
+            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"], investigation=notes)
             print(_json.dumps({"event": "warden.llm", "severity": "INFO", "ok": True, "model": usage.get("model", ""), "ms": int((now() - _t0).total_seconds() * 1000), "cost_usd": usage.get("cost_usd", 0.0), "incident_id": inc.incident_id, "category": diag.category}), flush=True)
         except Exception as e:
             db.health("gemini", False, str(e)[:200])
@@ -95,7 +109,7 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         # vonis kedua bila ragu atau dampak luas
         if (conf < 0.7 or diag.blast_radius in ("this_job", "budget", "artifacts")) and cc["passed"]:
             try:
-                diag2, usage2 = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["-"], model=settings.gemini_model_second)
+                diag2, usage2 = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["-"], model=settings.gemini_model_second, investigation=notes)
                 usage["cost_usd"] += usage2["cost_usd"]
                 cc["second_opinion"] = {"model": usage2["model"], "category": diag2.category, "action": diag2.recommended_action}
                 if diag2.category != diag.category or diag2.recommended_action != diag.recommended_action:

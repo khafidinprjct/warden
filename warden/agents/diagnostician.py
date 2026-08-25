@@ -30,7 +30,7 @@ def build_agent(model: str | None = None) -> LlmAgent:
                     generate_content_config=types.GenerateContentConfig(temperature=0.1))
 
 
-def _pack(job_card: dict, findings: list[dict], hb_summary: dict, log_lines: list[str], dmesg: list[str] | None) -> str:
+def _pack(job_card: dict, findings: list[dict], hb_summary: dict, log_lines: list[str], dmesg: list[str] | None, investigation: str = "") -> str:
     numbered = "\n".join(f"{i+1:4d}| {l[:300]}" for i, l in enumerate(log_lines))
     parts = [
         "## job_card\n" + json.dumps(job_card, ensure_ascii=False)[:1500],
@@ -40,16 +40,18 @@ def _pack(job_card: dict, findings: list[dict], hb_summary: dict, log_lines: lis
     ]
     if dmesg:
         parts.append("## dmesg_tail\n" + "\n".join(dmesg[-30:]))
+    if investigation:
+        parts.append("## investigation_notes (from the investigator agent; cite its evidence, verify against log_tail)\n" + investigation[:4000])
     return "\n\n".join(parts)
 
 
 async def diagnose_async(job_card: dict, findings: list[dict], hb_summary: dict, log_lines: list[str],
                          dmesg: list[str] | None = None, model: str | None = None,
-                         image_png: bytes | None = None) -> tuple[Diagnosis, dict[str, Any]]:
+                         image_png: bytes | None = None, investigation: str = "") -> tuple[Diagnosis, dict[str, Any]]:
     agent = build_agent(model)
     runner = InMemoryRunner(agent=agent, app_name="warden")
     session = await runner.session_service.create_session(app_name="warden", user_id="warden")
-    parts = [types.Part(text=_pack(job_card, findings, hb_summary, log_lines, dmesg))]
+    parts = [types.Part(text=_pack(job_card, findings, hb_summary, log_lines, dmesg, investigation))]
     if image_png:
         parts.append(types.Part.from_bytes(data=image_png, mime_type="image/png"))
     msg = types.Content(role="user", parts=parts)

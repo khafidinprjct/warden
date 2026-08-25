@@ -92,6 +92,23 @@ def decide(decision_id: str, verb: str, who: str = "dashboard", x_warden_signatu
     raise HTTPException(400, "verb: approve|deny|always|reevaluate")
 
 
+@app.post("/ask")
+async def ask(req: Request, x_warden_signature: str | None = Header(default=None)):
+    """Concierge: operator question → Gemini with read-only tools + incident memory. HMAC over the question text (dashboard)."""
+    body = await req.json()
+    q = str(body.get("question", ""))[:1000]
+    if not ing.verify(q.encode(), x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    if not q.strip():
+        raise HTTPException(400, "question required")
+    from warden.agents.concierge import ask as _ask
+    try:
+        return _ask(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")))
+    except Exception as e:  # noqa: BLE001
+        db.health("gemini", False, str(e)[:200])
+        return {"ok": False, "error": str(e)[:200]}
+
+
 @app.post("/freeze")
 def freeze(on: bool = True, who: str = "dashboard", x_warden_signature: str | None = Header(default=None)):
     if not ing.verify(b"freeze", x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
@@ -147,8 +164,9 @@ def steward(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
     from warden.steward import ledger
+    from warden.agents import memory
     out = {"accrue": ledger.accrue(600), "projection": ledger.projection(), "overrides_expired": ledger.expire_overrides(),
-           "promotion_candidates": ledger.promotion_candidates()}
+           "promotion_candidates": ledger.promotion_candidates(), "postmortems_written": memory.write_postmortems()}
     db.heartbeat_self("steward", out)
     return out
 
