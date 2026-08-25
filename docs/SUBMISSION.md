@@ -7,15 +7,17 @@
 
 *What it does.* Warden watches long-running jobs (training, evaluation, pipelines) on Compute Engine and acts on two rules the infrastructure can't see: **a live machine ≠ correct training**, and **finished ≠ intact**. A tiny harness on the machine sends heartbeats and signed completion markers; Warden's Watcher applies deterministic two-signal rules (stale heartbeat *and* idle CPU, `TERMINATED` *and* no completion marker). When log text must be understood, Gemini 3.5 Flash — via Google ADK with a fixed JSON schema — diagnoses it, and every claim is cross-checked against the raw log and heartbeat before anything happens. Artifacts are opened (`torch.load`, CSV/JSONL/NPZ/Parquet parsing, checksums) before a job may be called complete. Actions run under a graduated-autonomy policy (observe → propose → act-and-report → silent), rate limits, a circuit breaker, dry-run previews and explicit blast radius; deleting anything is impossible by IAM and by code. A separate dead-man service with its own identity stops machines if Warden itself goes quiet. Humans approve from a phone with one tap on Discord; a global FREEZE button halts all automation instantly.
 
-*How we built it.* Google ADK (`LlmAgent` + `output_schema`), Gemini 3.5 Flash / 3.5 Flash-Lite / 3.7 Flash via Vertex AI, Cloud Run (3 services), Firestore, Pub/Sub, Cloud Scheduler, Secret Manager, Compute Engine, Cloud Storage, Cloud Monitoring, Billing Budgets. Python 3.13, FastAPI, NiceGUI.
+*How we built it.* Google ADK (`LlmAgent` + `output_schema`), Gemini 3.5 Flash / 3.5 Flash-Lite / 3.7 Flash via Vertex AI, Cloud Run (3 services: core, dashboard, deadman watchdog), Firestore, Pub/Sub, Cloud Scheduler, Secret Manager, Compute Engine, Cloud Storage, Cloud Monitoring, Billing Budgets. Python 3.13, FastAPI, NiceGUI.
 
 *Challenges.* Google's frontend intercepts `/healthz`; a client-library regression URL-encoded `(default)`; the boot script is baked into instance metadata; every one of these became a documented lesson.
 
 *Accomplishments.* 41 unit/e2e tests; a chaos suite reproducing all 25 real failure modes (25/25); a live demo job on a real spot machine that is preempted on camera and recovers; a diagnosis of a real NaN crash log for $0.01.
 
+*The dashboard.* A design system first, then code: FastAPI + Jinja2 over a single stylesheet; an inbox-first Overview and an incident page that reads as a narrative with a decision rail (plan → approve → execute → verify). The implementation is measured against the approved mockup pixel by pixel (0.40 % differing) and rendered against production Firestore data before every deploy.
+
 *What we learned.* LLMs should never hold the button. Evidence means opening the file. Success must leave a trace.
 
-*What's next.* Effective-Training-Time-Ratio as the headline metric, Slack, second-job onboarding for GPU training with real checkpoints.
+*What's next.* Effective-Training-Time-Ratio as the headline metric, IAP in front of the dashboard, second-job onboarding for GPU training with real checkpoints.
 
 ## Ceklis
 - [ ] Repo dibagikan ke testing@devpost.com + cloudhackathons@google.com (atau publik)

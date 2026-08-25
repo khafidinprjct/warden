@@ -19,7 +19,7 @@ Warden lahir dari empat generasi "babysitter" yang kami tulis sendiri saat melat
 | Penjaga anggaran | Ledger real-time, ETTR (waktu training efektif ÷ waktu mesin dibayar), yatim/idle → STOP, kill-switch Billing Budget 50/80/100 % |
 | Pengawas luar | `warden-deadman` — layanan terpisah dengan identitas sendiri: kalau Warden berhenti berdenyut 15 menit, ia mematikan mesin |
 | Manusia di HP | Kartu Discord dengan bukti + biaya + tombol Approve/Deny/Always; `/warden freeze` tombol merah global; foto layar dari HP dibaca Gemini |
-| Dashboard | NiceGUI mobile-first: armada, insiden (bukti, diagnosis, keputusan), anggaran + ETTR, kebijakan, audit hanya-tambah, kesehatan |
+| Dashboard | FastAPI + Jinja2 di atas satu stylesheet sistem desain (`warden/ui2/`): Overview *inbox-first* (keputusan yang butuh Anda di atas), Incident = narasi + rel keputusan (Detected → Diagnosed → Approval → Execute → Verify), Jobs, Fleet, Budget/ETTR, Policies, Audit Log, System Health. Waktu disimpan UTC dan dirender di zona browser. Paritas piksel terhadap mockup yang disetujui diukur otomatis (`chaos/ui2_pixel.py`, 0,40 %). |
 
 Prinsip yang mengikat semua modul: **LLM tidak pernah memegang tombol**, **bukti = membuka**, **sukses harus berjejak**, **STOP bukan DELETE**, **flock bukan pgrep**, **ledger dulu mesin kemudian** (`plan.md` §1).
 
@@ -44,7 +44,7 @@ flowchart LR
   X -- "start/stop/setMetadata (tanpa delete)" --> GCE[Compute Engine API]
   C <--> F[(Firestore: fleet · jobs · incidents · decisions · evidence · audit · costs · health)]
   C -- "kartu + tombol" --> D[Discord]
-  U["Cloud Run · warden-ui (NiceGUI)"] <--> F
+  U["Cloud Run · warden-ui (FastAPI + Jinja2)"] <--> F
   DM["Cloud Run · warden-deadman (SA sendiri)"] -- "watcher basi 15 mnt → STOP mesin" --> GCE
   B[Billing Budget] -- Pub/Sub --> C
 ```
@@ -91,8 +91,17 @@ Identitas per layanan; role kustom tanpa delete; IAM + kode sama-sama menolak me
 ## Biaya
 Free tier untuk Cloud Run/Firestore/Pub/Sub/Scheduler pada beban ini; Gemini ≈ $0,03 per insiden (batas $2/hari); mesin demo e2-standard-2 spot ≈ $0,02/jam. Rincian: `plan.md` §7.
 
+## Dashboard (UI v2)
+Sistem desain: `docs/mockup-v2/Components.dc.html` (satu skala status Healthy · Degraded · Stale · Failing · Frozen; satu skala insiden Open · Awaiting approval · Executing · Resolved · Escalated · Closed; tiga aktor Warden · Gemini · Operator; tata letak stat card / property list / table row). Setiap halaman hanya memakai komponen itu — tidak ada teks penjelas di layar.
+
+| Overview | Incident | HP |
+|---|---|---|
+| ![](docs/screenshots/ui2/overview.png) | ![](docs/screenshots/ui2/incident_overview.png) | ![](docs/screenshots/ui2/prod_overview_mobile.png) |
+
+Verifikasi: `python -m chaos.ui2_pixel` (render templat vs artboard, jam dibekukan) dan render seluruh halaman terhadap Firestore prod (`docs/screenshots/ui2/`).
+
 ## Batasan & peta jalan
-Belum: deteksi silent data corruption perangkat keras (butuh armada besar); kanal Slack (adapter menyusul); promosi otonomi otomatis dari rekam jejak; IAP untuk dashboard. Rencana lengkap 15 fase: `plan.md`.
+Belum: deteksi silent data corruption perangkat keras (butuh armada besar); promosi otonomi otomatis dari rekam jejak; IAP untuk dashboard. Rencana lengkap 15 fase: `plan.md`.
 
 ## Lisensi
 MIT.
