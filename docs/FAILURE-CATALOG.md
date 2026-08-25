@@ -52,3 +52,8 @@ Semua pernah terjadi pada kami (harga = yang benar-benar dibayar). Kolom "uji" =
 - **Symptom:** a textbook CUDA-OOM run (`exit=1`, traceback in the log) was diagnosed `unknown` → notify → **RESOLVED**; nothing was done.
 - **Cause:** the agent posted `RUN_FIN` 8 s after the run ended; the pipeline diagnosed on the same tick with an empty log tail (the per-run log was still being uploaded by `wrun`). The Investigator even wrote "log sync delay" as hypothesis #2 — and then wandered through other jobs' logs (21 tool calls, $0.27). A notify with an empty ladder was treated as resolution.
 - **Fix:** (1) `wrun` uploads the run log and artifacts **before** `RUN_FIN.json` becomes visible; (2) the pipeline reads the run's own log and defers up to 4 minutes while it is empty and the marker is fresh; (3) a notification on a critical / `unknown` / needs-human incident **escalates** instead of resolving.
+
+## #33 · Every log read from Storage failed silently (26 Aug 2026, live drill #4)
+- **Symptom:** the run log was in Storage (1,094 B, OOM traceback visible with `gcloud storage cat`), yet Diagnostician and Investigator both saw `total_lines: 0`; health `gcs` had 25 consecutive failures that nobody looked at.
+- **Cause:** `Blob.download_as_text(errors="ignore")` — the installed google-cloud-storage rejects the keyword (`TypeError`); the exception was caught and turned into a health record and an empty log.
+- **Fix:** `download_as_bytes().decode("utf-8", errors="ignore")` everywhere; unit test with a stub blob; **operator rule**: a red `gcs`/`gemini`/`memory` health row is a failed drill, not a footnote — the live drill script now prints the health table at the start.

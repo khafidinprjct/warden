@@ -6,87 +6,94 @@
    "t": 0,
    "msg": "core",
    "url": "https://warden-core-hfgre6y7ta-uc.a.run.app",
-   "latest": "warden-core-00018-8d7"
+   "latest": "warden-core-00019-qs2"
   },
   {
    "t": 0,
    "msg": "PHASE 1: launch from spec with a GPU-OOM drill at step 600 (batch scale 1.0 \u2192 OOM; 0.5 passes)"
   },
   {
-   "t": 10,
+   "t": 39,
    "msg": "launch",
    "result": {
     "ok": true,
-    "job_id": "live-1842-oom",
-    "instance_ref": "us-central1-b/warden-live-1842-oom",
+    "job_id": "live-1901-oom",
+    "instance_ref": "us-central1-b/warden-live-1901-oom",
     "hourly_usd": 0.01005
    },
    "attempts": 1
   },
   {
-   "t": 53,
+   "t": 82,
    "msg": "\u2714 job RUNNING on first heartbeat",
    "value": true
   },
   {
-   "t": 114,
+   "t": 143,
    "msg": "\u2714 training advancing",
    "value": true
   },
   {
-   "t": 191,
+   "t": 281,
    "msg": "\u2714 incident run_fin_nonzero opened after the OOM",
    "value": {
-    "rule": "run_fin_nonzero",
-    "summary": "job live-1842-oom ended with exit=1",
-    "dedupe_key": "exit:live-1842-oom:r20260825T184304",
-    "created_at": "2026-08-25T18:45:13.860552Z",
-    "incident_id": "inc_01M0X3V9G4M6X3X8JWYHZF4FT9",
-    "llm_cost_usd": 0.0,
-    "ladder": [],
-    "decision_ids": [],
-    "instance_ref": "us-central1-b/warden-live-1842-oom",
-    "evidence_ids": [
-     "ev_01M0X3V9G4M6X3X8JWYHZF4FTA"
-    ],
-    "severity": "critical",
-    "attempt": 0,
-    "diagnosis": {},
-    "memory_ref": "",
-    "job_id": "live-1842-oom",
-    "cost_burning_usd_per_hour": 0.01005,
-    "verify": {},
-    "updated_at": "2026-08-25T18:45:13.918726Z",
+    "instance_ref": "us-central1-b/warden-live-1901-oom",
+    "crosscheck": {},
     "timeline": [
      {
-      "to": "TRIAGED",
-      "actor": "warden",
-      "ts": "2026-08-25T18:45:13.918534+00:00",
       "from": "DETECTED",
-      "note": "rule run_fin_nonzero"
+      "ts": "2026-08-25T19:06:09.008632+00:00",
+      "note": "rule run_fin_nonzero",
+      "to": "TRIAGED",
+      "actor": "warden"
      },
      {
-      "to": "DIAGNOSING",
-      "actor": "warden",
-      "ts": "2026-08-25T18:45:13.918711+00:00",
       "from": "TRIAGED",
-      "note": "LLM diagnosis required"
+      "ts": "2026-08-25T19:06:09.008811+00:00",
+      "note": "LLM diagnosis required",
+      "to": "DIAGNOSING",
+      "actor": "warden"
+     },
+     {
+      "from": "DIAGNOSING",
+      "ts": "2026-08-25T19:06:10.290616+00:00",
+      "note": "waiting for the run log to land in Storage before diagnosing",
+      "to": "DIAGNOSING",
+      "actor": "warden"
      }
     ],
-    "crosscheck": {},
-    "state": "DIAGNOSING"
+    "severity": "critical",
+    "cost_burning_usd_per_hour": 0.01005,
+    "state": "DIAGNOSING",
+    "evidence_ids": [
+     "ev_01M0X51K6EAT8SATK6RA79NJHT"
+    ],
+    "diagnosis": {},
+    "incident_id": "inc_01M0X51K6EAT8SATK6RA79NJHS",
+    "llm_cost_usd": 0.0,
+    "created_at": "2026-08-25T19:06:08.974201Z",
+    "verify": {},
+    "ladder": [],
+    "rule": "run_fin_nonzero",
+    "decision_ids": [],
+    "attempt": 0,
+    "memory_ref": "",
+    "updated_at": "2026-08-25T19:06:09.008823Z",
+    "dedupe_key": "exit:live-1901-oom:r20260825T190252",
+    "summary": "job live-1901-oom ended with exit=1",
+    "job_id": "live-1901-oom"
    }
   },
   {
-   "t": 791,
+   "t": 890,
    "msg": "\u2718 TIMEOUT diagnosis \u2192 resume_job smaller batch executed (L2, no human) after 600s"
   },
   {
-   "t": 791,
+   "t": 890,
    "msg": "LIVE TEST FAILED: AssertionError: None"
   },
   {
-   "t": 858,
+   "t": 956,
    "msg": "cleanup: STOP issued for all live-test instances (never delete)"
   }
  ]

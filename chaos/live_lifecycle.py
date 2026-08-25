@@ -171,6 +171,8 @@ if __name__ == "__main__":
             break
         log(f"core still serving {rev}, waiting for {LATEST}"); time.sleep(15)
     log("core", url=CORE, latest=LATEST)
+    bad = {d.id: (d.to_dict() or {}).get("last_error", "")[:80] for d in FS.collection("health").stream() if (d.to_dict() or {}).get("ok") is False}
+    log("health rows that are RED before the drill (a red gcs/gemini/memory row invalidates the drill)", red=bad or "none")
     try:
         if not ns.skip_phase1:
             jobs.append(phase1())

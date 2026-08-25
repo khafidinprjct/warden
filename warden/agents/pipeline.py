@@ -45,7 +45,7 @@ def read_log_tail(job_id: str, n: int = 200, run_id: str = "") -> list[str]:
             for name in ([f"jobs/{job_id}/log/{run_id}.log"] if run_id else []) + [f"jobs/{job_id}/log/tail.log"]:
                 blob = b.blob(name)
                 if blob.exists():
-                    return blob.download_as_text(errors="ignore").splitlines()[-n:]
+                    return blob.download_as_bytes().decode("utf-8", errors="ignore").splitlines()[-n:]
         except Exception as e:
             db.health("gcs", False, str(e)[:200])
     p = Path("data/gcs") / job_id / "tail.log"
