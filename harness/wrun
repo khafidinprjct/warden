@@ -11,6 +11,7 @@ while [ $# -gt 0 ]; do case "$1" in
 [ $# -gt 0 ] || { echo "wrun: perintah wajib setelah --" >&2; exit 64; }
 RUN="${RUN:-r$(date -u +%Y%m%dT%H%M%S)}"
 DIR="${WARDEN_DIR:-/var/lib/warden}/$JOB"; mkdir -p "$DIR/markers" "$DIR/artifacts"
+rm -f "$DIR/markers/RUN_FIN.json"        # RUN_FIN milik run LAMA tidak boleh menyamar sebagai milik run ini (bug 25 Agu: memblokir resume)
 LOCK="/run/lock/warden-$JOB.lock"; exec 9>"$LOCK"
 flock -n 9 || { echo "wrun: job $JOB sudah berjalan (flock $LOCK) — tidak meluncurkan yang kedua" >&2; exit 75; }
 export WARDEN_JOB="$JOB" WARDEN_RUN="$RUN" WARDEN_DIR="${WARDEN_DIR:-/var/lib/warden}"

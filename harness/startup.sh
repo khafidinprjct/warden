@@ -12,7 +12,18 @@ WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BU
   WARDEN_RESUME_CMD="$RESUME" WARDEN_WORKDIR="${WORKDIR:-/}" bash /opt/warden-src/install.sh || echo "startup: preflight gagal (marker ditulis)"
 # peluncuran/resume sadar fase: belum ada RUN_FIN (boot pertama, atau RUN_START terputus oleh preempt) → jalankan RESUME
 D="/var/lib/warden/$JOB/markers"
-if [ ! -f "$D/RUN_FIN.json" ] && [ -n "$RESUME" ]; then
+# selesai hanya bila RUN_FIN milik run yang SAMA dengan RUN_START (RUN_FIN run lama ≠ selesai)
+SELESAI=$(python3 - "$D" <<'PY'
+import json, os, sys
+d = sys.argv[1]
+try:
+    s = json.load(open(os.path.join(d, "RUN_START.json"))).get("run_id"); f = json.load(open(os.path.join(d, "RUN_FIN.json"))).get("run_id")
+    print("ya" if s and f and s == f else "tidak")
+except Exception:
+    print("ya" if os.path.exists(os.path.join(d, "RUN_FIN.json")) and not os.path.exists(os.path.join(d, "RUN_START.json")) else "tidak")
+PY
+)
+if [ "$SELESAI" != "ya" ] && [ -n "$RESUME" ]; then
   echo "startup: belum ada RUN_FIN ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START ada = lanjut setelah terputus' || echo 'boot pertama')) → $RESUME"
   mkdir -p "${WORKDIR:-/}"; (cd "${WORKDIR:-/}" && WARDEN_HMAC="$HMAC" nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
 fi
