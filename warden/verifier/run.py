@@ -53,6 +53,10 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     declared = {Path(a["path"]).name for a in (fin.artifacts if fin else [])}
     for name in [k for k in expect_map if "." in k and k not in declared]:
         results.append({"name": name, "ok": False, "reason": "diharapkan tapi tidak ada di RUN_FIN (artefak tidak mendarat)"}); all_ok = False; missing += 1
+    # artefak belum tersedia (agent masih mengunggah) → TUNDA, bukan gagal: masa tenggang 10 mnt sejak RUN_FIN (ukur saat penulis diam)
+    if missing and fin and (now() - fin.ts).total_seconds() < 600:
+        inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"{missing} artefak belum tersedia — tunggu unggahan", "actor": "warden"})
+        db.incidents.put(inc); return {"ok": False, "retry": True, "missing": missing}
     ev = Evidence(incident_id=inc.incident_id, kind="artifact_check", summary=f"{sum(1 for x in results if x['ok'])}/{len(results)} artefak lolos", payload={"results": results})
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
     if all_ok and results:

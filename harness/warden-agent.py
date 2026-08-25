@@ -206,8 +206,9 @@ def upload_log() -> None:
             fp = os.path.join(adir, name)
             if not os.path.isfile(fp) or name.endswith((".tmp", ".partial")) or fp in _uploaded:
                 continue
-            if os.path.getsize(fp) > 200 * 1024 * 1024 or time.time() - os.path.getmtime(fp) < 60:
-                continue
+            fin_ada = os.path.exists(os.path.join(DIR, "markers", "RUN_FIN.json"))
+            if os.path.getsize(fp) > 200 * 1024 * 1024 or (time.time() - os.path.getmtime(fp) < 60 and not fin_ada):
+                continue            # setelah RUN_FIN semua artefak final → unggah segera
             r = subprocess.run(["gcloud", "storage", "cp", fp, f"gs://{BUCKET}/jobs/{JOB}/artifacts/{name}", "-q"], capture_output=True, timeout=300)
             if r.returncode == 0:
                 _uploaded.add(fp)
