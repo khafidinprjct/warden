@@ -86,3 +86,4 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - Keamanan: `pip-audit` 0 kerentanan; `bandit` HIGH 0 / MEDIUM 1 (bind 0.0.0.0, wajib Cloud Run) — `docs/SECURITY-REVIEW.md`, `make audit`.
 - Temuan UI untuk audit user: sparkline denyut job legacy datar (lihat DEMO.md).
 - Perintah rekam pertama terbunuh (exit 137, batas waktu alat) → dipindah ke skrip bernama + nohup. Biaya $0.
+- 18:05 — sparkline insiden: job legacy → cpu%/gpu% host, job kontrak → step/loss (diverifikasi UI lokal terhadap data prod: `docs/screenshots/desktop_incident_sparkline_fix.png`). Belum deploy (menunggu izin). Catatan: keputusan START toy-train `dec_01M0VZ5C8F…` sudah **EXPIRED** 15:34 → insiden ESCALATED; untuk melanjutkan uji, insiden perlu ditutup lalu tick membuka insiden baru (atau resume manual).
