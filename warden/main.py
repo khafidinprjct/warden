@@ -123,6 +123,15 @@ def jobs_hold(job_id: str, minutes: int = 120, who: str = "dashboard", x_warden_
     return ledger.hold(job_id, minutes, who)
 
 
+@app.post("/jobs/{job_id}/propose")
+async def jobs_propose(job_id: str, req: Request, x_warden_signature: str | None = Header(default=None)):
+    """Operator-requested action through the normal policy/approval path (checklist K3). HMAC over job_id."""
+    if not ing.verify(job_id.encode(), x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    body = await req.json()
+    return approvals.propose(job_id, str(body.get("action", "")), body.get("params") or {}, str(body.get("who", "dashboard")), str(body.get("why", ""))[:300])
+
+
 @app.post("/jobs/launch")
 async def jobs_launch(req: Request, x_warden_signature: str | None = Header(default=None)):
     """One spec → Warden creates the machine and guards the job (checklist A1). HMAC over the body (dashboard/CLI)."""

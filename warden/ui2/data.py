@@ -12,15 +12,16 @@ STALE_HEALTH_S = 900
 PERIODIC_SOURCES = {"watcher", "steward", "deadman", "compute_api"}
 SOURCE_NAME = {"watcher": "Watcher", "steward": "Steward", "deadman": "Watchdog", "compute_api": "Compute Engine API", "gcs": "Cloud Storage",
                "gemini": "Gemini", "llm_budget": "LLM budget", "llm_circuit": "Gemini circuit breaker", "discord": "Discord", "verifier": "Verifier"}
-STATE_LABEL = {"DETECTED": "Open", "TRIAGED": "Open", "DIAGNOSING": "Open", "DIAGNOSED": "Open", "DECIDED": "Open", "EXECUTING": "Executing", "VERIFYING": "Executing",
+STATE_LABEL = {"DETECTED": "Open", "TRIAGED": "Open", "DIAGNOSING": "Open", "DIAGNOSED": "Open", "DECIDED": "Open", "EXECUTING": "Executing", "VERIFYING": "Verifying",
                "RESOLVED": "Resolved", "AWAITING_APPROVAL": "Awaiting approval", "HELD": "Held", "ESCALATED": "Escalated", "FAILED_ACTION": "Escalated", "CLOSED": "Closed", "FALSE_POSITIVE": "Closed"}
-STATE_CLS = {"Open": "crit", "Executing": "info", "Resolved": "ok", "Awaiting approval": "warn", "Held": "grey", "Escalated": "crit", "Closed": "grey"}
+STATE_CLS = {"Open": "crit", "Executing": "info", "Verifying": "info", "Resolved": "ok", "Awaiting approval": "warn", "Held": "grey", "Escalated": "crit", "Closed": "grey"}
 DEC_LABEL = {"PENDING": "Pending", "APPROVED": "Approved", "REJECTED": "Rejected", "EXECUTING": "Executing", "DONE": "Done", "FAILED": "Failed", "EXPIRED": "Expired"}
 VERDICT_LABEL = {"AUTO": "Automatic", "NEED_APPROVAL": "Approval required", "HELD": "Held", "DENY": "Denied"}
 RADIUS_LABEL = {"none": "Nothing", "this_run": "This run only", "this_job": "This job only", "budget": "Budget", "artifacts": "Artifacts"}
 ACTION_LABEL = {"notify": "Notify", "start_instance": "Start instance", "resume_job": "Resume job", "stop_instance": "Stop instance",
                 "quarantine_artifact": "Quarantine artifact", "rollback_last_good": "Roll back to last good checkpoint", "relocate_zone": "Relocate zone",
-                "resize_disk": "Resize disk", "kill_process": "Kill process", "resume_smaller_batch": "Resume with smaller batch", "change_machine_type": "Change machine type"}
+                "resize_disk": "Resize disk", "kill_process": "Kill process", "resume_smaller_batch": "Resume with smaller batch", "change_machine_type": "Change machine type",
+                "clean_disk": "Clean disk (checkpoints already in Storage)", "launch": "Launch job", "promote": "Promote autonomy", "demote": "Demote autonomy", "hold": "Hold job", "propose": "Propose action"}
 ACTION_VERB = {"start_instance": "start", "stop_instance": "stop", "resume_job": "resume", "quarantine_artifact": "quarantine", "rollback_ckpt": "roll back", "kill_process": "kill", "notify": "notify"}
 ACTION_CHANGE = {"start_instance": "TERMINATED → RUNNING", "stop_instance": "RUNNING → TERMINATED", "resume_job": "Job resumed from last verified checkpoint",
                  "quarantine_artifact": "Artifact renamed to .corrupt", "rollback_ckpt": "Checkpoint rolled back", "kill_process": "Process terminated", "notify": "Notification sent"}
@@ -31,9 +32,11 @@ JOB_STATUS = {"PENDING": ("Pending", "grey"), "RUNNING": ("Running", "ok"), "COM
 RULE_LABEL = {"stopped_external": "Instance stopped externally", "preempted": "Instance preempted", "orphan": "Orphan instance", "idle": "Idle instance",
               "fin_ok_pending_verify": "Run finished, verification pending", "artifact_unverified": "Artifact verification failed", "run_fin_nonzero": "Run exited with error",
               "marker_invalid": "Invalid marker", "done_without_exit": "DONE marker without exit code", "stuck": "Job stuck", "slow": "Job slow", "harness_dead": "Harness heartbeat lost",
-              "disk_low": "Disk space low", "dup_process": "Duplicate process", "nan_loss": "Non-finite loss", "unsafe_config": "Unsafe instance configuration", "instance_missing": "Instance missing"}
+              "disk_low": "Disk space low", "dup_process": "Duplicate process", "nan_loss": "Non-finite loss", "unsafe_config": "Unsafe instance configuration", "instance_missing": "Instance missing",
+              "complete_running": "Job complete, instance still running", "preflight_fail": "Preflight failed", "smoke_invalid": "Smoke test incomplete", "budget_80": "Budget 80 % used",
+              "budget_exhausted": "Budget exhausted", "throughput_drop": "Throughput dropped", "grad_spike": "Gradient spike", "plateau": "Loss plateau", "disk_trend": "Disk filling up", "vram_creep": "GPU memory rising"}
 STEP_LABEL = {"DETECTED": "Detected", "TRIAGED": "Triaged", "DIAGNOSING": "Diagnosing", "DIAGNOSED": "Diagnosed", "DECIDED": "Decided", "AWAITING_APPROVAL": "Approval required",
-              "EXECUTING": "Executing", "VERIFYING": "Verifying", "RESOLVED": "Resolved", "ESCALATED": "Escalated", "HELD": "Held", "FAILED_ACTION": "Action failed", "CLOSED": "Closed"}
+              "EXECUTING": "Executing", "VERIFYING": "Verifying", "RESOLVED": "Resolved", "ESCALATED": "Escalated", "HELD": "Held", "FAILED_ACTION": "Action failed", "CLOSED": "Closed", "FALSE_POSITIVE": "False positive"}
 
 
 def now() -> datetime:
@@ -225,7 +228,12 @@ def incident_context(incident_id: str) -> dict | None:
         ev = db.evidence.get(eid)
         if not ev:
             continue
-        kind = {"rule": "Rule evidence", "log_window": "Log excerpt", "artifact_check": "Artifact verification", "heartbeat": "Heartbeat evidence"}.get(ev.kind, ev.kind)
+        kind = {"rule": "Rule evidence", "log_window": "Log excerpt", "artifact_check": "Artifact verification", "heartbeat": "Heartbeat evidence", "investigation": "Investigation (agent reasoning trace)"}.get(ev.kind, ev.kind)
+        if ev.kind == "investigation" and isinstance(ev.payload, dict):
+            evidence.append({"kind": kind, "summary": ev.summary, "created_iso": iso(ev.created_at), "results": None, "rows": [],
+                             "notes": ev.payload.get("notes", ""), "cost": usd(float(ev.payload.get("cost_usd", 0.0)), 4),
+                             "tools": [{"tool": t.get("tool", ""), "args": json.dumps(t.get("args", {}), ensure_ascii=False)[:200], "preview": str(t.get("result_preview", ""))[:300]} for t in ev.payload.get("tool_calls", [])]})
+            continue
         evidence.append({"kind": kind, "summary": ev.summary, "created_iso": iso(ev.created_at), "results": ev.payload.get("results") if isinstance(ev.payload, dict) else None,
                          "rows": [(k.replace("_", " ").capitalize(), _s(v) if not isinstance(v, (dict, list)) else json.dumps(v)[:200]) for k, v in (ev.payload.items() if isinstance(ev.payload, dict) and ev.kind != "artifact_check" else [])][:8]})
     hbs = sorted(db.recent_heartbeats(inc.job_id, 60), key=lambda h: h.ts) if inc.job_id else []
@@ -251,11 +259,46 @@ def incident_context(incident_id: str) -> dict | None:
             cls = "current"
         if name == "Execute" and current == "Executing":
             cls = "current"
+        if name == "Verify" and current == "Verifying":
+            cls = "current"
         if name == "Verify" and current == "Escalated":
             cls = "failed"
         rail.append({"name": name, "cls": cls})
     tl = [{"ts": t.get("ts"), "from": label(STEP_LABEL, t.get("from", "")), "to": label(STEP_LABEL, t.get("to", "")), "note": t.get("note", ""), "actor": "Operator" if str(t.get("actor", "")).startswith("human") else "Warden"} for t in inc.timeline]
-    ctx.update({"inc": row, "summary": d.get("human_summary") or inc.summary, "diag": d, "cc": cc, "llm": usd(inc.llm_cost_usd, 3), "pending": pending, "past": past, "evidence": evidence,
+    v = inc.verify or {}
+    checks = v.get("checks") or []
+    recovery = {"attempt": inc.attempt, "kind": label(ACTION_LABEL, v.get("kind", "")) if v else "", "deadline_iso": v.get("deadline", ""), "result": v.get("result", ""),
+                "last_check": (checks[-1] if checks else None), "checks": checks[-6:],
+                "ladder": [{"action": label(ACTION_LABEL, r.get("action", "")), "why": r.get("why", ""), "params": ", ".join(f"{k} {val}" for k, val in (r.get("params") or {}).items())} for r in (inc.ladder or [])],
+                "memory_ref": inc.memory_ref, "can_false_positive": _s(inc.state) in ("AWAITING_APPROVAL", "ESCALATED"),
+                "hypotheses_done": [{"action": x["action_label"], "status": x["status"], "why": next((e[len("hypothesis "):] for e in x["explain"] if e.startswith("hypothesis ")), "")} for x in past if x["status_raw"] in ("DONE", "FAILED")]}
+    ctx.update({"inc": row, "summary": d.get("human_summary") or inc.summary, "diag": d, "cc": cc, "llm": usd(inc.llm_cost_usd, 3), "pending": pending, "past": past, "evidence": evidence, "recovery": recovery,
                 "chart": chart, "contract": contract, "rail": rail, "timeline": tl, "daily": usd(inc.cost_burning_usd_per_hour * 24),
                 "detected_by": f"Rule {inc.rule}" + (f" · {inc.summary}" if inc.summary else ""), "proposed": (label(ACTION_LABEL, d.get("recommended_action")) if d else (pending[0]["action_label"] if pending else "—"))})
+    return ctx
+
+
+def job_context(job_id: str) -> dict | None:
+    """Job detail (A/J/K): spec, live state, learned baselines, per-job policy, final report, incidents of this job."""
+    from warden.steward import ledger
+    ctx = base_context()
+    j = db.jobs.get(job_id)
+    if not j:
+        return None
+    inst = db.fleet.get(j.instance_ref) if j.instance_ref else None
+    h = db.last_heartbeat(job_id); txt, cls, ts = hb_state(h); st, scls = JOB_STATUS.get(_s(j.status), (_s(j.status), "grey"))
+    e = ledger.ettr(job_id, 168)
+    b = db.client().collection("baselines").document(job_id).get(); baselines = b.to_dict() if b.exists else {}
+    pol = db.job_policy(job_id)
+    incs = sorted([i for i in db.incidents.list(job_id=job_id, limit=200)], key=lambda i: i.created_at, reverse=True)
+    rep = j.report or {}
+    spec_rows = [(k.replace("_", " ").capitalize(), (json.dumps(v) if isinstance(v, (dict, list)) else str(v))[:160]) for k, v in (j.spec or {}).items() if k not in ("env", "name")]
+    hold_until = j.operator_hold_until.isoformat() if j.operator_hold_until and j.operator_hold_until > now() else ""
+    ctx.update({"job": j, "status": st, "status_cls": scls, "inst": inst, "hb_text": txt, "hb_cls": cls, "hb_iso": ts, "h": h, "ettr": e, "baselines": baselines, "policy": pol,
+                "overrides": [(label(ACTION_LABEL, a), l) for a, l in (j.autonomy_overrides or {}).items()], "spec_rows": spec_rows, "report": rep,
+                "report_rows": [(k.replace("_", " ").capitalize(), (json.dumps(v) if isinstance(v, (dict, list)) else str(v))[:200]) for k, v in rep.items() if k not in ("artifacts", "incidents")],
+                "incidents": [incident_row(i) for i in incs[:30]], "hold_until": hold_until, "spent": usd(j.spent_usd, 3), "cap": usd(j.budget_cap_usd, 2) if j.budget_cap_usd else "—",
+                "hb_rows": [("Phase", j.phase or "—"), ("Step", f"{h.step:,}" if h and h.step is not None else "—"), ("Loss", f"{h.loss:.4g}" if h and h.loss is not None else "—"),
+                            ("Step rate", f"{h.step_per_s:.3g} /s" if h and h.step_per_s else "—"), ("Disk free", f"{h.disk_avail_gb:.1f} GB" if h and h.disk_avail_gb is not None else "—"),
+                            ("GPU", f"{h.gpu_util:.0f} % · {h.vram_used_mb:.0f}/{h.vram_total_mb:.0f} MB" if h and h.gpu_util is not None and h.vram_total_mb else "—")]})
     return ctx

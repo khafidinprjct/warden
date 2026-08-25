@@ -132,3 +132,40 @@ def false_positive(incident_id: str, who: str, reason: str = "") -> dict:
             d.status, d.approved_by = DecisionStatus.REJECTED, who; db.decisions.put(d)
     transition(inc, S.FALSE_POSITIVE, note=f"false positive by {who}: {reason}"[:200], actor=f"human:{who}"); db.incidents.put(inc)
     return {"ok": True, "incident_id": incident_id}
+
+
+def propose(job_id: str, action: str, params: dict | None, who: str, why: str = "") -> dict:
+    """A human (dashboard / Ask Warden) asks for an action. It goes through the SAME policy and approval path as Warden's own
+    proposals: policy-evaluated, dry-run planned, then executed (AUTO) or queued for approval — never a side door."""
+    from warden.core.models import Action, Incident, IncidentState as S
+    from warden.executor import recovery
+    from warden.policy.engine import evaluate as policy_eval
+    from warden.watcher.tick import _ctx_for, _is_frozen, _policy_for
+    try:
+        act = Action(action)
+    except ValueError:
+        return {"ok": False, "error": f"unknown action {action}"}
+    job = db.jobs.get(job_id)
+    if job is None:
+        return {"ok": False, "error": "job not found"}
+    inst = compute().describe(job.instance_ref) if job.instance_ref else None
+    inc = Incident(job_id=job_id, instance_ref=job.instance_ref, rule="operator_request", severity="info", summary=f"{who} requested {action} on {job_id}: {why}"[:300],
+                   dedupe_key=f"operator:{job_id}:{action}:{now().strftime('%Y%m%d%H%M%S')}")
+    transition(inc, S.TRIAGED, note=f"requested by {who}", actor=f"human:{who}")
+    dec = policy_eval(act, _ctx_for(job, inst, act, _is_frozen()), _policy_for(job))
+    dec.incident_id = inc.incident_id; dec.job_id = job_id
+    dec.params = {"instance_ref": job.instance_ref, "run_id": job.run_id, **(params or {}), "reason": why or f"requested by {who}"}
+    dec.explain.insert(0, f"operator request by {who}")
+    if act != Action.NOTIFY:
+        dec.dry_run_plan = ex.dry_run(dec, compute())
+    db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
+    transition(inc, S.DECIDED, note=f"{act}: {dec.verdict}")
+    if dec.verdict == Verdict.AUTO:
+        transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
+        r = ex.execute(dec, compute(), actor=f"human:{who}")
+        db.incidents.put(inc); recovery.after_execute(inc, dec, r)
+        db.incidents.put(inc)
+        return {"ok": r.ok, "incident_id": inc.incident_id, "decision_id": dec.decision_id, "verdict": str(dec.verdict), "observed": r.observed, "error": r.error}
+    transition(inc, S.AWAITING_APPROVAL if dec.verdict == Verdict.NEED_APPROVAL else S.HELD if dec.verdict == Verdict.HELD else S.ESCALATED)
+    db.incidents.put(inc)
+    return {"ok": True, "incident_id": inc.incident_id, "decision_id": dec.decision_id, "verdict": str(dec.verdict), "explain": dec.explain}

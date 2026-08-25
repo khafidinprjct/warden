@@ -32,6 +32,18 @@
       setTimeout(() => location.reload(), 900);
     } catch (err) { toast(String(err), false); b.disabled = false; }
   });
+  document.addEventListener("submit", async function (e) {
+    const f = e.target.closest("[data-propose]"); if (!f) return;
+    e.preventDefault();
+    const fd = new FormData(f);
+    try {
+      const r = await fetch("/act", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: f.dataset.propose, key: f.dataset.key || "", json: { action: fd.get("action"), why: fd.get("why") || "", who: "dashboard" } }) });
+      const j = await r.json();
+      toast(j.ok ? ("Proposed: " + (j.verdict || "") + (j.observed ? " · " + j.observed : "")) : ("Failed: " + (j.error || "")), !!j.ok);
+      if (j.ok && j.incident_id) setTimeout(function () { location.href = "/incidents/" + j.incident_id; }, 900);
+    } catch (err) { toast("Failed: " + err, false); }
+  });
   function toast(msg, ok) {
     const t = document.createElement("div"); t.textContent = msg;
     t.style.cssText = "position:fixed;right:20px;bottom:20px;padding:10px 14px;border-radius:6px;font-weight:500;color:#fff;background:" + (ok ? "#1f7a3d" : "#b42323") + ";z-index:99";

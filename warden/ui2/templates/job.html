@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumb"><a href="/jobs">Jobs</a> / {{ job.job_id }}</div>
+<header class="page-head top">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px"><div class="title">{{ job.job_id }}</div><span class="pill pill-{{ status_cls }}">{{ status }}{% if job.phase %} · {{ job.phase }}{% endif %}</span>{% if hold_until %}<span class="pill pill-grey">On hold until <time data-utc="{{ hold_until }}" data-fmt="clock"></time></span>{% endif %}</div>
+    <div class="meta num"><span>Instance <b>{{ job.instance_ref or '—' }}</b></span><span>Run <b class="mono">{{ job.run_id or '—' }}</b></span><span>Heartbeat <b class="{{ hb_cls }}">{{ hb_text }}</b>{% if hb_iso %} · <time data-utc="{{ hb_iso }}" data-fmt="rel"></time>{% endif %}</span><span>Spent <b>{{ spent }}</b> of {{ cap }}</span></div>
+  </div>
+  <div class="actions">{% include "_freeze.html" %}</div>
+</header>
+<section class="split">
+  <div class="stack">
+    <div class="card"><div class="card-head"><div class="h">Live state</div></div><div class="card-body"><div class="props">{% for k, v in hb_rows %}<div class="k">{{ k }}</div><div class="v num">{{ v }}</div>{% endfor %}
+      {% if ettr.ettr is not none %}<div class="k">Effective training time</div><div class="v num">{{ (ettr.ettr * 100)|round|int }} % · {{ ettr.effective_h }} h of {{ ettr.paid_h }} h paid, 7 days</div>{% endif %}
+      {% if job.last_good_ckpt.path %}<div class="k">Last verified checkpoint</div><div class="v mono">{{ job.last_good_ckpt.path }} · step {{ job.last_good_ckpt.step }}</div>{% endif %}</div></div></div>
+    {% if report %}<div class="card"><div class="card-head"><div class="h">Final report</div><div class="s12 muted num"><time data-utc="{{ report.written_at }}" data-fmt="long"></time></div></div><div class="card-body"><div class="props">{% for k, v in report_rows %}<div class="k">{{ k }}</div><div class="v num">{{ v }}</div>{% endfor %}
+      <div class="k">Incidents</div><div class="v num">{{ report.incidents.total }} total · {{ report.incidents.resolved_by_warden }} resolved by Warden · {{ report.incidents.needed_human }} needed a human</div>
+      <div class="k">Artifacts</div><div class="v" style="display:flex;flex-direction:column;gap:2px">{% for a in report.artifacts %}<span class="mono s12">{{ a.name }} · {{ '{:,}'.format(a.bytes or 0) }} B</span>{% else %}—{% endfor %}</div></div></div></div>{% endif %}
+    {% if spec_rows %}<div class="card"><div class="card-head"><div class="h">Launch spec</div></div><div class="card-body"><div class="props">{% for k, v in spec_rows %}<div class="k">{{ k }}</div><div class="v mono s12">{{ v }}</div>{% endfor %}</div></div></div>{% endif %}
+    {% if baselines %}<div class="card"><div class="card-head"><div class="h">Learned baselines</div><div class="s12 muted">from verified data</div></div><div class="card-body"><div class="props">{% for k, v in baselines.items() if k not in ('updated_at','source') %}<div class="k">{{ k|replace('_',' ')|capitalize }}</div><div class="v num">{{ v }}</div>{% endfor %}</div></div></div>{% endif %}
+    <div class="card"><div class="card-head"><div class="h">Incidents</div><div class="s12 muted num">{{ incidents|length }}</div></div>
+      {% for r in incidents %}<a class="tr" href="/incidents/{{ r.id }}" style="grid-template-columns:minmax(0,1fr) 140px 110px"><div><div class="strong">{{ r.title }}</div><div class="s12 muted text-1">{{ r.sub }}</div></div><div><span class="pill pill-{{ r.state_cls }}">{{ r.state }}</span></div><div class="s12 muted num"><time data-utc="{{ r.opened_iso }}" data-fmt="rel"></time></div></a>{% else %}<div class="empty"><b>No incidents</b></div>{% endfor %}</div>
+  </div>
+  <aside class="stack">
+    <div class="card"><div class="card-head"><div class="h">Autonomy for this job</div></div><div class="card-body">
+      <div class="props narrow">{% for a, l in overrides %}<div class="k">{{ a }}</div><div class="v">{{ l }} (override)</div>{% else %}<div class="k">Overrides</div><div class="v">None — global policy applies</div>{% endfor %}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        {% if hold_until %}<button class="btn btn-secondary" data-act="/jobs/{{ job.job_id }}/hold?minutes=0&who=dashboard" data-key="{{ job.job_id }}">Release hold</button>
+        {% else %}<button class="btn btn-secondary" data-act="/jobs/{{ job.job_id }}/hold?minutes=120&who=dashboard" data-key="{{ job.job_id }}">Hold 2 h (manual mode)</button>{% endif %}
+      </div></div></div>
+    <div class="card"><div class="card-head"><div class="h">Request an action</div></div><div class="card-body">
+      <div class="s12 muted" style="margin-bottom:8px">Goes through the same policy and approval path as Warden's own proposals.</div>
+      <form data-propose="/jobs/{{ job.job_id }}/propose" data-key="{{ job.job_id }}" style="display:flex;flex-direction:column;gap:8px">
+        <select name="action" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit;background:#fff">{% for v, l in actions %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+        <input name="why" maxlength="200" placeholder="Why (recorded in the audit log)" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit">
+        <button class="btn btn-primary" type="submit">Propose</button>
+      </form></div></div>
+  </aside>
+</section>
+{% endblock %}

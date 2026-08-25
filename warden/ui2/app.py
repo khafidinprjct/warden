@@ -33,10 +33,10 @@ def health():
 async def act(request: Request):
     body = await request.json()
     path, key = str(body.get("path", "")), str(body.get("key", ""))
-    if not path.startswith(("/decisions/", "/freeze", "/steward")):
+    if not path.startswith(("/decisions/", "/freeze", "/steward", "/jobs/")):
         return JSONResponse({"ok": False, "error": "unknown action"}, status_code=400)
     try:
-        r = httpx.post(f"{CORE}{path}", headers={"X-Warden-Signature": sign(key.encode())}, timeout=30)
+        r = httpx.post(f"{CORE}{path}", headers={"X-Warden-Signature": sign(key.encode())}, json=body.get("json") or None, timeout=60)
         try:
             return r.json()
         except ValueError:
@@ -78,6 +78,39 @@ def approvals(request: Request):
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs(request: Request):
     return render(request, "jobs.html", "jobs", "Jobs", data.overview_context())
+
+
+@app.get("/jobs/launch", response_class=HTMLResponse)
+def launch_get(request: Request):
+    return render(request, "launch.html", "jobs", "Launch job", data.base_context(), refresh=0)
+
+
+@app.post("/jobs/launch", response_class=HTMLResponse)
+def launch_post(request: Request, job_id: str = Form(""), command: str = Form(""), machine_type: str = Form("e2-medium"), zones: str = Form("us-central1-a,us-central1-b,us-central1-c"),
+                spot: str = Form("on"), disk_gb: int = Form(20), budget_cap_usd: float = Form(0.0), expect: str = Form("{}"), entry: str = Form("")):
+    import json as _json
+    ctx = data.base_context(); result = None; error = ""
+    try:
+        spec = {"job_id": job_id.strip(), "command": command.strip(), "machine_type": machine_type.strip(), "zones": [z.strip() for z in zones.split(",") if z.strip()],
+                "spot": spot == "on", "disk_gb": int(disk_gb), "budget_cap_usd": float(budget_cap_usd), "expect": _json.loads(expect or "{}"), "entry": entry.strip()}
+        body = _json.dumps(spec).encode()
+        r = httpx.post(f"{CORE}/jobs/launch", content=body, headers={"X-Warden-Signature": sign(body), "Content-Type": "application/json"}, timeout=400)
+        result = r.json()
+        if not result.get("ok"):
+            error = str(result.get("error") or result.get("detail") or f"HTTP {r.status_code}")
+    except Exception as e:  # noqa: BLE001
+        error = str(e)[:200]
+    return render(request, "launch.html", "jobs", "Launch job", ctx, result=result, error=error, form=locals(), refresh=0)
+
+
+@app.get("/jobs/{job_id}", response_class=HTMLResponse)
+def job_detail(request: Request, job_id: str):
+    ctx = data.job_context(job_id)
+    if ctx is None:
+        return HTMLResponse("<p>Job not found.</p>", status_code=404)
+    from warden.core.models import Action
+    actions = [(a.value, data.label(data.ACTION_LABEL, a.value)) for a in Action if a.value != "notify"]
+    return render(request, "job.html", "jobs", job_id, ctx, actions=actions)
 
 
 @app.get("/fleet", response_class=HTMLResponse)

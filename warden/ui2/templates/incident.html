@@ -28,6 +28,16 @@
         {% if inc.burn != '$0.000' %}<div class="k">If left as is</div><div class="v num">{{ daily }} per day</div>{% endif %}
       </div>
     </div></div>
+    {% if recovery.attempt or recovery.ladder or recovery.kind %}
+    <div class="card">
+      <div class="card-head"><div class="h">Recovery</div><div class="s12 muted num">{{ recovery.attempt }} attempt{{ '' if recovery.attempt == 1 else 's' }}{% if recovery.memory_ref %} · <a href="/incidents/{{ recovery.memory_ref }}">memory {{ recovery.memory_ref[-8:] }}</a>{% endif %}</div></div>
+      {% for hd in recovery.hypotheses_done %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">Tried</div><div class="v"><b>{{ hd.action }}</b> — <span class="{{ 'ok' if hd.status == 'Done' else 'crit' }}">{{ hd.status }}</span>{% if hd.why %} · {{ hd.why }}{% endif %}</div></div></div>{% endfor %}
+      {% if recovery.kind %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">Verification</div><div class="v"><b>{{ recovery.kind }}</b>{% if recovery.result == 'ok' %} · <span class="ok">Confirmed by the world</span>{% elif recovery.result == 'fail' %} · <span class="crit">Did not hold</span>{% else %} · <span class="warn">Checking</span> until <time data-utc="{{ recovery.deadline_iso }}" data-fmt="clock"></time>{% endif %}
+        {% if recovery.last_check %}<div class="s12 muted">Last check: {{ recovery.last_check.why }} (<time data-utc="{{ recovery.last_check.ts }}" data-fmt="rel"></time>)</div>{% endif %}</div></div></div>{% endif %}
+      {% if recovery.ladder %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">Next hypotheses</div><div class="v" style="display:flex;flex-direction:column;gap:4px">{% for r in recovery.ladder %}<span><b>{{ loop.index }}. {{ r.action }}</b>{% if r.params %} <span class="mono s12">({{ r.params }})</span>{% endif %} — {{ r.why }}</span>{% endfor %}</div></div></div>{% endif %}
+      {% if recovery.can_false_positive %}<div class="section-row"><button class="btn btn-secondary" data-act="/decisions/{{ (pending[0].decision_id if pending else past[0].decision_id if past else inc.ref) }}/false_positive?who=dashboard" data-key="{{ (pending[0].decision_id if pending else past[0].decision_id if past else inc.ref) }}">Mark as false positive</button><span class="s12 muted" style="margin-left:8px">Warden withholds this action for this job after two dismissals in 7 days.</span></div>{% endif %}
+    </div>
+    {% endif %}
     {% if diag or evidence %}
     <div class="card">
       <div class="card-head"><div class="h">Evidence</div></div>
@@ -69,7 +79,10 @@
 {% elif tab == 'evidence' %}
 <section class="stack">
   {% for e in evidence %}<div class="card"><div class="card-head"><div class="h">{{ e.kind }}</div><div class="s12 muted num"><time data-utc="{{ e.created_iso }}" data-fmt="long"></time></div></div><div class="card-body">
-    {% if e.results %}{% for r in e.results %}<span class="mono s12 {{ 'ok' if r.ok else 'crit' }}">{{ 'Passed' if r.ok else 'Failed' }} — {{ r.name }} · {{ '{:,}'.format(r.bytes or 0) }} B{% if r.reason %} · {{ r.reason }}{% endif %}</span>{% endfor %}
+    {% if e.tools is defined %}<div class="s14" style="white-space:pre-wrap">{{ e.notes }}</div><div class="eyebrow" style="margin-top:10px">Tool calls · {{ e.tools|length }} · {{ e.cost }}</div>
+      <div class="th" style="grid-template-columns:160px minmax(0,1fr) minmax(0,1fr)"><div>Tool</div><div>Arguments</div><div>Result</div></div>
+      {% for t in e.tools %}<div class="tr" style="grid-template-columns:160px minmax(0,1fr) minmax(0,1fr)"><div class="mono s12">{{ t.tool }}</div><div class="mono s12 text-2">{{ t.args }}</div><div class="mono s12 text-2">{{ t.preview }}</div></div>{% endfor %}
+    {% elif e.results %}{% for r in e.results %}<span class="mono s12 {{ 'ok' if r.ok else 'crit' }}">{{ 'Passed' if r.ok else 'Failed' }} — {{ r.name }} · {{ '{:,}'.format(r.bytes or 0) }} B{% if r.reason %} · {{ r.reason }}{% endif %}</span>{% endfor %}
     {% else %}<div>{{ e.summary }}</div>{% if e.rows %}<div class="props">{% for k, v in e.rows %}<div class="k">{{ k }}</div><div class="v mono s12">{{ v }}</div>{% endfor %}</div>{% endif %}{% endif %}
   </div></div>{% else %}<div class="card"><div class="empty"><b>No evidence attached</b></div></div>{% endfor %}
 </section>
