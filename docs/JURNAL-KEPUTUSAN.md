@@ -191,3 +191,9 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - #30: revisi lama masih melayani 2 mnt setelah "deployed" → job diluncurkan dengan startup lama. Harga ≈$0,01 + 25 mnt. Ganti: healthz memuat K_REVISION; drill menunggu revisi terbaru benar-benar melayani.
 - #31: preempt nyata 2× dalam 4 mnt di us-central1-a dideteksi sebagai stopped_external (filter API tak cocok) → tangga relocate tak terpakai. Ganti: cocokkan target di kode; diverifikasi terhadap operasi nyata VM itu.
 - Keputusan: drill #3 memakai zona b, c, a (a sedang badai preempt). VM drill lama STOPPED (tidak dihapus), job → ABANDONED, insiden → CLOSED.
+
+## 26 Agu 2026 04:10 WIB — Drill hidup #3: launch+RUNNING+OOM ✔, diagnosis GAGAL (katalog #32), drill #4 dijalankan
+- Yang lulus: launch dari spec di us-central1-b (10 dtk), RUNNING pada denyut pertama (53 dtk), training maju di job id yang benar (#29 tuntas), OOM drill memicu RUN_FIN exit 1 → insiden run_fin_nonzero dalam 8 dtk.
+- Gagal: pipeline mendiagnosis pada tick yang sama saat log run belum mendarat di Storage → `unknown` → notify → RESOLVED (salah: tidak ada tindakan). Harga: ≈$0,01 VM + $0,27 LLM (Investigator 21 tool call, sebagian menjelajah log job lain) + 25 mnt.
+- Ganti: wrun mengunggah log+artefak SEBELUM RUN_FIN terlihat; pipeline membaca log run itu sendiri dan menunggu ≤4 mnt bila kosong; notify pada insiden kritis/unknown → ESCALATED. Tes 77/77. Core rev berikutnya; drill #4 menunggu revisi benar-benar melayani (#30).
+- FAKTA biaya: tanpa batas, satu penyelidikan bisa $0,27. Ini pilihan pemilik (keputusan 26 Agu dini hari); dicatat, tidak diubah.
