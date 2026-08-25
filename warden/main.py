@@ -237,6 +237,27 @@ def eval_gold(authorization: str | None = Header(default=None)):
     return {k: v for k, v in rep.items() if k != "rows"} | {"failed": [r["file"] for r in rep["rows"] if not r.get("ok")]}
 
 
+@app.post("/soak")
+def soak(days: int = 7, authorization: str | None = Header(default=None)):
+    """Soak gate (checklist H5): false actions over the last N days, written to eval/soak-<day>."""
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
+    from datetime import timedelta
+    since = now() - timedelta(days=days)
+    incs = [i for i in db.incidents.list(limit=2000) if i.created_at >= since]
+    false_actions = []
+    for i in incs:
+        for did in i.decision_ids:
+            d = db.decisions.get(did)
+            if d and d.action != "notify" and str(d.status) == "DONE" and (str(i.state) == "FALSE_POSITIVE" or ((i.verify or {}).get("result") == "fail" and i.rule in ("idle", "orphan", "stuck", "disk_low", "disk_trend"))):
+                false_actions.append({"incident": i.incident_id, "job": i.job_id, "rule": i.rule, "action": str(d.action)})
+    rep = {"days": days, "incidents": len(incs), "false_actions": false_actions, "resolved_by_warden": sum(1 for i in incs if str(i.state) == "RESOLVED" and i.attempt > 0),
+           "needed_human": sum(1 for i in incs if str(i.state) in ("ESCALATED", "CLOSED")), "ts": now().isoformat(), "pass": not false_actions}
+    db.client().collection("eval").document(f"soak-{now():%Y%m%d}").set(rep)
+    db.health("soak", rep["pass"], "" if rep["pass"] else f"{len(false_actions)} false actions in {days} days")
+    return rep
+
+
 @app.post("/digest")
 def digest(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
