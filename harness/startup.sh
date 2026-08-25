@@ -10,9 +10,9 @@ mkdir -p /opt/warden-src && cd /opt/warden-src
 [ -n "$HURL" ] && gcloud storage cp -r "$HURL/*" /opt/warden-src/ -q 2>/dev/null || true
 WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BUCKET" WARDEN_ENTRY="$ENTRY" \
   WARDEN_RESUME_CMD="$RESUME" WARDEN_WORKDIR="${WORKDIR:-/}" bash /opt/warden-src/install.sh || echo "startup: preflight gagal (marker ditulis)"
-# resume sadar fase: RUN_START tanpa RUN_FIN dari boot sebelumnya → job terputus (preempt) → jalankan resume
+# peluncuran/resume sadar fase: belum ada RUN_FIN (boot pertama, atau RUN_START terputus oleh preempt) → jalankan RESUME
 D="/var/lib/warden/$JOB/markers"
-if [ -f "$D/RUN_START.json" ] && [ ! -f "$D/RUN_FIN.json" ] && [ -n "$RESUME" ]; then
-  echo "startup: RUN_START tanpa RUN_FIN → resume: $RESUME"
+if [ ! -f "$D/RUN_FIN.json" ] && [ -n "$RESUME" ]; then
+  echo "startup: belum ada RUN_FIN ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START ada = lanjut setelah terputus' || echo 'boot pertama')) → $RESUME"
   (cd "${WORKDIR:-/}" && WARDEN_HMAC="$HMAC" nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
 fi
