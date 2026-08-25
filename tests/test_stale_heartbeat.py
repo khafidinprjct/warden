@@ -1,4 +1,7 @@
 """Insiden 25 Agu: denyut agen membawa run_id LAMA (train.json basi) menimpa run_id baru → RUN_FIN exit 1 run baru tak terlihat."""
+import os
+os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "127.0.0.1:8081"); os.environ.setdefault("WARDEN_PROJECT", "warden-local")
+os.environ.setdefault("WARDEN_FIRESTORE_DB", "warden-test"); os.environ.setdefault("WARDEN_PROVIDER", "fake")
 from datetime import timedelta
 from warden.core.models import Job, JobStatus, Marker, now
 from warden.signals.ingest import ingest_heartbeat
