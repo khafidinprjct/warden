@@ -37,3 +37,13 @@ Semua pernah terjadi pada kami (harga = yang benar-benar dibayar). Kolom "uji" =
 - **Cause:** `startup.sh` launched the resume command with only `WARDEN_HMAC` in the environment; the bootstrap script defaulted `WARDEN_JOB` to `toy-train`. On the old demo VM the metadata happened to say `toy-train`, so it never showed.
 - **Fix:** startup exports `WARDEN_JOB / CORE_URL / BUCKET / ENTRY / DIR` to the resume command; bootstraps refuse to run without `WARDEN_JOB` (`${WARDEN_JOB:?}`); test `test_startup_script_exports_job_env_to_resume`.
 - **Cost:** ≈ $0.01 VM + 10 min. Detected by the live gate, not by the fake — which is why the live gate exists.
+
+## #30 · "Deployed" is not "serving": the previous Cloud Run revision handled requests 2 minutes after gcloud reported the new one at 100 % (26 Aug 2026, live drill #2)
+- **Symptom:** a job launched right after the deploy carried the old startup script; the fix from #29 looked ineffective.
+- **Cause:** request log shows `/jobs/launch` at 18:13:19 served by revision 00017 although 00018 was "deployed and serving 100 %" at 18:11.
+- **Fix:** `/healthz` returns `K_REVISION`; the live drill (and any deploy gate) waits until the served revision equals `latestReadyRevisionName`.
+
+## #31 · Preemption detected as "stopped externally" (26 Aug 2026, live drill #2)
+- **Symptom:** two real Spot preemptions in 4 minutes (us-central1-a) opened a `stopped_external` incident; after the restart was preempted again the ladder had nothing left and escalated — the `preempted` ladder would have offered `relocate_zone`.
+- **Cause:** `zoneOperations.list` with `targetLink : "<name>"` returned no operations; the substring filter does not match on that field.
+- **Fix:** filter by `operationType` only and match the target suffix in code; verified against the real operations of that VM (two events found).

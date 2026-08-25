@@ -186,3 +186,8 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Gagal: `live-1800-oom` diluncurkan Warden dari spec ✔ (VM `warden-live-1800-oom`, denyut pertama 65 dtk → RUNNING ✔), tetapi training melapor sebagai `toy-train`: startup.sh hanya mengekspor WARDEN_HMAC ke perintah resume, bootstrap memakai default job id. Harga: ≈$0,01 VM + 10 mnt. Dampak: nol pada arah — ini persis jenis cacat yang hanya ketahuan di gerbang hidup.
 - Ganti: startup mengekspor WARDEN_JOB/CORE_URL/BUCKET/ENTRY/DIR; bootstrap menolak tanpa WARDEN_JOB (`${WARDEN_JOB:?}`); tes unit; core rev berikutnya; job lama → ABANDONED, insiden nyasar toy-train ditutup; VM lama STOPPED (tidak dihapus).
 - N2 terbukti: clone bersih → venv 3.12 → 76 tes + chaos 25/25 dalam 36 dtk.
+
+## 26 Agu 2026 03:45 WIB — Drill hidup #2: dua temuan (katalog #30, #31), drill #3 dijalankan
+- #30: revisi lama masih melayani 2 mnt setelah "deployed" → job diluncurkan dengan startup lama. Harga ≈$0,01 + 25 mnt. Ganti: healthz memuat K_REVISION; drill menunggu revisi terbaru benar-benar melayani.
+- #31: preempt nyata 2× dalam 4 mnt di us-central1-a dideteksi sebagai stopped_external (filter API tak cocok) → tangga relocate tak terpakai. Ganti: cocokkan target di kode; diverifikasi terhadap operasi nyata VM itu.
+- Keputusan: drill #3 memakai zona b, c, a (a sedang badai preempt). VM drill lama STOPPED (tidak dihapus), job → ABANDONED, insiden → CLOSED.
