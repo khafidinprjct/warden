@@ -174,3 +174,9 @@ def stockout_recent(zone: str, machine_type: str, minutes: int = 30) -> bool:
     if not d.exists:
         return False
     return (now() - datetime.fromisoformat(d.to_dict()["ts"])) < timedelta(minutes=minutes)
+
+
+def job_policy(job_id: str) -> dict[str, Any]:
+    """Per-job policy overrides (G5): policies/<job_id> may override autonomy levels and limits; missing = global."""
+    d = client().collection("policies").document(job_id).get() if job_id else None
+    return d.to_dict() if d and d.exists else {}

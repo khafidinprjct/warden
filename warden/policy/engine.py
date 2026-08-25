@@ -127,3 +127,9 @@ def evaluate(action: Action, ctx: Ctx, policy: dict[str, Any], t: datetime | Non
         d.verdict = Verdict.AUTO; ex.append(f"{level}: automatic")
     d.explain = ex
     return d
+
+
+def limit_events(d: Decision) -> list[str]:
+    """Explain lines that mean a policy limit changed the outcome — surfaced as warden.limit events so a limit is never silent (G3)."""
+    keys = ("limit ", "cap", "breaker", "price increase", "hard-denied", "FROZEN", "operator_hold", "operator active")
+    return [e for e in d.explain if any(k in e for k in keys)]

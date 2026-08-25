@@ -49,6 +49,17 @@ def _facts_for(inst, job, t) -> Facts:
                  prev_status=prev, in_ledger=bool(job), boot_age_min=boot_age, policy=POLICY)
 
 
+def _policy_for(job) -> dict:
+    """Global policy with per-job overrides merged (G5): policies/<job_id> {autonomy: {...}, limits: {...}}."""
+    import copy
+    pol = copy.deepcopy(POLICY)
+    jp = db.job_policy(job.job_id) if job else {}
+    for k in ("autonomy", "limits", "global", "circuit_breaker"):
+        if isinstance(jp.get(k), dict):
+            pol[k] = {**pol.get(k, {}), **jp[k]}
+    return pol
+
+
 def _ctx_for(job, inst, action: Action, frozen: bool) -> Ctx:
     today = db.cost_today()
     hour_ago = now() - timedelta(hours=1)
@@ -133,9 +144,21 @@ def run_tick(notify=None) -> dict[str, Any]:
     return stats
 
 
+def _dismissed_before(job_id: str, rule: str, days: int = 7) -> int:
+    """How many times a human marked this rule on this job as a false positive recently (memory lowers the weight, F3)."""
+    if not job_id:
+        return 0
+    cutoff = now() - timedelta(days=days)
+    return sum(1 for i in db.incidents.list(job_id=job_id, rule=rule, limit=50) if i.state == S.FALSE_POSITIVE and i.updated_at > cutoff)
+
+
 def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
     if _dedupe_recent(f.dedupe_key):
         return
+    n_fp = _dismissed_before(job.job_id if job else "", f.rule)
+    if n_fp >= 2 and f.suggested_action not in ("", "notify", "verify") and f.severity != "critical":
+        f.suggested_action = "notify"; f.severity = "info"; f.needs_llm = False
+        f.summary = f"{f.summary} — proposed action withheld: dismissed as false positive {n_fp}× in 7 days"
     inc = Incident(job_id=job.job_id if job else "", instance_ref=inst.ref if inst else "", dedupe_key=f.dedupe_key,
                    rule=f.rule, severity=f.severity, summary=f.summary,
                    cost_burning_usd_per_hour=(inst.hourly_price_usd if inst and inst.status == InstanceStatus.RUNNING else 0.0))
@@ -165,7 +188,7 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
         inc.ladder.insert(0, mem); inc.memory_ref = ref
     if inc.ladder:
         rung = inc.ladder.pop(0); action = Action(rung["action"]); f.action_params = {**f.action_params, **rung["params"]}
-    dec = policy_eval(action, _ctx_for(job, inst, action, frozen), POLICY)
+    dec = policy_eval(action, _ctx_for(job, inst, action, frozen), _policy_for(job))
     dec.incident_id = inc.incident_id
     dec.params = {"instance_ref": inst.ref if inst else "", "run_id": job.run_id if job else "", **f.action_params}
     if inc.memory_ref:
@@ -175,6 +198,9 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
     db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
     transition(inc, S.DECIDED, note=f"{action}: {dec.verdict}")
     print(_j.dumps({"event": "warden.decision", "severity": "INFO", "action": str(action), "verdict": str(dec.verdict), "autonomy": str(dec.autonomy), "incident_id": inc.incident_id, "decision_ms": int((now() - inc.created_at).total_seconds() * 1000)}), flush=True)
+    from warden.policy.engine import limit_events
+    for _e in limit_events(dec):
+        print(_j.dumps({"event": "warden.limit", "severity": "WARNING", "action": str(action), "incident_id": inc.incident_id, "job": inc.job_id, "limit": _e}), flush=True)
     if dec.verdict == Verdict.AUTO:
         stats["auto"] += 1
         transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)

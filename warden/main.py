@@ -91,7 +91,10 @@ def decide(decision_id: str, verb: str, who: str = "dashboard", x_warden_signatu
         return approvals.always(decision_id, who)
     if verb == "reevaluate":
         return approvals.reevaluate(decision_id, who)
-    raise HTTPException(400, "verb: approve|deny|always|reevaluate")
+    if verb == "false_positive":
+        dec = db.decisions.get(decision_id)
+        return approvals.false_positive(dec.incident_id if dec else decision_id, who)
+    raise HTTPException(400, "verb: approve|deny|always|reevaluate|false_positive")
 
 
 @app.post("/ask")
@@ -109,6 +112,15 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
     except Exception as e:  # noqa: BLE001
         db.health("gemini", False, str(e)[:200])
         return {"ok": False, "error": str(e)[:200]}
+
+
+@app.post("/jobs/{job_id}/hold")
+def jobs_hold(job_id: str, minutes: int = 120, who: str = "dashboard", x_warden_signature: str | None = Header(default=None)):
+    """Manual mode: Warden keeps watching but takes no action on this job until the hold expires (0 = release)."""
+    if not ing.verify(job_id.encode(), x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    from warden.steward import ledger
+    return ledger.hold(job_id, minutes, who)
 
 
 @app.post("/jobs/launch")
@@ -194,7 +206,8 @@ def steward(authorization: str | None = Header(default=None)):
     from warden.steward import ledger
     from warden.agents import memory
     out = {"accrue": ledger.accrue(600), "projection": ledger.projection(), "overrides_expired": ledger.expire_overrides(),
-           "promotion_candidates": ledger.promotion_candidates(), "postmortems_written": memory.write_postmortems()}
+           "promotions": ledger.apply_promotions(notify=_notify), "postmortems_written": memory.write_postmortems(),
+           "baselines": list(ledger.learn_baselines().keys())}
     db.heartbeat_self("steward", out)
     return out
 

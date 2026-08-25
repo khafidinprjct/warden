@@ -155,6 +155,55 @@ def evaluate(f: Facts) -> list[Finding]:
             out.append(Finding("idle", "warning", f"{inst.ref}: job {job.job_id} idle ≥ {g['idle_grace_minutes']} min",
                                f"idle:{inst.ref}:{inst.boot_id}", suggested_action="stop_instance"))
 
+    # B3 patrol — trends that become incidents later if nobody acts (all two-condition, all from the last 30 heartbeats)
+    if job and job.status == JobStatus.RUNNING and inst and inst.status == InstanceStatus.RUNNING and len(f.hbs) >= 12 and f.run_fin is None:
+        import statistics
+        hs = f.hbs
+        # throughput: median step/s of the last 5 vs the median of the 20 before, while the GPU/CPU is busy → not a stall, a slowdown
+        rates = [h.step_per_s for h in hs if h.step_per_s]
+        if len(rates) >= 12:
+            recent, before = statistics.median(rates[-5:]), float((job.expect or {}).get("baseline_step_per_s") or statistics.median(rates[-25:-5] or rates[:-5]))
+            busy = (hb.gpu_util or 0) >= 30 or (hb.cpu_pct or 0) >= 30
+            if before > 0 and recent < 0.6 * before and busy:
+                out.append(Finding("throughput_drop", "warning", f"{job.job_id}: {recent:.3g} step/s vs baseline {before:.3g} (−{(1-recent/before)*100:.0f}%) while busy",
+                                   f"thr:{job.job_id}:{hb.run_id}:{int(before*1000)}", needs_llm=True, suggested_action="notify",
+                                   evidence={"recent_step_per_s": recent, "baseline_step_per_s": before, "gpu": hb.gpu_util, "cpu": hb.cpu_pct}))
+        # grad-norm spike: last > 10× median of the window → early warning before NaN
+        gns = [h.grad_norm for h in hs if h.grad_norm is not None]
+        if len(gns) >= 10 and hb.grad_norm is not None:
+            med = statistics.median(gns[:-1])
+            if med > 0 and hb.grad_norm > 10 * med:
+                out.append(Finding("grad_spike", "warning", f"{job.job_id}: grad_norm {hb.grad_norm:.3g} = {hb.grad_norm/med:.0f}× median {med:.3g} at step {hb.step}",
+                                   f"grad:{job.job_id}:{hb.run_id}:{hb.step}", suggested_action="notify", evidence={"grad_norm": hb.grad_norm, "median": med}))
+        # plateau: ≥ 2 h of steps advancing while the loss barely moves (std < 1 % of mean) — not an error, a waste
+        window = [h for h in hs if (f.t - h.ts) <= timedelta(hours=2)]
+        losses = [h.loss for h in window if h.loss is not None]
+        steps = [h.step for h in window if h.step is not None]
+        if len(losses) >= 10 and steps and steps[-1] > steps[0] and (window[-1].ts - window[0].ts) >= timedelta(minutes=100):   # ≈ the 2 h window, allowing for the sampling gap
+            mean = statistics.mean(losses)
+            if mean and statistics.pstdev(losses) < 0.01 * abs(mean):
+                out.append(Finding("plateau", "info", f"{job.job_id}: loss flat at {mean:.4g} for {(window[-1].ts - window[0].ts).total_seconds()/3600:.1f} h (steps {steps[0]}→{steps[-1]})",
+                                   f"plateau:{job.job_id}:{hb.run_id}:{int(mean*1e4)}", suggested_action="notify", evidence={"mean": mean, "std": statistics.pstdev(losses)}))
+        # disk trend: linear fit of free GB over the window → hours until below the need threshold
+        pts = [(h.ts, h.disk_avail_gb) for h in hs if h.disk_avail_gb is not None]
+        if len(pts) >= 10 and pts[-1][1] > 0:
+            t0 = pts[0][0]; xs = [(t - t0).total_seconds() / 3600 for t, _ in pts]; ys = [g for _, g in pts]
+            mx, my = statistics.mean(xs), statistics.mean(ys)
+            den = sum((x - mx) ** 2 for x in xs)
+            slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den if den else 0.0     # GB per hour
+            need = max(2 * float((job.expect or {}).get("ckpt_size_bytes", 0)) / 1e9, 5.0)
+            if slope < -0.05 and pts[-1][1] > need:
+                hours = (pts[-1][1] - need) / -slope
+                if hours < 3:
+                    out.append(Finding("disk_trend", "warning", f"{job.job_id}: disk free {pts[-1][1]:.1f} GB falling {-slope:.2f} GB/h → below {need:.0f} GB in {hours:.1f} h",
+                                       f"disktrend:{job.job_id}:{hb.run_id}", suggested_action="clean_disk", evidence={"slope_gb_per_h": slope, "hours_left": hours},
+                                       action_params={"keep": 2, "min_free_gb": need}))
+        # VRAM creep: used memory rising monotonically by > 20 % across the window with the step advancing → leak before the OOM
+        vr = [h.vram_used_mb for h in hs if h.vram_used_mb]
+        if len(vr) >= 10 and vr[0] > 0 and vr[-1] > 1.2 * vr[0] and all(b >= a for a, b in zip(vr[-10:], vr[-9:])):
+            out.append(Finding("vram_creep", "warning", f"{job.job_id}: VRAM {vr[0]:.0f}→{vr[-1]:.0f} MB rising monotonically (+{(vr[-1]/vr[0]-1)*100:.0f}%)",
+                               f"vram:{job.job_id}:{hb.run_id}", suggested_action="notify", evidence={"from_mb": vr[0], "to_mb": vr[-1], "total_mb": hb.vram_total_mb}))
+
     # R-loss: NaN/divergen dari denyut (tanpa LLM)
     if hb and hb.loss is not None and job and job.status == JobStatus.RUNNING:
         import math

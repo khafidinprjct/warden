@@ -122,3 +122,83 @@ def promotion_candidates(min_streak: int = 10) -> list[dict[str, Any]]:
         elif d.status in ("FAILED", "REJECTED"):
             broken.add(k)
     return [{"job_id": j, "action": a, "streak": n, "usul": "L1 → L2"} for (j, a), n in streak.items() if n >= min_streak]
+
+
+def apply_promotions(policy: dict | None = None, notify=None) -> dict[str, Any]:
+    """Graduated trust (checklist G2): an L1 action approved by a human `streak` times in a row for a job, with no failure or rejection,
+    is promoted to L2 for that job; a failed verification of an L2 action demotes it back to L1. Both are audited and reversible."""
+    from warden.core.models import AuditEntry
+    from warden.policy.engine import load_policy
+    pol = (policy or load_policy()).get("promotion", {})
+    out = {"promoted": [], "demoted": []}
+    if not pol.get("auto", False):
+        return out
+    for c in promotion_candidates(min_streak=int(pol.get("streak", 5))):
+        job = db.jobs.get(c["job_id"])
+        if not job or job.autonomy_overrides.get(c["action"]) == "L2":
+            continue
+        job.autonomy_overrides[c["action"]] = "L2"; db.jobs.put(job)
+        db.audit(AuditEntry(actor="warden", phase="result", action="promote", target=c["job_id"], before={"level": "L1", "streak": c["streak"]}, after={"level": "L2", "action": c["action"]}, ok=True))
+        out["promoted"].append(c)
+        if notify: notify(None, None, f"⬆️ {c['job_id']}: {c['action']} promoted L1 → L2 after {c['streak']} consecutive approvals without a failure")
+    if pol.get("demote_on_failed_verification", True):
+        for inc in db.incidents.list(limit=300):
+            if (inc.verify or {}).get("result") != "fail" or (now() - inc.updated_at) > timedelta(hours=24):
+                continue
+            for did in inc.decision_ids:
+                d = db.decisions.get(did)
+                if not d or d.verdict != "AUTO" or d.action == "notify":
+                    continue
+                job = db.jobs.get(d.job_id) if d.job_id else None
+                if job and job.autonomy_overrides.get(d.action.value) == "L2":
+                    job.autonomy_overrides[d.action.value] = "L1"; db.jobs.put(job)
+                    db.audit(AuditEntry(actor="warden", phase="result", action="demote", target=d.job_id, before={"level": "L2"}, after={"level": "L1", "action": d.action.value, "incident": inc.incident_id}, ok=True))
+                    out["demoted"].append({"job_id": d.job_id, "action": d.action.value, "incident": inc.incident_id})
+                    if notify: notify(inc, None, f"⬇️ {d.job_id}: {d.action.value} demoted L2 → L1 — its result did not verify ({inc.incident_id})")
+    return out
+
+
+def hold(job_id: str, minutes: int, who: str) -> dict[str, Any]:
+    """Manual mode (G4): the operator takes the machine; Warden observes only until the hold expires."""
+    from warden.core.models import AuditEntry
+    job = db.jobs.get(job_id)
+    if not job:
+        return {"ok": False, "error": "job not found"}
+    job.operator_hold_until = now() + timedelta(minutes=minutes) if minutes > 0 else None; db.jobs.put(job)
+    db.audit(AuditEntry(actor=f"human:{who}", phase="result", action="hold", target=job_id, after={"until": job.operator_hold_until.isoformat() if job.operator_hold_until else None}, ok=True))
+    return {"ok": True, "job_id": job_id, "hold_until": job.operator_hold_until.isoformat() if job.operator_hold_until else None}
+
+
+def learn_baselines() -> dict[str, Any]:
+    """Per-job expectations from verified data (F4/B5): checkpoint size from VERIFIED markers, step rate and heartbeat interval from
+    healthy heartbeats. Written to job.expect only where the operator did not set a value; stored under baselines/<job> in full."""
+    import statistics
+    out: dict[str, Any] = {}
+    for job in db.jobs.list(limit=200):
+        if job.status not in (JobStatus.RUNNING, JobStatus.COMPLETE, JobStatus.FINISHED_UNVERIFIED):
+            continue
+        b: dict[str, Any] = {}
+        hbs = [h for h in db.recent_heartbeats(job.job_id, 300) if h.step_per_s]
+        if len(hbs) >= 10:
+            b["step_per_s_median"] = round(statistics.median(h.step_per_s for h in hbs), 4)
+            gaps = sorted((y.ts - x.ts).total_seconds() for x, y in zip(hbs, hbs[1:]))
+            b["heartbeat_interval_p95_s"] = round(gaps[int(0.95 * (len(gaps) - 1))], 1)
+        ver = db.get_marker(job.job_id, job.run_id, "VERIFIED") if job.run_id else None
+        if ver:
+            sizes = [a.get("bytes", 0) for a in ver.artifacts if str(a.get("name", "")).startswith("ckpt") or str(a.get("name", "")).endswith((".pt", ".pth", ".ckpt", ".npz"))]
+            if sizes:
+                b["ckpt_size_bytes"] = int(statistics.median(sizes))
+        if not b:
+            continue
+        b["updated_at"] = now().isoformat(); b["source"] = "learned"
+        db.client().collection("baselines").document(job.job_id).set(b)
+        changed = False
+        for k in ("ckpt_size_bytes",):
+            if k in b and not job.expect.get(k):
+                job.expect[k] = b[k]; changed = True
+        if "step_per_s_median" in b and not job.expect.get("baseline_step_per_s_user"):
+            job.expect["baseline_step_per_s"] = b["step_per_s_median"]; changed = True
+        if changed:
+            db.jobs.put(job)
+        out[job.job_id] = b
+    return out

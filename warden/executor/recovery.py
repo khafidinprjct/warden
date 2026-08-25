@@ -73,6 +73,11 @@ LADDERS: dict[str, list[dict[str, Any]]] = {
     ],
     "plateau": [],
     "instance_missing": [],
+    "disk_trend": [
+        {"action": "clean_disk", "params": {"keep": 2}, "why": "disk will be full within hours: clean now, before the checkpoint fails"},
+        {"action": "resize_disk", "params": {"grow_pct": 50}, "why": "nothing to clean: grow the disk before it fills"},
+    ],
+    "throughput_drop": [], "grad_spike": [], "vram_creep": [],
 }
 PERMANENT_STOP = {"nan_input", "dependency_missing", "env_broken", "data_error", "config_error", "code_bug"}
 for _k in PERMANENT_STOP:
@@ -105,14 +110,15 @@ def remembered_rung(job_id: str, key: str) -> tuple[dict | None, str]:
     which rung worked → it goes first. One that ESCALATED after rung k tells us to start at k+1."""
     try:
         from warden.agents import memory
-        pms = [p for p in memory.recall(job_id=job_id, rule="", query="", n=20) if p.get("category") == key or p.get("rule") == key]
+        same_job = [p for p in memory.recall(job_id=job_id, rule="", query="", n=20) if p.get("category") == key or p.get("rule") == key]
+        other = [] if same_job else [p for p in memory.recall(job_id="", rule="", query="", n=50) if (p.get("category") == key or p.get("rule") == key) and p.get("job_id") != job_id]
     except Exception:  # noqa: BLE001
         return None, ""
-    for pm in pms:  # newest first
+    for pm, scope in [(p, "this job") for p in same_job] + [(p, f"job {p.get('job_id')}") for p in other]:  # newest first, own job first (F5)
         acts = [a for a in pm.get("actions", []) if a.get("action") not in ("notify", "")]
         if pm.get("ok") and acts:
             a = acts[-1]
-            return {"action": a["action"], "params": a.get("params", {}), "why": f"remembered: {pm['incident_id']} resolved with {a['action']}"}, pm["incident_id"]
+            return {"action": a["action"], "params": a.get("params", {}), "why": f"remembered from {scope}: {pm['incident_id']} resolved with {a['action']}"}, pm["incident_id"]
     return None, ""
 
 
@@ -265,8 +271,12 @@ def advance(inc, notify=None, reason: str = "") -> None:
         mt = rung["params"].get("machine_type") or bigger_machine(inst.machine_type)
         if mt and inst.hourly_price_usd:
             ctx.price_increase_pct = max(0.0, (compute().price_of(mt, inst.spot) / inst.hourly_price_usd - 1) * 100)
-    dec = policy_eval(action, ctx, POLICY)
+    from warden.watcher.tick import _policy_for
+    dec = policy_eval(action, ctx, _policy_for(job))
     dec.incident_id = inc.incident_id; dec.job_id = inc.job_id
+    from warden.policy.engine import limit_events
+    for _e in limit_events(dec):
+        print(_j.dumps({"event": "warden.limit", "severity": "WARNING", "action": action.value, "incident_id": inc.incident_id, "job": inc.job_id, "limit": _e}), flush=True)
     dec.params = {"instance_ref": inst.ref if inst else inc.instance_ref, "run_id": job.run_id if job else "", **rung["params"], "reason": rung.get("why", "")}
     dec.explain = [f"hypothesis {inc.attempt + 1}: {rung.get('why', '')}"] + list(dec.explain)
     if action != Action.NOTIFY:

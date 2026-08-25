@@ -117,3 +117,18 @@ def reevaluate(decision_id: str, who: str) -> dict:
         inc.state = S.AWAITING_APPROVAL if new.verdict == Verdict.NEED_APPROVAL else S.HELD if new.verdict == Verdict.HELD else S.ESCALATED
         inc.updated_at = now(); db.incidents.put(inc)
     return {"ok": True, "decision_id": new.decision_id, "verdict": str(new.verdict), "autonomy": str(new.autonomy)}
+
+
+def false_positive(incident_id: str, who: str, reason: str = "") -> dict:
+    """The human says this alarm was wrong. Pending decisions are rejected; memory lowers the weight of this rule for this job (F3)."""
+    inc = db.incidents.get(incident_id)
+    if inc is None:
+        return {"ok": False, "error": "incident not found"}
+    if inc.state not in (S.AWAITING_APPROVAL, S.ESCALATED):
+        return {"ok": False, "error": f"state {inc.state} — only AWAITING_APPROVAL/ESCALATED can be marked false positive"}
+    for did in inc.decision_ids:
+        d = db.decisions.get(did)
+        if d and d.status == DecisionStatus.PENDING:
+            d.status, d.approved_by = DecisionStatus.REJECTED, who; db.decisions.put(d)
+    transition(inc, S.FALSE_POSITIVE, note=f"false positive by {who}: {reason}"[:200], actor=f"human:{who}"); db.incidents.put(inc)
+    return {"ok": True, "incident_id": incident_id}

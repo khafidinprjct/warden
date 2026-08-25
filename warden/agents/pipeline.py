@@ -149,8 +149,11 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
             _mt = rung["params"].get("machine_type") or bigger_machine(inst.machine_type)
             if _mt and inst.hourly_price_usd:
                 ctx.price_increase_pct = max(0.0, (compute().price_of(_mt, inst.spot) / inst.hourly_price_usd - 1) * 100)
-        from warden.policy.engine import evaluate as policy_eval
-        dec = policy_eval(action, ctx, POLICY)
+        from warden.policy.engine import evaluate as policy_eval, limit_events
+        from warden.watcher.tick import _policy_for
+        dec = policy_eval(action, ctx, _policy_for(job))
+        for _e in limit_events(dec):
+            print(_json.dumps({"event": "warden.limit", "severity": "WARNING", "action": action.value, "incident_id": inc.incident_id, "job": inc.job_id, "limit": _e}), flush=True)
         if forced_l1 and dec.verdict == Verdict.AUTO:
             dec.verdict = Verdict.NEED_APPROVAL; dec.explain.append("crosscheck/second opinion requires human → L1")
             from datetime import timedelta

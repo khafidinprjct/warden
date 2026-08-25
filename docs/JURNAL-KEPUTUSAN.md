@@ -169,3 +169,9 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Aturan baru: preflight_fail → stop; smoke_invalid (member SMOKE_FIN ⊄ expect.smoke_members) → notify; budget_80 → notify; budget_exhausted → stop (J3).
 - Endpoint `POST /jobs/launch` (HMAC) + CLI `warden launch spec.yaml`. Provider: `create()` GCE nyata (SPOT+STOP+no-auto-delete, SA warden-vm, label managed) + fake.
 - Bukti: tests/test_lifecycle_fake.py 6 skenario; total pytest 65/65. Uji hidup launch di GCE nyata = M2/M4 (menyusul, e2 spot ≈ $0,01/jam).
+
+## 26 Agu 2026 01:50 WIB — Butir B, F, G dibangun
+- B3 patroli tren (rules.py, dua-syarat, jendela 30 denyut): throughput_drop (−40 % vs baseline & mesin sibuk → LLM), grad_spike (>10× median), plateau (loss datar ≥ ~2 jam sambil step maju), disk_trend (regresi linear → habis < 3 jam → clean_disk proaktif), vram_creep (+20 % monoton). B5/F4: steward `learn_baselines()` menulis baselines/<job> + job.expect (ckpt_size_bytes, baseline_step_per_s) dari data terverifikasi.
+- F3: `false_positive(incident)` (state FALSE_POSITIVE baru); alarm yang dibuang 2× dalam 7 hari → aksi ditahan, hanya notifikasi info. F5: memori lintas job — bila job ini belum punya riwayat, postmortem job lain dengan kategori sama dipakai (ditandai "remembered from job X").
+- G2: `apply_promotions()` di steward tiap 10 mnt — 5 persetujuan beruntun tanpa gagal → L2 untuk job itu; verifikasi gagal aksi L2 → turun L1; keduanya di audit + notifikasi. G3: setiap batas kebijakan yang mengubah keputusan → event `warden.limit`. G4: `POST /jobs/{id}/hold?minutes=`. G5: `policies/<job_id>` menimpa autonomy/limits global.
+- Bukti: pytest 73/73, chaos 25/25.
