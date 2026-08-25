@@ -49,6 +49,10 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
         r = verify(p, exp, declared_sha256=a.get("sha256", ""), prev_sha256=(job.last_good_ckpt or {}).get("sha256", "") if name.endswith((".pt", ".pth", ".ckpt")) else "")
         results.append({"name": name, "ok": r.ok, "reason": r.corrupt_reason, "checks": r.checks, "bytes": r.bytes, "sha256": r.sha256})
         all_ok = all_ok and r.ok
+    # artefak yang DIHARAPKAN (job.expect) tapi tidak dideklarasikan RUN_FIN = hilang (mode #21)
+    declared = {Path(a["path"]).name for a in (fin.artifacts if fin else [])}
+    for name in [k for k in expect_map if "." in k and k not in declared]:
+        results.append({"name": name, "ok": False, "reason": "diharapkan tapi tidak ada di RUN_FIN (artefak tidak mendarat)"}); all_ok = False; missing += 1
     ev = Evidence(incident_id=inc.incident_id, kind="artifact_check", summary=f"{sum(1 for x in results if x['ok'])}/{len(results)} artefak lolos", payload={"results": results})
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
     if all_ok and results:

@@ -31,18 +31,39 @@ def validate_marker(mk: Marker) -> Marker:
                 mk.valid, mk.invalid_reason = False, "tanda tangan tidak cocok"
             else:
                 mk.valid = True
+    elif mk.kind == "RUN_START":
+        mk.valid = bool(mk.run_id); mk.invalid_reason = "" if mk.run_id else "tanpa run_id"
     else:
         mk.valid = True
     return mk
 
 
+def _touch_job(job_id: str, **fields) -> None:
+    """Perbarui ringkasan job dari denyut/marker (run_id, fase, step, waktu denyut) — sumber kebenaran tetap Firestore."""
+    job = db.jobs.get(job_id)
+    if job is None:
+        return
+    changed = False
+    for k, v in fields.items():
+        if v in (None, "") or getattr(job, k) == v:
+            continue
+        if k == "run_id" and job.run_id and job.run_id != v and job.status.value in ("COMPLETE",):
+            continue
+        setattr(job, k, v); changed = True
+    if changed:
+        db.jobs.put(job)
+
+
 def ingest_heartbeat(payload: dict) -> Heartbeat:
     hb = Heartbeat.model_validate(payload)
     db.put_heartbeat(hb)
+    _touch_job(hb.job_id, run_id=hb.run_id, phase=hb.phase, last_step=hb.step, last_heartbeat_at=hb.ts)
     return hb
 
 
 def ingest_marker(payload: dict) -> Marker:
     mk = validate_marker(Marker.model_validate(payload))
     db.put_marker(mk)
+    if mk.kind in ("RUN_START", "RUN_FIN") and mk.valid:
+        _touch_job(mk.job_id, run_id=mk.run_id, phase=mk.phase or None)
     return mk

@@ -17,7 +17,7 @@ cd "$WD/climate-health" && WARDEN_ARTIFACTS="" WARDEN_HMAC="$(curl -sf -H 'Metad
   /usr/local/bin/wrun --job "$JOB" --phase F0 -- bash -c '
     ../venv/bin/python run_pipeline.py --fast --jobs 2 --folds 2 --repeats 1 --optuna 0
     EX=$?
-    cp submissions/smoke/submission_v16d.csv /var/lib/warden/'"$JOB"'/artifacts/pred.csv 2>/dev/null
+    cp submissions/smoke/submission_v16a.csv /var/lib/warden/'"$JOB"'/artifacts/pred.csv || { echo "ARTEFAK TIDAK ADA"; exit 4; }
     python3 - <<PY
 import csv, json
 rows = sum(1 for _ in open("/var/lib/warden/'"$JOB"'/artifacts/pred.csv")) - 1
