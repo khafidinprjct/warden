@@ -217,3 +217,8 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 ## 26 Agu 2026 05:45 WIB — B4 badai preempt; status ceklis
 - B4: aturan `preempt_storm` (≥3 preempt/60 mnt dari operasi GCE nyata — deteksi #31) → langsung relocate (L1), tidak start ke-4; anak tangga berikutnya relocate dengan spot=False (keluar ke on-demand) yang harganya +233 % → ditolak penjaga harga 50 % kecuali kebijakan per-job menaikkannya. Tes 79/79, chaos 25/25.
 - Ceklis: 61 butir → ✅ 55 · ◐ 5 (A4 fase eval live, H5 soak 7 hari s/d 1 Sep, J4 butuh ekspor billing oleh pemilik, K1 audit desktop oleh pemilik, N2 waktu deploy-ke-hidup di project segar) · ☐ 1 (K4 Discord — terakhir, butuh kredensial pemilik).
+
+## 26 Agu 2026 pagi — DIBEKUKAN atas perintah pemilik (fokus pindah ke submisi Lost in Transcription)
+- Posisi beku: ceklis A–N 55/61 ✅ (`docs/CEKLIS-WARDEN.md`), core rev 00021 / ui 00010 melayani, semua health hijau, semua VM TERMINATED, 136 commit di origin/main. Drill hidup #5 lulus penuh (M2/M4). Tenggat lomba 1 Sep 07:00 WIB.
+- Sisa saat dibekukan: H5 soak (otomatis s/d 1 Sep), A4 fase eval live, N2 waktu deploy segar, J4 (ekspor billing — pemilik), K1 (audit desktop — pemilik), K4 Discord + video (terakhir), keputusan 9 disk drill (pemilik).
+- Saat dibangunkan: baca ceklis + jurnal ini; jalankan `python -m chaos.soak --days 7` dan `python -m warden.eval.gold`; pastikan tidak ada revisi baru sebelum drill (`/health` revision).
