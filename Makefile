@@ -16,3 +16,7 @@ smoke: emulators
 
 dev: emulators
 	$(ENV) WARDEN_DEV=1 .venv/bin/uvicorn warden.main:app --host 127.0.0.1 --port 8080 --reload
+
+audit:  ## bandit + pip-audit (Fase 12)
+	$(PY) -m bandit -q -r warden -f txt || true
+	$(PY) -m pip_audit -r requirements.txt --desc off
