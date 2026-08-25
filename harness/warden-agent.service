@@ -1,0 +1,11 @@
+[Unit]
+Description=warden-agent (denyut & mailbox harness Warden)
+After=network-online.target
+[Service]
+EnvironmentFile=/etc/warden/agent.env
+ExecStart=/usr/bin/python3 /opt/warden/warden-agent.py
+Restart=always
+RestartSec=10
+User=root
+[Install]
+WantedBy=multi-user.target

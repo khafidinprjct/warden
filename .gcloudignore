@@ -1,0 +1,8 @@
+.venv/
+venv/
+data/
+tests/
+docs/
+chaos/
+.git/
+*.log

@@ -24,3 +24,11 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - KEPUTUSAN: ID dokumen Firestore untuk ref mesin `zone/name` → `zone__name` (Firestore melarang '/').
 - Uji pembatal ADK (output_schema + agen LLM + runner) LULUS — rancangan §3.3 tetap.
 - Biaya: $0,01 (Gemini).
+
+## 25 Agu 2026 13:50 WIB — Fase 2 (sebagian): harness selesai & teruji lokal; ukuran mesin diputuskan
+- Harness: `wrun` (flock, exit code proses anak via PIPESTATUS, RUN_FIN bertanda tangan HMAC + sha256 artefak), `warden-agent.py` (denyut host 30 s, marker, log→GCS, mailbox, tanda preempt→SIGUSR1), `warden_beat.py`, `install.sh` (+preflight), `startup.sh` (resume sadar fase), unit systemd, `MARKER-SPEC.md`.
+- Uji lokal end-to-end: wrun → agent → core (/ingest HMAC) → Firestore: RUN_FIN valid, exit 0, 1 artefak + sha256, evidence rows; denyut host diterima. LULUS.
+- UJI PEMBATAL ukuran mesin (P12): `run_pipeline.py --fast --jobs 2 --folds 2 --repeats 1 --optuna 0` = 3 mnt 14 dtk, RSS maks **3,2 GB** → e2-medium (4 GB) terlalu sempit → KEPUTUSAN: mesin demo **e2-standard-2** (8 GB; spot ≈ $0,02/jam).
+- `warden-core` terdeploy ke Cloud Run (revisi 00001 Ready, uvicorn hidup di 8080) — URL publik masih 404 dari frontend Google saat dicek pertama; sedang diselidiki (propagasi/IAM invoker).
+- Catatan: hook lokal "gerbang praterbang" memblokir perintah yang memuat teks flag startup-script; berkas ditulis lewat Python. Harness Warden memenuhi tujuan gerbang itu (preflight, marker exit code, denyut, resume, STOP+no-auto-delete).
+- Biaya: ≈ $0 (Cloud Run free tier; Gemini $0,01).

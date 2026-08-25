@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# wrun — pembungkus peluncuran job (rencana §4). Bash + python stdlib. Tanpa pip.
+#   wrun --job <id> [--run-id <rid>] [--phase <p>] [--poweroff-on-success] -- <perintah asli...>
+# Menjamin: flock (bukan pgrep), exit code dari PROSES ANAK, RUN_FIN.json bertanda tangan, artefak+sha256.
+set -o pipefail
+JOB=""; RUN=""; PHASE="run"; POWEROFF=0
+while [ $# -gt 0 ]; do case "$1" in
+  --job) JOB="$2"; shift 2;; --run-id) RUN="$2"; shift 2;; --phase) PHASE="$2"; shift 2;;
+  --poweroff-on-success) POWEROFF=1; shift;; --) shift; break;; *) echo "wrun: argumen tak dikenal $1" >&2; exit 64;; esac; done
+[ -n "$JOB" ] || { echo "wrun: --job wajib" >&2; exit 64; }
+[ $# -gt 0 ] || { echo "wrun: perintah wajib setelah --" >&2; exit 64; }
+RUN="${RUN:-r$(date -u +%Y%m%dT%H%M%S)}"
+DIR="${WARDEN_DIR:-/var/lib/warden}/$JOB"; mkdir -p "$DIR/markers" "$DIR/artifacts"
+LOCK="/run/lock/warden-$JOB.lock"; exec 9>"$LOCK"
+flock -n 9 || { echo "wrun: job $JOB sudah berjalan (flock $LOCK) — tidak meluncurkan yang kedua" >&2; exit 75; }
+export WARDEN_JOB="$JOB" WARDEN_RUN="$RUN" WARDEN_DIR="${WARDEN_DIR:-/var/lib/warden}"
+LOG="$DIR/run.log"; START=$(date -u +%s); BOOT=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo "-")
+echo "{\"job_id\":\"$JOB\",\"run_id\":\"$RUN\",\"phase\":\"$PHASE\",\"ts\":$START,\"boot_id\":\"$BOOT\",\"cmd\":\"$*\"}" > "$DIR/markers/RUN_START.json"
+echo "=== wrun $JOB $RUN phase=$PHASE start=$(date -u -Iseconds) ===" | tee -a "$LOG"
+"$@" 2>&1 | tee -a "$LOG"
+EXIT=${PIPESTATUS[0]}            # exit code proses anak, bukan tee (mode #11)
+END=$(date -u +%s)
+# daftar artefak (file di artifacts/ + yang dideklarasikan lewat WARDEN_ARTIFACTS, dipisah spasi) + sha256
+python3 - "$DIR" "$JOB" "$RUN" "$PHASE" "$EXIT" "$START" "$END" "$BOOT" <<'PY'
+import hashlib, json, os, sys, glob, hmac
+d, job, run, phase, ex, start, end, boot = sys.argv[1:9]
+paths = sorted(set(glob.glob(os.path.join(d, "artifacts", "**", "*"), recursive=True) + os.environ.get("WARDEN_ARTIFACTS", "").split()))
+arts = []
+for p in paths:
+    if os.path.isfile(p):
+        h = hashlib.sha256()
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+        arts.append({"path": p, "bytes": os.path.getsize(p), "sha256": h.hexdigest()})
+        open(p + ".sha256", "w").write(h.hexdigest() + "\n")
+ev = {}
+evf = os.path.join(d, "evidence.json")            # job boleh menulis {rows:..., metrics:...} sendiri
+if os.path.exists(evf):
+    try: ev = json.load(open(evf))
+    except Exception: ev = {"_error": "evidence.json tidak valid"}
+ts = __import__("datetime").datetime.fromtimestamp(int(end), __import__("datetime").timezone.utc).isoformat()
+secret = os.environ.get("WARDEN_HMAC", "")
+sig = hmac.new(secret.encode(), f"{job}|{run}|{ex}|{ts}".encode(), hashlib.sha256).hexdigest() if secret else ""
+fin = {"v": 1, "job_id": job, "run_id": run, "kind": "RUN_FIN", "ts": ts, "exit_code": int(ex), "signal": None,
+       "phase": phase, "boot_id": boot, "started": int(start), "ended": int(end), "duration_s": int(end) - int(start),
+       "artifacts": arts, "evidence": ev, "signature": sig}
+tmp = os.path.join(d, "markers", "RUN_FIN.json.tmp")
+json.dump(fin, open(tmp, "w")); os.replace(tmp, os.path.join(d, "markers", "RUN_FIN.json"))
+print(f"=== wrun selesai exit={ex} artefak={len(arts)} RUN_FIN ditulis ===")
+PY
+echo "EXIT=$EXIT" >> "$LOG"
+if [ "$POWEROFF" = 1 ] && [ "$EXIT" = 0 ]; then sleep 90; sudo poweroff; fi   # 90 dtk: beri agent waktu mengirim RUN_FIN
+exit "$EXIT"
