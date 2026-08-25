@@ -48,3 +48,10 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - Fase 9: `render_loss_curve` (matplotlib dari denyut) + `read_photo` (Gemini 3.5 Flash multimodal). Uji nyata: kurva sintetis dengan NaN & lonjakan grad_norm → Gemini: "lonjakan grad_norm … gradient explosion" (1.169 token masuk, ≈$0,003). Temuan foto/kurva selalu berlabel `source=photo, confidence ≤ 0,6` → tidak memicu aksi otomatis.
 - Fase 10: `chaos/run.py` — 25 skenario memetakan 25 mode kegagalan ke fake GCE + Firestore emulator; **25/25 lulus dalam 3,7 detik**, laporan `chaos/report.json`. Dua bug uji ditemukan & dibetulkan (operator bytes; isolasi subkoleksi denyut antar-skenario).
 - Belum: uji kekacauan HIDUP di GCP (suntikan preempt/korup/yatim di mesin demo) + 3 latihan demo — menunggu job demo pertama tamat.
+
+## 25 Agu 2026 16:00 WIB — Fase 12–14 (sebagian) + job demo nyata hidup
+- Job demo `climate-demo` BERJALAN di `demo-train-1` di bawah `wrun`: denyut produksi menunjukkan fase F3-4, step 97, cpu 64 %, 3 proses — parser log legacy (`=== [Fx] ===`, baris LightGBM) menghasilkan denyut sintetis dari job yang tidak memakai `beat()`. Dua bug startup diperbaiki (boot pertama tidak meluncurkan; workdir belum ada) + alat `infra/set_startup.py` (skrip boot metadata via Compute API — skrip boot tertanam di metadata saat mesin dibuat, bukan diambil dari GCS).
+- Fase 12: verifikasi OIDC sungguhan (`google.oauth2.id_token`; audience = URL layanan; hanya SA scheduler/core + pemilik) — `/tick` tanpa token = 401, dengan token pemilik = 200; rate limit `/ingest` 120/mnt/IP; circuit breaker Gemini (5 gagal berturut → lewati LLM 5 mnt).
+- Fase 13: log terstruktur `warden.heartbeat` tiap tick → metrik log `warden_heartbeat` → alarm Monitoring "absen 10 menit" → email pemilik. Bersama `warden-deadman` (STOP mesin setelah 15 mnt) = dua pengawas luar (P5).
+- Fase 14 (dokumen): `docs/FAILURE-CATALOG.md` (25 mode → detektor → tindakan → uji), `docs/RUNBOOK.md`, `infra/discord_register.py`.
+- Tes: 41 unit/e2e + chaos 25/25. Biaya hari ini: ≈ $0,10 (Gemini) + VM demo ≈ $0,05.
