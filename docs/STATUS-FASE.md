@@ -1,3 +1,5 @@
+> **Superseded 26 Aug 2026:** status of record is now [`CEKLIS-WARDEN.md`](CEKLIS-WARDEN.md) (61 items, A–N). This file is kept as the history of the phase gates.
+
 # Status gerbang Fase 0–14 (diperbarui 25 Agu 2026 15:10 WIB)
 Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/live_toy.log`, Firestore proyek `warden-260825-a1446f`.
 
