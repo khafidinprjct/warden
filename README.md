@@ -1,107 +1,139 @@
 # Warden
 
-**Warden menjaga pekerjaan komputasi panjang — training, evaluasi, pipeline — yang berjalan di mesin sewaan.**
-Dua kalimat yang jadi tulang punggungnya:
+**Warden is an SRE agent for long-running compute jobs — training, evaluation, pipelines — on rented cloud machines.**
+Two sentences carry the whole design:
 
-- **Mesin hidup ≠ training benar.** Status `RUNNING` tidak berarti apa-apa. Yang penting: step bertambah, loss masuk akal, disk cukup, proses cuma satu — dan kalau berhenti, ada yang tahu dalam 5 menit.
-- **Selesai ≠ utuh.** Marker `DONE`, exit code 0, berkas yang "ada" dengan ukuran benar — semuanya pernah berbohong. Yang dipercaya hanya artefak yang *dibuka*.
+- **A live machine ≠ correct training.** `RUNNING` means nothing. What matters: steps advance, loss is finite, disk suffices, exactly one process runs — and if it stops, someone knows within minutes.
+- **Finished ≠ intact.** A `DONE` marker, exit code 0, a file that "exists" at the right size — every one of these has lied to us. Only an artifact that has been *opened* is trusted.
 
-Warden lahir dari empat generasi "babysitter" yang kami tulis sendiri saat melatih model di cloud, dan dari 25 kegagalan yang benar-benar kami bayar (`docs/FAILURE-CATALOG.md`).
+Warden replaces four generations of hand-written "babysitter" scripts and encodes 28 failures we actually paid for (`docs/FAILURE-CATALOG.md`). It runs on Google Cloud and uses Gemini through the Agent Development Kit — but the LLM never holds the button.
 
-## Apa yang dilakukan Warden
+Bahasa Indonesia: `docs/README.id.md`.
 
-| Kemampuan | Cara kerja |
+## What it does
+
+| Capability | How |
 |---|---|
-| Deteksi deterministik | Watcher tiap 2 menit membaca status mesin, denyut harness, marker, dan artefak; aturan **dua-syarat** (sinyal diam + sinyal aktivitas) untuk macet/idle/yatim |
-| Diagnosis semantik | Gemini 3.5 Flash (lewat ADK, skema JSON tetap) membaca log hanya bila teks tak bisa diregex aman; setiap klaim wajib menunjuk nomor baris; **cek silang deterministik** + vonis kedua (3.7 Flash) bila ragu |
-| Verifikasi artefak | `torch.load`, parse CSV/JSONL/NPZ/Parquet, checksum sidecar, ukuran vs ekspektasi, "ukur hanya saat penulis diam"; `VERIFIED` hanya ditulis Warden |
-| Tindakan berkebijakan | Otonomi bertahap per jenis tindakan (L0 amati → L1 minta izin → L2 lakukan lalu lapor → L3 diam), batas laju & biaya, circuit breaker, `dry_run`, blast radius, lease anti-balapan, **delete tidak pernah ada** |
-| Penjaga anggaran | Ledger real-time, ETTR (waktu training efektif ÷ waktu mesin dibayar), yatim/idle → STOP, kill-switch Billing Budget 50/80/100 % |
-| Pengawas luar | `warden-deadman` — layanan terpisah dengan identitas sendiri: kalau Warden berhenti berdenyut 15 menit, ia mematikan mesin |
-| Manusia di HP | Kartu Discord dengan bukti + biaya + tombol Approve/Deny/Always; `/warden freeze` tombol merah global; foto layar dari HP dibaca Gemini |
-| Dashboard | FastAPI + Jinja2 di atas satu stylesheet sistem desain (`warden/ui2/`): Overview *inbox-first* (keputusan yang butuh Anda di atas), Incident = narasi + rel keputusan (Detected → Diagnosed → Approval → Execute → Verify), Jobs, Fleet, Budget/ETTR, Policies, Audit Log, System Health. Waktu disimpan UTC dan dirender di zona browser. Paritas piksel terhadap mockup yang disetujui diukur otomatis (`chaos/ui2_pixel.py`, 0,40 %). |
+| Deterministic detection | The Watcher runs every minute: instance status, harness heartbeats, signed markers, artifacts. Two-signal rules (a silent signal *and* an activity signal) for stuck / idle / orphan, so a busy machine is never mistaken for a dead one. |
+| Semantic diagnosis | Gemini 3.5 Flash via ADK (`LlmAgent` with a fixed `output_schema`) reads logs only when regexes cannot decide safely. Every claim must cite log line numbers; a **deterministic cross-check** verifies the citations and the numbers; Gemini 3.7 Flash gives a second opinion when confidence is low. |
+| Artifact verification | `torch.load`, CSV/JSONL/NPZ/Parquet parsers, sidecar checksums, size vs. expectation, "measure only when the writer is quiet". `VERIFIED` is written by Warden alone. |
+| Policy-governed action | Graduated autonomy per action type (L0 observe → L1 propose → L2 act then report → L3 act silently), rate and cost limits, circuit breaker, `dry_run` for every action, explicit blast radius, per-job lease. **Delete does not exist as an action.** |
+| Budget stewardship | Real-time ledger, ETTR (effective training time ÷ paid machine time), orphan/idle → STOP, Billing Budget kill-switch at 50 / 80 / 100 %. |
+| External watchdog | `warden-deadman` — a separate service with its own identity. If Warden stops heartbeating for 15 minutes, it stops the fleet. |
+| Humans on a phone | Discord cards with evidence, cost and Approve / Deny / Always buttons; `/warden freeze` as the global red button; screenshots from a phone are read by Gemini. |
+| Dashboard | FastAPI + Jinja2 over a single design-system stylesheet: inbox-first Overview, incident pages as a narrative plus a decision rail (Detected → Diagnosed → Approval → Execute → Verify), jobs, fleet, budget, policies, audit log, system health. |
 
-Prinsip yang mengikat semua modul: **LLM tidak pernah memegang tombol**, **bukti = membuka**, **sukses harus berjejak**, **STOP bukan DELETE**, **flock bukan pgrep**, **ledger dulu mesin kemudian** (`plan.md` §1).
+## Architecture
 
-## Arsitektur
+Three services, three identities. Actions never depend on the UI, and the watchdog never shares fate with what it watches.
 
 ```mermaid
 flowchart LR
-  subgraph VM["Mesin (Compute Engine, spot/on-demand)"]
+  subgraph VM["Trust boundary: managed instance · SA warden-vm (write only to gs://…/jobs/{job})"]
     H[harness: wrun · warden-agent · warden.beat]
   end
-  H -- "POST /ingest (HMAC) denyut+marker" --> C
-  H -- "GET /cmd (mailbox)" --> C
-  H -- "log & artefak" --> G[(GCS)]
-  S[Cloud Scheduler] -- "/tick 2 mnt · /steward 10 mnt · /digest" --> C
-  subgraph C["Cloud Run · warden-core"]
-    W[Watcher] --> P["Pipeline insiden: bukti → Gemini 3.5 (ADK, JSON) → cek silang → 3.7 vonis kedua"]
-    P --> K["Kebijakan (murni) → AUTO / MINTA IZIN / TAHAN / TOLAK"]
-    K --> X[Executor: dry_run · lease · audit niat/hasil]
-    V[Verifier artefak] --> K
-    T[Steward: ledger · ETTR · kill-switch]
+  subgraph CORE["Trust boundary: Cloud Run warden-core · SA warden-core (custom role: start/stop/setMetadata, no delete)"]
+    W[Watcher] --> P["Incident pipeline: evidence → Gemini 3.5 (ADK, JSON schema) → cross-check → 3.7 second opinion"]
+    P --> K["Policy engine (pure function) → AUTO / APPROVAL / HOLD / DENY"]
+    K --> X["Executor: dry_run · lease · audit intent/result · requested-vs-observed"]
+    V[Artifact verifier] --> K
+    T["Steward: ledger · ETTR · budget kill-switch"]
   end
-  X -- "start/stop/setMetadata (tanpa delete)" --> GCE[Compute Engine API]
-  C <--> F[(Firestore: fleet · jobs · incidents · decisions · evidence · audit · costs · health)]
-  C -- "kartu + tombol" --> D[Discord]
-  U["Cloud Run · warden-ui (FastAPI + Jinja2)"] <--> F
-  DM["Cloud Run · warden-deadman (SA sendiri)"] -- "watcher basi 15 mnt → STOP mesin" --> GCE
-  B[Billing Budget] -- Pub/Sub --> C
+  subgraph UI["Trust boundary: Cloud Run warden-ui · read Firestore, actions signed to core"]
+    U[Dashboard]
+  end
+  subgraph DM["Trust boundary: Cloud Run warden-deadman · SA warden-deadman (independent)"]
+    D[Watchdog]
+  end
+  H -- "POST /ingest heartbeat+marker (HMAC)" --> W
+  H -- "GET /cmd mailbox (HMAC)" --> X
+  H -- "logs, artifacts, RUN_FIN" --> G[(Cloud Storage)]
+  S["Cloud Scheduler · SA warden-scheduler (OIDC)"] -- "/tick 1 min · /steward 10 min · /digest daily" --> W
+  S -- "/check 5 min" --> D
+  X -- "instances.start / stop / setMetadata" --> GCE[Compute Engine API]
+  D -- "watcher silent 15 min → STOP fleet" --> GCE
+  CORE <--> F[(Firestore: fleet · jobs · incidents · decisions · evidence · audit · costs · health · leases)]
+  U <--> F
+  U -- "approve / deny / freeze (HMAC)" --> X
+  X -- "cards + buttons (Ed25519 verified)" --> DC[Discord]
+  B[Billing Budget] -- "Pub/Sub push (OIDC) + dead-letter" --> T
+  P -- "Vertex AI, location global" --> GEM[Gemini 3.5 Flash · 3.7 Flash]
 ```
 
-Layanan Google Cloud: Cloud Run (3 layanan), Firestore, Pub/Sub, Cloud Scheduler, Secret Manager, Compute Engine, Cloud Storage, Cloud Logging/Monitoring, Billing Budgets. Model: `gemini-3.5-flash` (diagnosis, multimodal), `gemini-3.5-flash-lite`, `gemini-3.7-flash` (vonis kedua) lewat Vertex AI (lokasi `global`) dengan identitas service account — tanpa kunci API di produksi. Framework agen: **Google ADK** (`LlmAgent` + `output_schema`).
+**Google Cloud services:** Cloud Run (3 services), Firestore, Pub/Sub (with dead-letter), Cloud Scheduler, Secret Manager, Compute Engine, Cloud Storage, Cloud Logging/Monitoring (log-based metrics, SLOs, alerts), Billing Budgets, Vertex AI. **Models:** `gemini-3.5-flash` (diagnosis, multimodal), `gemini-3.5-flash-lite` (prefilter), `gemini-3.7-flash` (second opinion), all through Vertex AI with service-account identity — no API keys in production. **Agent framework:** Google ADK (`LlmAgent`, `InMemoryRunner`, schema-constrained output).
 
-## Menjalankan (≈30 menit)
+### Control loop
+1. **Ingest** — the harness posts heartbeats (30 s) and signed markers; the ingest layer stores and never thinks.
+2. **Watcher** (every minute) — provider status + heartbeats + markers + artifacts → deterministic rules → incidents with dedupe keys; writes its own heartbeat.
+3. **Incident pipeline** — the only place an LLM runs: evidence → `Diagnosis` JSON → deterministic cross-check (cited lines must exist, an OOM claim must match an OOM regex or VRAM ≥ 95 %) → policy verdict.
+4. **Executor** — per-job lease, audit *intent*, act through the provider, wait for the operation, compare requested vs. observed, audit *result*. A mismatch opens a new incident.
+5. **Steward** (every 10 minutes) — cost ledger, idle/orphan two-signal detection, runway projection, daily digest.
 
-Prasyarat: `gcloud` login pada akun dengan billing aktif, Python 3.12+, Java 21 (emulator lokal).
+Architecture decision records: `docs/adr/`. Failure catalog: `docs/FAILURE-CATALOG.md`. Observability: `docs/OBSERVABILITY.md`. Security review: `docs/SECURITY-REVIEW.md`. Phase plan and gates: `plan.md`, `docs/STATUS-FASE.md`.
+
+## Harness contract (the machine side)
+Bash + Python standard library only, installed by one script, adopted by replacing a single launch line:
+
+- `wrun <job> -- <original command>` — `flock`, `pipefail`, tee'd log; writes `RUN_START` and, on exit, `RUN_FIN.json` with the **child's exit code**, run id, boot id, artifacts with sha256, evidence numbers and an HMAC signature. Unsigned or exit-less markers are rejected.
+- `warden-agent` (systemd) — heartbeats every 30 s (cpu, gpu, disk, entrypoint processes, log mtime, open writers, ssh sessions, preempt notice), uploads logs and artifacts (one background rsync), polls the command mailbox — no ssh anywhere in the critical path.
+- `warden.beat()` — one call in the training loop: phase, step, loss, lr, grad_norm, checkpoint. Legacy jobs run in log-parser mode; their findings carry a confidence penalty, so destructive actions always ask a human.
+- Preempt notice → `SIGUSR1` → emergency checkpoint; `startup.sh` resumes from the last **intact** checkpoint at the last phase.
+
+Full specification: `harness/MARKER-SPEC.md`.
+
+## Quick start (≈30 minutes on a clean machine)
+Prerequisites: `gcloud` on an account with billing, Python 3.12+, Java 21 (local emulators).
 
 ```bash
 git clone <repo> warden && cd warden
-python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt   # runtime + pytest
-make emulators && make test                # 41 tes unit + end-to-end di emulator
-make smoke                                 # komponen ASLI: emulator + fake GCE + Gemini 3.5 nyata pada log nyata
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+make emulators && make test        # 49 unit / end-to-end tests on the emulator
+make smoke                         # real components: emulator + fake fleet + real Gemini on a real crash log
+python -m chaos.run                # 25 deterministic failure scenarios (25/25)
 ```
 
-Infrastruktur GCP (semua perintah ada di `infra/` dan `docs/JURNAL-KEPUTUSAN.md`):
-1. Project baru + billing + API (`run cloudbuild artifactregistry firestore pubsub secretmanager compute cloudscheduler aiplatform logging monitoring billingbudgets storage`).
-2. Firestore Native, topik `warden-events` + `billing-alerts`, bucket `<project>-warden`, Budget $150 (ambang 25/50/80/100 % → Pub/Sub).
-3. Service account: `warden-core`, `warden-vm`, `warden-scheduler`, `warden-deadman` + role kustom `wardenInstanceOperator` (**tanpa** `compute.instances.delete`).
-4. Secret Manager: `warden-ingest-hmac`, `warden-ui-secret`, (opsional) `discord-*`.
-5. Deploy: `gcloud run deploy warden-core --source .` (Procfile), `warden-ui` (Procfile.ui, `--session-affinity --timeout 3600`), `warden-deadman` (Procfile.deadman, SA sendiri, tanpa akses publik).
-6. Scheduler: `/tick` tiap 2 menit, `/steward` tiap 10 menit, `/digest` harian, deadman `/check` tiap 5 menit (OIDC).
+Google Cloud (commands in `infra/`; every step is recorded in `docs/JURNAL-KEPUTUSAN.md`):
+1. New project + billing + APIs (`run cloudbuild artifactregistry firestore pubsub secretmanager compute cloudscheduler aiplatform logging monitoring billingbudgets storage`).
+2. Firestore Native; topics `warden-events`, `billing-alerts`, `warden-dead-letter`; bucket `<project>-warden`; Budget $150 with thresholds 25/50/80/100 % → Pub/Sub.
+3. Service accounts `warden-core`, `warden-vm`, `warden-scheduler`, `warden-deadman` + custom role `wardenInstanceOperator` (**no** `compute.instances.delete`).
+4. Secret Manager: `warden-ingest-hmac`, `warden-ui-secret`, optional `discord-*`.
+5. Deploy: `gcloud run deploy warden-core --source .` (Procfile), `warden-ui` (Procfile.ui), `warden-deadman` (Procfile.deadman, own SA, no public access).
+6. Scheduler: `/tick` every minute, `/steward` every 10 minutes, `/digest` daily, deadman `/check` every 5 minutes (all OIDC).
 
-Mesin yang dijaga:
+Watch a machine:
 ```bash
 python -m warden.cli job add climate-demo --instance us-central1-a/demo-train-1 --command run_pipeline.py --legacy \
   --expect-json '{"pred.csv": {"columns": ["ID","TargetF1","TargetRAUC"], "rows": 1030, "range01_columns": ["TargetRAUC"]}}'
 WARDEN_CORE_URL=... WARDEN_HMAC=... WARDEN_RESUME_CMD='bash /opt/job_bootstrap.sh' bash infra/vm_create.sh demo-train-1 climate-demo e2-standard-2
 ```
-Mesin yang **sudah ada**: `sudo WARDEN_JOB=<id> WARDEN_CORE_URL=... WARDEN_HMAC=... bash harness/install.sh`, lalu ganti satu baris peluncuran menjadi `wrun --job <id> -- <perintah asli>`. Kontrak lengkap: `harness/MARKER-SPEC.md`.
+An **existing** machine: `sudo WARDEN_JOB=<id> WARDEN_CORE_URL=... WARDEN_HMAC=... bash harness/install.sh`, then change the launch line to `wrun --job <id> -- <original command>`.
 
-## Uji
+## Evidence
+- `make test` — 49 tests: policy matrix, state machine, Watcher rules, end-to-end tick, approvals, verifier, Discord, infrastructure chaos (Gemini down, Discord down, slow Firestore).
+- `make smoke` — real Gemini 3.5 diagnoses a real NaN crash log: category `nan_input`, cited lines 174–175, cross-check passed, cost ≈ $0.01.
+- `python -m chaos.run` — 25 scenarios covering every catalogued failure mode, 25/25.
+- **Live, on real machines** (25 Aug 2026): a Spot preemption triggered with `simulate-maintenance-event` → incident within one tick → automatic START (L2) → resume from the last phase → run COMPLETE and artifacts VERIFIED; measured downtime 348 s. The same test found and fixed three real defects (truncated emergency checkpoint, stale heartbeat overwriting the run id, artifact upload starving the heartbeat) — catalog #26–#28.
+- Dashboard: pixel parity with the approved design mockup 0.40 % (`python -m chaos.ui2_pixel`), every page rendered against production data before deploy.
+- Clean-machine check: clone → venv → tests + chaos in 34 s.
 
-- `make test` — 41 tes: kebijakan (matriks), mesin status, aturan Watcher, tick end-to-end, alur izin, verifier, Discord.
-- `make smoke` — Gemini 3.5 asli mendiagnosis log NaN nyata: kategori `nan_input`, bukti baris 174–175, cek silang lolos, biaya ≈ $0,01.
-- `python -m chaos.run` — 25 skenario kegagalan (fake GCE + emulator), 25/25 lulus.
-- Uji hidup: `docs/DEMO.md` (preempt nyata via `simulate-maintenance-event`, artefak korup via mailbox `inject`, mesin yatim).
+## Security model
+One identity per service; a custom Compute role without delete; IAM *and* code both refuse instances not labelled `warden-managed=true`; HMAC-signed harness traffic with zero-downtime key rotation (`infra/rotate_hmac.py`); Ed25519 for Discord interactions; OIDC for Scheduler and Pub/Sub push; secrets only in Secret Manager; append-only audit with intent and result; global `FREEZE`. `pip-audit`: 0 known vulnerabilities; `bandit`: 0 high. Details and accepted risks: `docs/SECURITY-REVIEW.md`.
 
-## Keamanan
-Identitas per layanan; role kustom tanpa delete; IAM + kode sama-sama menolak mesin tanpa label `warden-managed=true`; HMAC untuk harness; Ed25519 untuk Discord; OIDC untuk Scheduler; rahasia hanya di Secret Manager; audit niat/hasil hanya-tambah; tombol merah `FREEZE`.
+## Observability
+Structured events (`warden.heartbeat`, `warden.incident`, `warden.decision`, `warden.llm`) → 8 log-based metrics → the *Warden — operations* dashboard → three SLOs on a custom service (decision ≤ 30 s at 99 %, detection ≤ 60 s at 90 %, watcher heartbeat in every 5-minute window at 99 %, rolling 7 days) → alerts by e-mail. `docs/OBSERVABILITY.md`.
 
-## Biaya
-Free tier untuk Cloud Run/Firestore/Pub/Sub/Scheduler pada beban ini; Gemini ≈ $0,03 per insiden (batas $2/hari); mesin demo e2-standard-2 spot ≈ $0,02/jam. Rincian: `plan.md` §7.
+## Cost
+Cloud Run, Firestore, Pub/Sub and Scheduler stay in the free tier at this load; Gemini ≈ $0.01–0.03 per incident with a $2/day cap; a demo machine (e2-standard-2 Spot) ≈ $0.02/h. Warden's own ledger is the first line of defence; the Billing Budget is the last.
 
-## Dashboard (UI v2)
-Sistem desain: `docs/mockup-v2/Components.dc.html` (satu skala status Healthy · Degraded · Stale · Failing · Frozen; satu skala insiden Open · Awaiting approval · Executing · Resolved · Escalated · Closed; tiga aktor Warden · Gemini · Operator; tata letak stat card / property list / table row). Setiap halaman hanya memakai komponen itu — tidak ada teks penjelas di layar.
+## Known limitations and deliberate trade-offs
+- Single region; the dashboard has no login (accepted for a judged, time-boxed deployment — the link is shared with judges only).
+- Warden and the watchdog both depend on Firestore; if Firestore is unavailable both are blind (the watchdog still stops the fleet when Warden's heartbeat is absent, which is the safe direction).
+- Detection latency is bounded by the one-minute tick plus provider propagation; heartbeat-only preemptions carry no measured `detect_ms`.
+- Legacy (log-parser) jobs get lower autonomy by design.
+- Hardware silent-data-corruption detection is out of scope (needs a large fleet).
 
-| Overview | Incident | HP |
-|---|---|---|
-| ![](docs/screenshots/ui2/overview.png) | ![](docs/screenshots/ui2/incident_overview.png) | ![](docs/screenshots/ui2/prod_overview_mobile.png) |
+## Repository map
+`warden/` core, policy, watcher, executor, verifier, steward, agents (ADK), concierge (Discord), `ui2/` dashboard · `harness/` machine side · `infra/` GCP scripts · `chaos/` failure scenarios and live tests · `tests/` · `docs/` ADRs, failure catalog, security review, observability, decision journal, design mockups.
 
-Verifikasi: `python -m chaos.ui2_pixel` (render templat vs artboard, jam dibekukan) dan render seluruh halaman terhadap Firestore prod (`docs/screenshots/ui2/`).
-
-## Batasan & peta jalan
-Belum: deteksi silent data corruption perangkat keras (butuh armada besar); promosi otonomi otomatis dari rekam jejak; IAP untuk dashboard. Rencana lengkap 15 fase: `plan.md`.
-
-## Lisensi
+## License
 MIT.
