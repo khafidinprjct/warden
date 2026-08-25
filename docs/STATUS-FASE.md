@@ -16,7 +16,7 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
 | 12 Pengerasan | rate limit, circuit breaker Gemini/provider, IAM, kekacauan infra terkendali | ✅ OIDC push, dead-letter + alert, rotasi HMAC, notifikasi gagal-aman, chaos infra (Gemini/Discord/Firestore), pip-audit 0 / bandit HIGH 0. **IAP/login dashboard tidak dipakai (keputusan pemilik 25 Agu: tautan hanya untuk juri, deployment hanya selama lomba)** |
-| 13 Observability | metrik+alert core basi; SLO 7 hari | ◐ metrik `warden_heartbeat` + alert per-layanan ✓ (terbukti tanpa alarm palsu); dashboard Monitoring + SLO belum; **Slack dicoret (keputusan pemilik 25 Agu)** |
+| 13 Observability | metrik+alert core basi; SLO 7 hari | ◐ **dibangun 25 Agu 22:30**: 4 event terstruktur, 8 metrik log, dashboard "Warden — operations", 3 SLO (keputusan ≤30 s 99 %, deteksi ≤60 s 90 %, watcher tiap 5 mnt 99 %), alarm tick p95/Gemini/DLQ; tick 2 mnt → 1 mnt. Gerbang "SLO terukur 7 hari" genap 1 Sep |
 | 14 Operasi berkelanjutan | 2 job berbeda dipantau 7 hari | ◐ | 2 job (climate-demo, toy-train) dipantau sejak 25 Agu; 7 hari belum genap |
 
 **Uji preempt jujur toy-train:** ✅ lulus 25 Agu 18:1x — lihat jurnal 18:30 (rantai bukti) — setelah START disetujui pemilik.
