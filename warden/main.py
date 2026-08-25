@@ -19,6 +19,7 @@ app = FastAPI(title="warden-core", version="0.1.0")
 
 
 _ALLOWED_SA = {f"warden-scheduler@{settings.project}.iam.gserviceaccount.com", f"warden-core@{settings.project}.iam.gserviceaccount.com"}
+_OWNER = {e.strip() for e in os.getenv("WARDEN_OWNER_EMAILS", "inyongkhafid@gmail.com").split(",")}
 _RATE: dict[str, list[float]] = {}
 
 
@@ -33,10 +34,15 @@ def _oidc_ok(auth: str | None) -> bool:
     try:
         from google.auth.transport import requests as greq
         from google.oauth2 import id_token
-        aud = os.getenv("WARDEN_SELF_URL")
-        info = id_token.verify_oauth2_token(auth.split(" ", 1)[1], greq.Request(), audience=aud) if aud else id_token.verify_oauth2_token(auth.split(" ", 1)[1], greq.Request())
+        tok = auth.split(" ", 1)[1]; aud = os.getenv("WARDEN_SELF_URL")
+        try:
+            info = id_token.verify_oauth2_token(tok, greq.Request(), audience=aud) if aud else id_token.verify_oauth2_token(tok, greq.Request())
+        except ValueError:
+            info = id_token.verify_oauth2_token(tok, greq.Request())      # token manusia (gcloud) punya audience lain
+            if info.get("email", "") not in _OWNER:
+                return False
         email = info.get("email", "")
-        return email in _ALLOWED_SA or email.endswith("@gmail.com") and info.get("email_verified", False)
+        return email in _ALLOWED_SA or (email in _OWNER and info.get("email_verified", False))
     except Exception:
         return False
 
