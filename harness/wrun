@@ -56,5 +56,12 @@ json.dump(fin, open(tmp, "w")); os.replace(tmp, os.path.join(d, "markers", "RUN_
 print(f"=== wrun selesai exit={ex} artefak={len(arts)} RUN_FIN ditulis ===")
 PY
 echo "EXIT=$EXIT" >> "$LOG"
+# artefak WAJIB mendarat sebelum job dianggap selesai (mode #21; preempt nyata 25 Agu memakan jendela unggah agent):
+# unggah artefak + marker ke GCS secara SINKRON di sini, bukan menunggu agent.
+if [ -n "${WARDEN_BUCKET:-}" ] && command -v gcloud >/dev/null 2>&1; then
+  gcloud storage cp -r "$DIR/artifacts/"* "gs://$WARDEN_BUCKET/jobs/$JOB/artifacts/" -q 2>/dev/null || echo "wrun: unggah artefak GAGAL" | tee -a "$LOG"
+  gcloud storage cp "$DIR/markers/RUN_FIN.json" "gs://$WARDEN_BUCKET/jobs/$JOB/markers/RUN_FIN_$RUN.json" -q 2>/dev/null || true
+  echo "wrun: artefak+RUN_FIN diunggah ke gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
+fi
 if [ "$POWEROFF" = 1 ] && [ "$EXIT" = 0 ]; then sleep 90; sudo poweroff; fi   # 90 dtk: beri agent waktu mengirim RUN_FIN
 exit "$EXIT"

@@ -13,7 +13,7 @@ if [ ! -f .deps_ok ]; then
 fi
 gcloud storage cp "gs://$BUCKET/demo/climate_payload.tgz" payload.tgz -q && tar xzf payload.tgz && rm -f payload.tgz
 mkdir -p "/var/lib/warden/$JOB/artifacts"
-cd "$WD/climate-health" && WARDEN_ARTIFACTS="" WARDEN_HMAC="$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/warden-hmac)" \
+cd "$WD/climate-health" && WARDEN_ARTIFACTS="" WARDEN_BUCKET="$BUCKET" WARDEN_HMAC="$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/warden-hmac)" \
   /usr/local/bin/wrun --job "$JOB" --phase F0 -- bash -c '
     ../venv/bin/python run_pipeline.py --fast --jobs 2 --folds 2 --repeats 1 --optuna 0
     EX=$?
