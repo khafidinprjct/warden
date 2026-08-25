@@ -15,7 +15,7 @@
     <div class="cell-2 gap4"><div class="strong s14">{{ d.action_label }} · {{ d.target_short }}</div><div class="sub">Job {{ d.job_id or '—' }} · Autonomy {{ d.autonomy }} · Affects {{ d.radius|lower }}</div></div>
     <div class="cell-2 gap4 text-2"><div>{{ d.why }}</div>
       {% if d.gemini %}<div class="muted" style="display:flex;align-items:center;gap:8px"><span class="actor actor-gemini">Gemini</span>Confidence {{ d.gemini.conf }} · Cross-check {{ 'passed' if d.gemini.passed else 'failed' }}</div>{% else %}<div class="muted"><span class="actor actor-warden">Warden</span> Rule · {{ d.rule }}</div>{% endif %}</div>
-    <div class="num {{ 'crit' if d.expired else 'warn' }}">{% if d.expired %}Expired{% else %}Expires <time data-utc="{{ d.expires_iso }}" data-fmt="rel"></time>{% endif %}</div>
+    <div class="num expires {{ 'crit' if d.expired else 'warn' }}">{% if d.expired %}Expired{% else %}Expires <time data-utc="{{ d.expires_iso }}" data-fmt="rel"></time>{% endif %}</div>
     <div class="actions" style="justify-content:flex-end">
       {% if d.expired %}<button class="btn btn-secondary" data-act="/decisions/{{ d.decision_id }}/reevaluate?who=dashboard" data-key="{{ d.decision_id }}">Re-evaluate</button>
       {% else %}<button class="btn btn-approve" data-act="/decisions/{{ d.decision_id }}/approve?who=dashboard" data-key="{{ d.decision_id }}">Approve</button>{% endif %}
