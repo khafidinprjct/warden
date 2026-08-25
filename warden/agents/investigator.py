@@ -15,7 +15,7 @@ from google.genai import types
 from warden.config import settings
 from warden.store import firestore as db
 
-MAX_TOOL_CALLS = 4
+MAX_TOOL_CALLS = 12   # runaway guard only — the prompt asks the agent to stop as soon as the evidence is sufficient
 _budget: contextvars.ContextVar[dict | None] = contextvars.ContextVar("investigator_budget", default=None)
 
 
@@ -38,15 +38,15 @@ def _log_lines(job_id: str, run_id: str = "") -> list[str]:
 
 
 def get_log_window(job_id: str, start_line: int, end_line: int, run_id: str = "") -> dict:
-    """Return numbered log lines [start_line, end_line] (1-based, inclusive, at most 60 lines) of the job's log; pass run_id to read a specific run's log."""
+    """Return numbered log lines [start_line, end_line] (1-based, inclusive, at most 120 lines) of the job's log; pass run_id to read a specific run's log."""
     if (err := _spend()):
         return err
     lines = _log_lines(job_id, run_id)
-    s = max(1, int(start_line)); e = min(len(lines), int(end_line), s + 59)
+    s = max(1, int(start_line)); e = min(len(lines), int(end_line), s + 119)
     return {"job_id": job_id, "total_lines": len(lines), "lines": [f"{i:5d}| {lines[i - 1][:300]}" for i in range(s, e + 1)]}
 
 
-def search_log(job_id: str, pattern: str, max_hits: int = 12, run_id: str = "") -> dict:
+def search_log(job_id: str, pattern: str, max_hits: int = 20, run_id: str = "") -> dict:
     """Regex search over the job's log (case-insensitive); pass run_id to search a specific run's log. Returns line numbers and text."""
     if (err := _spend()):
         return err
@@ -56,14 +56,14 @@ def search_log(job_id: str, pattern: str, max_hits: int = 12, run_id: str = "") 
     except re.error as e:
         return {"error": f"bad pattern: {e}"}
     hits = [{"line": i + 1, "text": l[:300]} for i, l in enumerate(lines) if rx.search(l)]
-    return {"job_id": job_id, "total_lines": len(lines), "hits": hits[: min(int(max_hits), 12)], "n_hits": len(hits)}
+    return {"job_id": job_id, "total_lines": len(lines), "hits": hits[: min(int(max_hits), 30)], "n_hits": len(hits)}
 
 
-def get_heartbeats(job_id: str, n: int = 20) -> dict:
+def get_heartbeats(job_id: str, n: int = 30) -> dict:
     """Recent heartbeats (oldest first): ts, run_id, phase, step, loss, grad_norm, cpu_pct, gpu_util, disk_avail_gb, synthetic."""
     if (err := _spend()):
         return err
-    hbs = db.recent_heartbeats(job_id, min(int(n), 40))
+    hbs = db.recent_heartbeats(job_id, min(int(n), 80))
     return {"job_id": job_id, "heartbeats": [{"ts": h.ts.isoformat(), "run_id": h.run_id, "phase": h.phase, "step": h.step, "loss": h.loss, "grad_norm": h.grad_norm,
                                               "cpu_pct": h.cpu_pct, "gpu_util": h.gpu_util, "disk_avail_gb": h.disk_avail_gb, "synthetic": h.synthetic} for h in hbs]}
 
@@ -114,7 +114,7 @@ SYSTEM = (
     "You are the investigator of an SRE system for long-running compute jobs. You are given an incident summary and a job id. "
     "Gather the evidence a diagnostician needs, using the read-only tools: widen or search the log around the failure, check heartbeats "
     "(is the step still advancing? loss finite? disk?), check artifacts (did RUN_FIN declare them? sizes sane?), check the instance, and "
-    "check past incidents/postmortems of this job for a repeat pattern. Use at most 4 tool calls; stop as soon as the evidence is sufficient. "
+    "check past incidents/postmortems of this job for a repeat pattern. Use as many tool calls as the evidence requires and stop as soon as it is sufficient (a runaway guard stops you at 12). "
     "Never guess: every claim must cite a tool result (log line numbers, timestamps, byte counts). "
     "Finish with a compact investigation note in English with these headings: Hypotheses (ranked), Evidence (with citations), "
     "Ruled out, Recommended check for the diagnostician."
