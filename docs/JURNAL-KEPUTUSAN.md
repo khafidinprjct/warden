@@ -197,3 +197,8 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Gagal: pipeline mendiagnosis pada tick yang sama saat log run belum mendarat di Storage → `unknown` → notify → RESOLVED (salah: tidak ada tindakan). Harga: ≈$0,01 VM + $0,27 LLM (Investigator 21 tool call, sebagian menjelajah log job lain) + 25 mnt.
 - Ganti: wrun mengunggah log+artefak SEBELUM RUN_FIN terlihat; pipeline membaca log run itu sendiri dan menunggu ≤4 mnt bila kosong; notify pada insiden kritis/unknown → ESCALATED. Tes 77/77. Core rev berikutnya; drill #4 menunggu revisi benar-benar melayani (#30).
 - FAKTA biaya: tanpa batas, satu penyelidikan bisa $0,27. Ini pilihan pemilik (keputusan 26 Agu dini hari); dicatat, tidak diubah.
+
+## 26 Agu 2026 04:35 WIB — Drill hidup #4: perbaikan #32 bekerja (pipeline menunggu log 4 mnt) tapi pembaca log Storage rusak (katalog #33); drill #5
+- FAKTA: log run ada di Storage (1.094 B, traceback OOM), tetapi `download_as_text(errors=...)` ditolak pustaka → semua pembacaan log gagal senyap; health `gcs` merah 25× beruntun tanpa saya lihat. Investigator 11 tool call $0,09 lalu `unknown` → ESCALATED (perilaku #32 benar: tidak lagi RESOLVED palsu).
+- Ganti: decode bytes; tes stub; drill mencetak baris health merah di awal (aturan: health merah = drill tidak sah). Harga: ≈$0,01 VM + $0,09 LLM + 20 mnt.
+- Pelajaran (untuk saya): sistem sudah bicara lewat halaman System; pemantau saya hanya membaca log drill. Tambahkan health ke setiap gerbang hidup.
