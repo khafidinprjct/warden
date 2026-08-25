@@ -115,13 +115,25 @@ def incident_detail(incident_id: str):
             ui.label(f"aturan {inc.rule} · {inc.severity} · job {inc.job_id} · mesin {inc.instance_ref} · dibuat {_t(inc.created_at.isoformat())}").classes("text-sm text-grey")
         hbs = db.recent_heartbeats(inc.job_id, 60) if inc.job_id else []
         if hbs:
+            # job dengan kontrak penuh → step+loss; job legacy (denyut sintetis dari parser log) → cpu%/gpu% host,
+            # jangan gambar step/loss palsu yang datar (temuan audit bingkai video 25 Agu)
+            x = [h.ts.astimezone(WIB).strftime("%H:%M") for h in hbs]
+            kontrak = any((not h.synthetic) and h.loss is not None for h in hbs)
             with ui.card().classes("w-full p-3"):
-                ui.label("Denyut (60 terakhir)").classes("font-semibold")
-                ui.echart({"xAxis": {"type": "category", "data": [h.ts.astimezone(WIB).strftime("%H:%M") for h in hbs]},
-                           "yAxis": [{"type": "value", "name": "step"}, {"type": "value", "name": "loss"}],
-                           "series": [{"type": "line", "data": [h.step or 0 for h in hbs], "name": "step"},
-                                      {"type": "line", "yAxisIndex": 1, "data": [h.loss for h in hbs], "name": "loss"}],
-                           "legend": {}, "grid": {"left": 40, "right": 40, "top": 30, "bottom": 30}}).classes("w-full h-48")
+                if kontrak:
+                    ui.label("Denyut training (60 terakhir): step & loss").classes("font-semibold")
+                    ui.echart({"xAxis": {"type": "category", "data": x},
+                               "yAxis": [{"type": "value", "name": "step"}, {"type": "value", "name": "loss"}],
+                               "series": [{"type": "line", "data": [h.step for h in hbs], "name": "step"},
+                                          {"type": "line", "yAxisIndex": 1, "data": [h.loss for h in hbs], "name": "loss"}],
+                               "legend": {}, "grid": {"left": 40, "right": 40, "top": 30, "bottom": 30}}).classes("w-full h-48")
+                else:
+                    ui.label("Denyut host (60 terakhir): cpu% & gpu% — job legacy, tanpa step/loss dari trainer").classes("font-semibold")
+                    ui.echart({"xAxis": {"type": "category", "data": x},
+                               "yAxis": [{"type": "value", "name": "%", "max": 100}],
+                               "series": [{"type": "line", "data": [h.cpu_pct for h in hbs], "name": "cpu%"},
+                                          {"type": "line", "data": [h.gpu_util for h in hbs], "name": "gpu%"}],
+                               "legend": {}, "grid": {"left": 40, "right": 40, "top": 30, "bottom": 30}}).classes("w-full h-48")
         if inc.diagnosis:
             d = inc.diagnosis; cc = inc.crosscheck or {}
             with ui.card().classes("w-full p-3"):
