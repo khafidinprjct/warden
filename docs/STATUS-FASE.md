@@ -19,6 +19,6 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 13 Observability | metrik+alert core basi; adapter Slack | ◐ | metrik `warden_heartbeat` + alert absence → email; adapter Slack ada, belum end-to-end |
 | 14 Operasi berkelanjutan | 2 job berbeda dipantau 7 hari | ◐ | 2 job (climate-demo, toy-train) dipantau sejak 25 Agu; 7 hari belum genap |
 
-**Uji preempt jujur toy-train (live_toy):** putaran-1 tidak sah (resume pada job tamat selesai seketika); putaran-2 dimulai 14:56 WIB dengan run baru 20.000 langkah, `simulate-maintenance-event` pada step 1250 — hasil: _menunggu_.
+**Uji preempt jujur toy-train (live_toy):** putaran-1 tidak sah (resume pada job tamat selesai seketika); putaran-2 dimulai 14:56 WIB dengan run baru 20.000 langkah, `simulate-maintenance-event` pada step 1250 → `stopped_external` terbuka 15:04, **circuit breaker** (3 aksi otomatis/jam: 2 karantina + 1 notify) menurunkan START ke L1 → menunggu izin manusia (`inc_01M0VZ5C3N5ZEPHTKB4CHK19TP`). Perbaikan: notify tak lagi dihitung (commit, belum deploy).
 
 **Yang hanya bisa dilakukan user:** kredensial Discord (Fase 7), audit UI (Fase 8), rekam video (Fase 11), memilih 2 submisi final Zindi.
