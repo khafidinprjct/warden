@@ -22,9 +22,15 @@ os.makedirs(a.out, exist_ok=True)
 rng = np.random.default_rng(0); X = rng.normal(size=(2000, 20)); w_true = rng.normal(size=20); y = (X @ w_true + rng.normal(scale=0.5, size=2000) > 0).astype(float)
 w = np.zeros(20); step = 0; lr = 0.1
 ck = sorted(glob.glob(os.path.join(a.out, "ckpt_*.npz")))
-if ck:
-    z = np.load(ck[-1]); w, step = z["w"], int(z["step"]); print(f"=== [resume] dari {os.path.basename(ck[-1])} step {step} ===", flush=True)
-else:
+# Resume dari checkpoint UTUH terakhir, bukan yang terbaru (katalog #7/#8): preempt nyata 25 Agu memotong
+# ckpt_001700.npz → np.load EOFError → run gagal. Yang rusak dikarantina (.corrupt), lalu mundur satu.
+resumed = False
+for c in reversed(ck):
+    try:
+        z = np.load(c); w, step = z["w"], int(z["step"]); print(f"=== [resume] dari {os.path.basename(c)} step {step} ===", flush=True); resumed = True; break
+    except Exception as e:  # noqa: BLE001 — checkpoint rusak/terpotong
+        os.replace(c, c + ".corrupt"); print(f"=== [resume] {os.path.basename(c)} RUSAK ({type(e).__name__}) → dikarantina, mundur ===", flush=True)
+if not resumed:
     print("=== [train] mulai dari nol ===", flush=True)
 
 
@@ -38,9 +44,14 @@ def save(tag: str = ""):
 
 
 last_loss = 1.0
-signal.signal(signal.SIGUSR1, lambda *_: (save("(darurat: tanda preempt)"), None))
+# Handler sinyal hanya MENANDAI; simpan dilakukan di loop utama (anti re-entrancy: dua SIGUSR1 beruntun
+# saat save() sedang menulis bisa merusak file — dugaan kuat penyebab ckpt_001700 terpotong).
+preempt = {"flag": False, "saved": False}
+signal.signal(signal.SIGUSR1, lambda *_: preempt.__setitem__("flag", True))
 t0 = time.time()
 while step < a.steps:
+    if preempt["flag"] and not preempt["saved"]:
+        save("(darurat: tanda preempt)"); preempt["saved"] = True
     i = rng.integers(0, 2000, 64); xb, yb = X[i], y[i]
     p = 1 / (1 + np.exp(-xb @ w)); g = xb.T @ (p - yb) / 64; w -= lr * g
     last_loss = float(-np.mean(yb * np.log(p + 1e-9) + (1 - yb) * np.log(1 - p + 1e-9)))

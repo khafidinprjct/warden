@@ -131,10 +131,16 @@ _RX_LGB = re.compile(r"^\[(\d+)\]\s+valid_0's \w+: ([0-9.]+|nan|inf)")   # baris
 def train_stats() -> dict:
     """Utama: train.json dari warden.beat(). Cadangan (mode legacy): parse ekor run.log →
     denyut sintetis (phase dari '=== [Fx] ===', step/loss dari pola umum), ditandai synthetic=True."""
-    p = os.path.join(DIR, "train.json")
+    p = os.path.join(DIR, "train.json"); rs = os.path.join(DIR, "markers", "RUN_START.json")
     if os.path.exists(p):
         try:
             t = json.load(open(p))
+            # train.json milik run LAMA bila RUN_START.json lebih baru → jangan kirim step/loss basi atas nama run baru
+            if os.path.exists(rs) and os.path.getmtime(rs) > os.path.getmtime(p):
+                try: rid = json.load(open(rs)).get("run_id", "")
+                except Exception: rid = ""
+                if rid and rid != t.get("run_id"):
+                    return {"run_id": rid, "phase": t.get("phase")}
             return {k: t.get(k) for k in ("run_id", "phase", "step", "epoch", "loss", "lr", "grad_norm", "step_per_s")}
         except Exception:
             return {}

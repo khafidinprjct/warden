@@ -38,8 +38,14 @@ def validate_marker(mk: Marker) -> Marker:
     return mk
 
 
-def _touch_job(job_id: str, **fields) -> None:
-    """Perbarui ringkasan job dari denyut/marker (run_id, fase, step, waktu denyut) — sumber kebenaran tetap Firestore."""
+def _run_start_ts(job_id: str, run_id: str):
+    mk = db.get_marker(job_id, run_id, "RUN_START") if run_id else None
+    return mk.ts if mk else None
+
+
+def _touch_job(job_id: str, source: str = "marker", **fields) -> None:
+    """Perbarui ringkasan job dari denyut/marker (run_id, fase, step, waktu denyut) — sumber kebenaran tetap Firestore.
+    Denyut BASI tidak boleh memundurkan run_id (insiden 25 Agu: train.json run lama membuat RUN_FIN exit 1 run baru tak terlihat)."""
     job = db.jobs.get(job_id)
     if job is None:
         return
@@ -49,6 +55,10 @@ def _touch_job(job_id: str, **fields) -> None:
             continue
         if k == "run_id" and job.run_id and job.run_id != v and job.status.value in ("COMPLETE",):
             continue
+        if k == "run_id" and source == "heartbeat" and job.run_id and job.run_id != v:
+            cur, new = _run_start_ts(job_id, job.run_id), _run_start_ts(job_id, v)
+            if cur is not None and (new is None or new < cur):
+                return   # seluruh denyut ini milik run lama → abaikan (jangan timpa fase/step run baru)
         setattr(job, k, v); changed = True
     if changed:
         db.jobs.put(job)
@@ -57,7 +67,7 @@ def _touch_job(job_id: str, **fields) -> None:
 def ingest_heartbeat(payload: dict) -> Heartbeat:
     hb = Heartbeat.model_validate(payload)
     db.put_heartbeat(hb)
-    _touch_job(hb.job_id, run_id=hb.run_id, phase=hb.phase, last_step=hb.step, last_heartbeat_at=hb.ts)
+    _touch_job(hb.job_id, source="heartbeat", run_id=hb.run_id, phase=hb.phase, last_step=hb.step, last_heartbeat_at=hb.ts)
     return hb
 
 
