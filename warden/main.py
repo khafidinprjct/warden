@@ -36,7 +36,12 @@ def tick(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
     approvals.expire_stale()
-    return run_tick(notify=_notify)
+    stats = run_tick(notify=_notify)
+    from warden.agents.pipeline import process_diagnosing
+    stats["llm"] = process_diagnosing(notify=_notify)
+    from warden.verifier.run import process_pending
+    stats["verify"] = process_pending(notify=_notify)
+    return stats
 
 
 @app.post("/decisions/{decision_id}/{verb}")
@@ -97,14 +102,36 @@ async def events(req: Request):
     return {"ok": True, "received": data.get("kind", "?")}
 
 
+@app.post("/steward")
+def steward(authorization: str | None = Header(default=None)):
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
+    from warden.steward import ledger
+    out = {"accrue": ledger.accrue(600), "projection": ledger.projection()}
+    db.heartbeat_self("steward", out)
+    return out
+
+
+@app.post("/digest")
+def digest(authorization: str | None = Header(default=None)):
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
+    from warden.steward import ledger
+    text = ledger.digest()
+    _notify(type("I", (), {"incident_id": "digest"})(), None, text)
+    return {"ok": True, "text": text}
+
+
 @app.post("/budget")
 async def budget(req: Request):
     """Billing budget → Pub/Sub → sini. Ambang 0,5/0,8/1,0 (Fase 6 mengaktifkan kill-switch)."""
     msg = (await req.json()).get("message", {})
     data = json.loads(base64.b64decode(msg.get("data", "e30=")).decode() or "{}")
     pct = float(data.get("alertThresholdExceeded", 0) or 0)
-    db.client().collection("policies").document("runtime").set({"budget_pct": pct, "budget_at": now().isoformat()}, merge=True)
-    return {"ok": True, "pct": pct}
+    from warden.steward import ledger
+    out = ledger.budget_kill_switch(pct, notify=_notify)
+    db.client().collection("policies").document("runtime").set({"budget_at": now().isoformat()}, merge=True)
+    return {"ok": True, **out}
 
 
 def _notify(inc, dec, text: str) -> None:

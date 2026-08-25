@@ -186,6 +186,9 @@ def send_markers() -> None:
             _sent_markers.add(name)
 
 
+_uploaded: set[str] = set()
+
+
 def upload_log() -> None:
     if not BUCKET:
         return
@@ -193,6 +196,18 @@ def upload_log() -> None:
     if os.path.exists(logp):
         subprocess.run(["bash", "-c", f"tail -c 262144 '{logp}' | gcloud storage cp - gs://{BUCKET}/jobs/{JOB}/log/tail.log -q"],
                        capture_output=True, timeout=60)
+    # artefak: unggah berkas ≤200 MB yang mtime-nya sudah diam ≥ 60 dtk (ukur saat penulis diam)
+    adir = os.path.join(DIR, "artifacts")
+    if os.path.isdir(adir):
+        for name in os.listdir(adir):
+            fp = os.path.join(adir, name)
+            if not os.path.isfile(fp) or name.endswith((".tmp", ".partial")) or fp in _uploaded:
+                continue
+            if os.path.getsize(fp) > 200 * 1024 * 1024 or time.time() - os.path.getmtime(fp) < 60:
+                continue
+            r = subprocess.run(["gcloud", "storage", "cp", fp, f"gs://{BUCKET}/jobs/{JOB}/artifacts/{name}", "-q"], capture_output=True, timeout=300)
+            if r.returncode == 0:
+                _uploaded.add(fp)
 
 
 def handle_cmd(c: dict) -> None:

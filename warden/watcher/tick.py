@@ -120,6 +120,9 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
     transition(inc, S.TRIAGED, note=f"aturan {f.rule}")
     stats["incidents_new"] += 1
+    if f.suggested_action == "verify":
+        db.incidents.put(inc); stats["incidents_new"] += 0
+        return
     if f.needs_llm:
         # diserahkan ke pipeline LLM (Fase 4): tandai DIAGNOSING, pipeline yang melanjutkan
         transition(inc, S.DIAGNOSING, note="butuh diagnosis LLM"); db.incidents.put(inc)
