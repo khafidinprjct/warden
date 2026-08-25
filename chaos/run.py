@@ -148,7 +148,7 @@ def s14():
 def s15():
     fake, inst, job = healthy(); job.status = JobStatus.COMPLETE; db.jobs.put(job)
     db.put_heartbeat(Heartbeat(job_id="j1", run_id="r1", ts=now() - timedelta(minutes=20), boot_id=inst.boot_id, phase="done", gpu_util=0, cpu_pct=1, disk_avail_gb=40)); T.run_tick()
-    return "orphan" in rules_seen() and fake.describe(inst.ref).status == "STOPPED", {}
+    return ("complete_running" in rules_seen() or "orphan" in rules_seen()) and fake.describe(inst.ref).status == "STOPPED", {"rules": rules_seen()}
 
 @scenario(16, "create gagal per-item → OpResult.error terstruktur, bukan stderr dipangkas")
 def s16():

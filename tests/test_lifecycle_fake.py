@@ -89,3 +89,23 @@ def test_preflight_fail_stops_machine():
     s = T.run_tick()
     inc = [i for i in db.incidents.list(job_id="toy-1") if i.rule == "preflight_fail"]
     assert inc and "torch/cuda" in inc[0].summary and fake.describe(ref).status == "STOPPED"
+
+
+def test_two_jobs_guarded_concurrently_without_interference():
+    """H4: a preempt on job A and a disk problem on job B in the same tick → two independent incidents, two correct actions, nothing crossed."""
+    fake = registry.compute()
+    ra = lifecycle.launch({**SPEC, "job_id": "job-a"}, actor="test"); rb = lifecycle.launch({**SPEC, "job_id": "job-b"}, actor="test")
+    ia, ib = fake.describe(ra["instance_ref"]), fake.describe(rb["instance_ref"])
+    for j, inst in (("job-a", ia), ("job-b", ib)):
+        job = db.jobs.get(j); job.status = JobStatus.RUNNING; job.run_id = "r1"; db.jobs.put(job)
+        for i in range(10):
+            db.put_heartbeat(Heartbeat(job_id=j, run_id="r1", ts=now() - timedelta(minutes=10 - i), boot_id=inst.boot_id, phase="train", step=i * 50, loss=0.4, gpu_util=90, cpu_pct=80,
+                                       disk_avail_gb=(40 if j == "job-a" else 3.0), procs=[{"pid": 7, "ppid": 1, "cmd": "x"}]))
+    T.run_tick()
+    fake.preempt(ia.ref); T.run_tick(); s = T.run_tick()
+    a = [i for i in db.incidents.list(job_id="job-a")]; b = [i for i in db.incidents.list(job_id="job-b")]
+    assert {i.rule for i in a} == {"preempted"} and {i.rule for i in b} == {"disk_low"}
+    assert fake.describe(ia.ref).status == "RUNNING"
+    cmd_b = db.client().collection("cmd").document("job-b").get().to_dict(); assert cmd_b["cmd"] == "clean_disk"
+    assert not db.client().collection("cmd").document("job-a").get().exists
+    assert all(d.job_id == "job-a" for i in a for d in [db.decisions.get(x) for x in i.decision_ids]) and all(d.job_id == "job-b" for i in b for d in [db.decisions.get(x) for x in i.decision_ids])
