@@ -218,7 +218,9 @@ def handle_cmd(c: dict) -> None:
             if p["ppid"] == 1 or not args.get("pid") or p["pid"] == args.get("pid"):
                 os.kill(p["pid"], signal.SIGTERM)
     elif cmd == "resume":
-        subprocess.Popen(["bash", "-c", os.environ.get("WARDEN_RESUME_CMD", "true")], cwd=os.environ.get("WARDEN_WORKDIR", "/"))
+        wd = os.environ.get("WARDEN_WORKDIR", "/"); os.makedirs(wd, exist_ok=True)
+        subprocess.Popen(["bash", "-c", os.environ.get("WARDEN_RESUME_CMD", "true")], cwd=wd,
+                         stdout=open("/var/log/warden-resume.log", "a"), stderr=subprocess.STDOUT)
     elif cmd == "quarantine":
         p = args.get("path", "")
         if p and os.path.exists(p):

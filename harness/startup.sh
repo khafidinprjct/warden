@@ -14,5 +14,5 @@ WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BU
 D="/var/lib/warden/$JOB/markers"
 if [ ! -f "$D/RUN_FIN.json" ] && [ -n "$RESUME" ]; then
   echo "startup: belum ada RUN_FIN ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START ada = lanjut setelah terputus' || echo 'boot pertama')) → $RESUME"
-  (cd "${WORKDIR:-/}" && WARDEN_HMAC="$HMAC" nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
+  mkdir -p "${WORKDIR:-/}"; (cd "${WORKDIR:-/}" && WARDEN_HMAC="$HMAC" nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)
 fi
