@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="crumb"><a href="/incidents">Incidents</a> / {{ inc.ref }}</div>
+<header class="page-head top">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px"><div class="title">{{ inc.title }} on {{ inc.instance.split('/')[-1] if inc.instance else inc.job }}</div><span class="pill pill-{{ inc.state_cls }}">{{ inc.state }}</span><span class="sev sev-{{ inc.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[inc.severity] }}"></span>{{ inc.severity_label }}</span></div>
+    <div class="meta num"><span>Rule <b>{{ inc.rule }}</b></span><span>Job <a href="/jobs">{{ inc.job }}</a></span><span>Instance <b>{{ inc.instance or '—' }}</b></span><span>Opened <b><time data-utc="{{ inc.opened_iso }}"></time></b> · <time data-utc="{{ inc.opened_iso }}" data-fmt="rel"></time></span><span>Cost while open <b>{{ inc.burn }}/h</b></span></div>
+  </div>
+  <div class="actions">{% include "_freeze.html" %}</div>
+</header>
+<nav class="tabs">
+  <a class="tab{% if tab == 'overview' %} active{% endif %}" href="?tab=overview">Overview</a>
+  <a class="tab{% if tab == 'timeline' %} active{% endif %}" href="?tab=timeline">Timeline <span class="n">{{ timeline|length }}</span></a>
+  <a class="tab{% if tab == 'evidence' %} active{% endif %}" href="?tab=evidence">Evidence <span class="n">{{ evidence|length }}</span></a>
+  <a class="tab{% if tab == 'decisions' %} active{% endif %}" href="?tab=decisions">Decisions <span class="n">{{ (pending|length) + (past|length) }}</span></a>
+</nav>
+
+{% if tab == 'overview' %}
+<section class="split">
+  <div class="stack">
+    <div class="card"><div class="card-body">
+      <div class="h" style="font-size:15px;font-weight:600">Summary</div>
+      <div class="s14">{{ summary }}</div>
+      <div class="props">
+        <div class="k">Detected by</div><div class="v">{{ detected_by }}</div>
+        {% if diag %}<div class="k">Diagnosis</div><div class="v"><span class="actor actor-gemini" style="margin-right:6px">Gemini</span>{{ diag.category }}, {{ diag.transient_or_permanent }} · confidence {{ cc.adjusted_confidence if cc.adjusted_confidence is defined else diag.confidence }} · cross-check {{ 'passed' if cc.passed else 'failed' }} · {{ llm }}</div>{% endif %}
+        <div class="k">Proposed action</div><div class="v">{{ proposed }}{% if pending %} · Autonomy {{ pending[0].autonomy }} · {{ pending[0].radius|lower }}{% endif %}</div>
+        {% if inc.burn != '$0.000' %}<div class="k">If left as is</div><div class="v num">{{ daily }} per day</div>{% endif %}
+      </div>
+    </div></div>
+    {% if diag or evidence %}
+    <div class="card">
+      <div class="card-head"><div class="h">Evidence</div></div>
+      {% if diag.evidence_quotes %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">Log excerpt</div><div class="v"><div class="code">{% for q in diag.evidence_quotes %}{{ q }}{% if not loop.last %}
+{% endif %}{% endfor %}</div></div></div></div>{% endif %}
+      {% if cc.checks %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">Cross-check</div><div class="v" style="display:flex;flex-direction:column;gap:4px">{% for c in cc.checks %}<span class="{{ 'ok' if c.ok else 'crit' }}">{{ 'Passed' if c.ok else 'Failed' }} — {{ c.check|replace('_',' ') }}{% if c.note %}: {{ c.note }}{% endif %}</span>{% endfor %}</div></div></div>{% endif %}
+      {% if diag.falsifiable_check %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">How to disprove</div><div class="v">{{ diag.falsifiable_check }}</div></div></div>{% endif %}
+      {% for e in evidence if e.results %}{% set failed = e.results|rejectattr('ok')|list %}<div class="section-row"><div class="props" style="grid-template-columns:150px minmax(0,1fr)"><div class="k">{{ e.kind }}</div><div class="v" style="display:flex;flex-direction:column;gap:4px"><span class="{{ 'ok' if not failed else 'crit' }}">{{ e.results|length - failed|length }} of {{ e.results|length }} artifacts passed</span>{% for r in failed[:12] %}<span class="mono s12 crit">Failed — {{ r.name }} · {{ '{:,}'.format(r.bytes or 0) }} B{% if r.reason %} · {{ r.reason }}{% endif %}</span>{% endfor %}{% if failed|length > 12 %}<span class="muted s12">{{ failed|length - 12 }} more</span>{% endif %}<a class="s12" href="?tab=evidence">All artifacts</a></div></div></div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if chart %}
+    <div class="card">
+      <div class="card-head"><div class="h">{{ 'Training heartbeat' if contract else 'Host heartbeat' }} · last 60</div></div>
+      <svg viewBox="0 0 640 140" role="img" aria-label="{{ chart.label }} over the last 60 heartbeats" style="width:100%;height:160px;padding:8px 12px;box-sizing:border-box">
+        <line x1="40" y1="110" x2="620" y2="110" stroke="#e3e6eb"></line><line x1="40" y1="70" x2="620" y2="70" stroke="#eef0f3"></line><line x1="40" y1="30" x2="620" y2="30" stroke="#eef0f3"></line>
+        <text x="8" y="114" fill="#6b7686" font-size="10">0</text><text x="8" y="74" fill="#6b7686" font-size="10">{{ chart.mid }}</text><text x="8" y="34" fill="#6b7686" font-size="10">{{ chart.max }}</text>
+        <polyline fill="none" stroke="#2f5fd6" stroke-width="2" points="{{ chart.points }}"></polyline>
+        <foreignObject x="40" y="120" width="580" height="20"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;justify-content:space-between;font-size:10px;color:#6b7686"><time data-utc="{{ chart.t0 }}"></time><time data-utc="{{ chart.t1 }}"></time><time data-utc="{{ chart.t2 }}"></time></div></foreignObject>
+      </svg>
+    </div>
+    {% endif %}
+  </div>
+  {% if pending %}{% set d = pending[0] %}{% include "_decision_rail.html" %}
+  {% else %}
+  <aside class="card"><div class="card-head"><div class="h">Decision</div></div>
+    {% for d in past %}<div class="section-row"><div class="props narrow"><div class="k">Action</div><div class="v strong">{{ d.action_label }}</div><div class="k">Outcome</div><div class="v"><span class="pill pill-{{ 'ok' if d.status_raw == 'DONE' else 'crit' if d.status_raw in ('FAILED','EXPIRED') else 'grey' }}">{{ d.status }}</span></div>{% if d.result %}<div class="k">Observed</div><div class="v {{ 'ok' if d.status_raw == 'DONE' else 'crit' }}">{{ d.result.observed or d.result.error or '—' }}</div>{% endif %}{% if d.approved_by %}<div class="k">Approved by</div><div class="v">{{ d.approved_by }}</div>{% endif %}</div>
+      {% if d.status_raw in ('EXPIRED','REJECTED','FAILED') %}<div style="margin-top:10px"><button class="btn btn-secondary" data-act="/decisions/{{ d.decision_id }}/reevaluate?who=dashboard" data-key="{{ d.decision_id }}">Re-evaluate</button></div>{% endif %}</div>
+    {% else %}<div class="empty"><b>No decision recorded</b></div>{% endfor %}
+  </aside>
+  {% endif %}
+</section>
+
+{% elif tab == 'timeline' %}
+<section class="card">
+  <div class="th" style="grid-template-columns:150px 220px minmax(0,1fr) 100px"><div>Time</div><div>Transition</div><div>Note</div><div>Actor</div></div>
+  {% for t in timeline %}<div class="tr" style="grid-template-columns:150px 220px minmax(0,1fr) 100px"><div class="num muted"><time data-utc="{{ t.ts }}" data-fmt="clock"></time></div><div>{{ t.from }} → {{ t.to }}</div><div class="text-2">{{ t.note }}</div><div><span class="actor actor-{{ t.actor|lower }}">{{ t.actor }}</span></div></div>{% endfor %}
+</section>
+
+{% elif tab == 'evidence' %}
+<section class="stack">
+  {% for e in evidence %}<div class="card"><div class="card-head"><div class="h">{{ e.kind }}</div><div class="s12 muted num"><time data-utc="{{ e.created_iso }}" data-fmt="long"></time></div></div><div class="card-body">
+    {% if e.results %}{% for r in e.results %}<span class="mono s12 {{ 'ok' if r.ok else 'crit' }}">{{ 'Passed' if r.ok else 'Failed' }} — {{ r.name }} · {{ '{:,}'.format(r.bytes or 0) }} B{% if r.reason %} · {{ r.reason }}{% endif %}</span>{% endfor %}
+    {% else %}<div>{{ e.summary }}</div>{% if e.rows %}<div class="props">{% for k, v in e.rows %}<div class="k">{{ k }}</div><div class="v mono s12">{{ v }}</div>{% endfor %}</div>{% endif %}{% endif %}
+  </div></div>{% else %}<div class="card"><div class="empty"><b>No evidence attached</b></div></div>{% endfor %}
+</section>
+
+{% else %}
+<section class="stack">
+  {% for d in pending + past %}<div class="card"><div class="card-head"><div class="h">{{ d.action_label }}</div><span class="pill pill-{{ 'warn' if d.status_raw == 'PENDING' else 'ok' if d.status_raw == 'DONE' else 'crit' if d.status_raw in ('FAILED','EXPIRED') else 'grey' }}">{{ d.status }}</span></div><div class="card-body">
+    <div class="props"><div class="k">Verdict</div><div class="v">{{ d.verdict }}</div><div class="k">Autonomy</div><div class="v">{{ d.autonomy }}</div><div class="k">Target</div><div class="v mono">{{ d.target }}</div><div class="k">Affects</div><div class="v">{{ d.radius }}</div><div class="k">Created</div><div class="v num"><time data-utc="{{ d.created_iso }}" data-fmt="long"></time></div>{% if d.expires_iso %}<div class="k">Expires</div><div class="v num"><time data-utc="{{ d.expires_iso }}" data-fmt="long"></time></div>{% endif %}{% if d.approved_by %}<div class="k">Approved by</div><div class="v">{{ d.approved_by }}</div>{% endif %}{% if d.result %}<div class="k">Requested</div><div class="v">{{ d.result.requested }}</div><div class="k">Observed</div><div class="v {{ 'ok' if d.status_raw == 'DONE' else 'crit' }}">{{ d.result.observed or d.result.error or '—' }}</div>{% endif %}</div>
+    {% if d.explain %}<div class="eyebrow">Policy evaluation</div><div class="code">{% for e in d.explain %}{{ e }}{% if not loop.last %}
+{% endif %}{% endfor %}</div>{% endif %}
+    {% if d.plan_rows %}<div class="eyebrow">Execution plan</div><div class="props">{% for k, v in d.plan_rows %}<div class="k">{{ k }}</div><div class="v mono">{{ v }}</div>{% endfor %}</div>{% endif %}
+  </div></div>{% else %}<div class="card"><div class="empty"><b>No decisions</b></div></div>{% endfor %}
+</section>
+{% endif %}
+{% endblock %}

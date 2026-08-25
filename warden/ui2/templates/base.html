@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · Warden</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/static/warden.css">
+</head>
+<body data-refresh="{{ refresh|default(30) }}">
+<div class="layout">
+  <aside class="nav">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2f5fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+      <span>Warden</span>
+    </div>
+    <a class="nav-item{% if page == 'overview' %} active{% endif %}" href="/"><span>Overview</span></a>
+    <a class="nav-item{% if page == 'incidents' %} active{% endif %}" href="/incidents"><span>Incidents</span>{% if n_open %}<span class="count">{{ n_open }}</span>{% endif %}</a>
+    <a class="nav-item{% if page == 'approvals' %} active{% endif %}" href="/approvals"><span>Approvals</span>{% if n_pending %}<span class="badge">{{ n_pending }}</span>{% endif %}</a>
+    <a class="nav-item{% if page == 'jobs' %} active{% endif %}" href="/jobs"><span>Jobs</span></a>
+    <a class="nav-item{% if page == 'fleet' %} active{% endif %}" href="/fleet"><span>Fleet</span></a>
+    <a class="nav-item{% if page == 'budget' %} active{% endif %}" href="/budget"><span>Budget</span></a>
+    <a class="nav-item{% if page == 'policies' %} active{% endif %}" href="/policies"><span>Policies</span></a>
+    <a class="nav-item{% if page == 'audit' %} active{% endif %}" href="/audit"><span>Audit Log</span></a>
+    <div class="nav-foot">
+      <div class="eyebrow">System</div>
+      {% for s in services %}<div class="row"><span>{{ s.name }}</span><span class="health {{ s.cls }}"><span class="dot dot-{{ s.cls }}"></span>{{ s.status }}</span></div>{% endfor %}
+      <a class="s12" href="/system">System health</a>
+    </div>
+  </aside>
+  <main class="main{% if main_class %} {{ main_class }}{% endif %}">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -128,3 +128,11 @@ Pemilik: UI/UX "sangat semrawut dan kotor". Keputusan: hentikan perbaikan inkrem
 
 ## 25 Agu 2026 20:10 WIB — Zona waktu produk: browser pengguna, bukan WIB
 Koreksi pemilik ("kenapa pakai WIB?"): aturan WIB hanya untuk komunikasi ke pemilik; produk internasional tidak boleh memaksa satu zona. Implementasi: simpan/log UTC; dashboard mendeteksi `Intl.DateTimeFormat().resolvedOptions().timeZone` sekali per klien (disimpan di user storage), semua waktu dirender di zona itu dengan label `GMT±h`/`UTC`; zona tetap = pengaturan (belum ada UI-nya). Diverifikasi Playwright dengan 3 zona (Jakarta/Los Angeles/UTC). Mockup v2 diselaraskan. Memori dibatasi: WIB = chat/jurnal, bukan produk.
+
+## 25 Agu 2026 20:45 WIB — UI v2 dibangun dengan Jinja2 + CSS sistem desain; paritas piksel terukur
+**Keputusan pemilik:** setuju mengganti NiceGUI dengan Jinja2; ragu soal presisi per piksel → dibuktikan dengan pengukuran.
+**Koreksi pemilik yang ditaati:** "gunakan GCP bijak" ≠ mengganti komponen asli dengan tiruan → semua render diverifikasi terhadap **Firestore prod, data nyata** (13 halaman/tab HTTP 200, 0 error JS, zona waktu browser, tanpa hscroll di HP). Emulator hanya dipakai tes unit.
+**Bangunan:** `warden/ui2/` — `app.py` (FastAPI, `/act` menandatangani HMAC ke core), `data.py` (read model + kosakata), `templates/` (base, overview, incident 4 tab, incidents, approvals, jobs, fleet, budget, policies, audit, health), `static/warden.css` (satu-satunya stylesheet, token dari lembar sistem desain), `static/app.js` (waktu UTC→zona browser, aksi, penyegaran).
+**Paritas piksel** (`chaos/ui2_pixel.py`: templat dirender dengan data mockup + jam dibekukan, dibanding artboard `docs/mockup-v2/Main.dc.html`, ambang |Δ|>24/255): 5,66 % → 4,51 % → **0,93 %** setelah tiga penyebab ditutup: `box-sizing` (lebar konten 1056 vs 1120 px), kolom waktu (label GMT+7 lebih panjang dari WIB), jarak 4 px sel keputusan. Sisa 0,93 % = anti-aliasing teks ±1 px dan teks usia relatif. Bukti: `docs/screenshots/ui2/pixel_{render,mockup,diff}.png`.
+**Temuan lain:** `data-refresh="0"` memicu reload tanpa henti (string "0" truthy) — diperbaiki; daftar 135 artefak dirangkum menjadi "N of M passed" + yang gagal.
+**Belum:** deploy (menunggu izin; Procfile.ui masih menunjuk NiceGUI).

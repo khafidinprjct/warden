@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-head"><div><div class="title">Incidents</div><div class="s12 muted num">{{ rows|length }} total · {{ n_open }} open</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+<section class="card">
+  <div class="th cols-incidents"><div>Severity</div><div>Incident</div><div>Job</div><div>Status</div><div>Opened</div></div>
+  {% for i in rows %}<div class="tr cols-incidents">
+    <div><span class="sev sev-{{ i.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[i.severity] }}"></span>{{ i.severity_label }}</span></div>
+    <div class="cell-2"><a class="plain" href="/incidents/{{ i.id }}">{{ i.title }}</a><div class="sub">{{ i.sub }}</div></div>
+    <div>{{ i.job }}</div><div><span class="pill pill-{{ i.state_cls }}">{{ i.state }}</span></div><div class="num muted"><time data-utc="{{ i.opened_iso }}" data-rel="1"></time></div>
+  </div>{% else %}<div class="empty"><b>No incidents recorded</b></div>{% endfor %}
+</section>
+{% endblock %}

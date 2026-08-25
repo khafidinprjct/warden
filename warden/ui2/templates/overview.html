@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="title">Overview</div>
+    <div class="s12 muted num">Updated <time data-utc="{{ now_iso }}" data-fmt="long"></time></div>
+  </div>
+  <div class="actions"><span class="select">Last 24 hours</span>{% include "_freeze.html" %}</div>
+</header>
+
+<section class="card">
+  <div class="card-head"><div class="h">Needs your decision</div><div class="s12 muted num">{{ decisions|length }} pending</div></div>
+  {% for d in decisions %}
+  <div class="tr cols-decision">
+    <div class="cell-2 gap4"><div class="strong s14">{{ d.action_label }} · {{ d.target_short }}</div><div class="sub">Job {{ d.job_id or '—' }} · Autonomy {{ d.autonomy }} · Affects {{ d.radius|lower }}</div></div>
+    <div class="cell-2 gap4 text-2"><div>{{ d.why }}</div>
+      {% if d.gemini %}<div class="muted" style="display:flex;align-items:center;gap:8px"><span class="actor actor-gemini">Gemini</span>Confidence {{ d.gemini.conf }} · Cross-check {{ 'passed' if d.gemini.passed else 'failed' }}</div>{% else %}<div class="muted"><span class="actor actor-warden">Warden</span> Rule · {{ d.rule }}</div>{% endif %}</div>
+    <div class="num {{ 'crit' if d.expired else 'warn' }}">{% if d.expired %}Expired{% else %}Expires <time data-utc="{{ d.expires_iso }}" data-fmt="rel"></time>{% endif %}</div>
+    <div class="actions" style="justify-content:flex-end">
+      {% if d.expired %}<button class="btn btn-secondary" data-act="/decisions/{{ d.decision_id }}/reevaluate?who=dashboard" data-key="{{ d.decision_id }}">Re-evaluate</button>
+      {% else %}<button class="btn btn-approve" data-act="/decisions/{{ d.decision_id }}/approve?who=dashboard" data-key="{{ d.decision_id }}">Approve</button>{% endif %}
+      <a class="btn btn-secondary" href="/incidents/{{ d.incident_id }}">Review</a>
+    </div>
+  </div>
+  {% else %}<div class="empty"><b>No pending decisions</b><span>Warden lists decisions here when a policy requires you.</span></div>{% endfor %}
+</section>
+
+<section class="stats">
+  <div class="stat"><div class="k">Open incidents</div><div class="v num">{{ stats.open }}</div><div class="s num">{{ stats.resolved_today }} resolved today</div></div>
+  <div class="stat"><div class="k">Instances running</div><div class="v num">{{ stats.running }} <small>of {{ stats.instances }}</small></div><div class="s num">{{ stats.burn }}/h</div></div>
+  <div class="stat"><div class="k">Spend this month</div><div class="v num">{{ stats.mtd }}</div><div class="bar"><i style="width:{{ stats.cap_pct }}%"></i></div><div class="s num">Budget {{ stats.cap }}</div></div>
+  <div class="stat"><div class="k">Effective training time</div><div class="v num">{% if stats.ettr_pct is not none %}{{ stats.ettr_pct }}%{% else %}—{% endif %}</div><div class="s num">{% if stats.ettr_pct is not none %}{{ stats.eff_h }} h of {{ stats.paid_h }} h paid, 7 days{% endif %}</div></div>
+</section>
+
+<section class="card">
+  <div class="card-head"><div class="h">Open incidents</div><a class="s12" href="/incidents">View all incidents</a></div>
+  <div class="th cols-incidents"><div>Severity</div><div>Incident</div><div>Job</div><div>Status</div><div>Opened</div></div>
+  {% for i in open_rows %}
+  <div class="tr cols-incidents">
+    <div><span class="sev sev-{{ i.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[i.severity] }}"></span>{{ i.severity_label }}</span></div>
+    <div class="cell-2"><a class="plain" href="/incidents/{{ i.id }}">{{ i.title }}</a><div class="sub">{{ i.sub }}</div></div>
+    <div>{{ i.job }}</div>
+    <div><span class="pill pill-{{ i.state_cls }}">{{ i.state }}</span></div>
+    <div class="num muted"><time data-utc="{{ i.opened_iso }}" data-rel="1"></time></div>
+  </div>
+  {% else %}<div class="empty"><b>No open incidents</b></div>{% endfor %}
+</section>
+
+<section class="two">
+  <div class="card">
+    <div class="card-head"><div class="h">Jobs</div><a class="s12" href="/jobs">View all jobs</a></div>
+    {% for j in jobs %}
+    <div class="section-row" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><a class="plain" href="/jobs">{{ j.job_id }}</a><span class="pill pill-{{ j.status_cls }}">{{ j.status }}{% if j.phase %} · {{ j.phase }}{% endif %}</span></div>
+      {% if j.pct is not none %}<div class="progress"><i class="{{ 'done' if j.pct >= 100 else '' }}" style="width:{{ j.pct }}%"></i></div>{% endif %}
+      <div class="num muted" style="display:flex;justify-content:space-between"><span>{{ j.line }}</span><span class="{{ j.hb_cls }}">{{ j.hb_text }}{% if j.hb_iso %} <time data-utc="{{ j.hb_iso }}" data-fmt="rel"></time>{% endif %}</span></div>
+    </div>
+    {% else %}<div class="empty"><b>No jobs registered</b></div>{% endfor %}
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="h">Recent activity</div><a class="s12" href="/audit">Audit log</a></div>
+    {% for a in activity %}
+    <div class="tr cols-activity"><div class="num muted"><time data-utc="{{ a.ts }}"></time></div><div><span class="actor actor-{{ a.cls }}">{{ a.actor }}</span></div><div><a class="plain" style="font-weight:400" href="/incidents/{{ a.inc }}">{{ a.text }}</a></div></div>
+    {% else %}<div class="empty"><b>No activity recorded</b></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

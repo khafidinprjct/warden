@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-head"><div><div class="title">System Health</div><div class="s12 muted num">{{ health|length }} components</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+<section class="card">
+  {% for h in health %}<div class="section-row"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="strong s14">{{ h.name }}</div><span class="pill pill-{{ h.cls }}"><span class="dot dot-{{ h.cls }}"></span>{{ h.status }}</span></div>
+    <div class="props"><div class="k">Last OK</div><div class="v num"><time data-utc="{{ h.last_ok_iso }}" data-fmt="long" data-rel="1"></time></div><div class="k">Consecutive failures</div><div class="v num">{{ h.fails }}</div>{% if h.error %}<div class="k">Last error</div><div class="v mono s12">{{ h.error }}</div>{% endif %}{% if h.stats %}<div class="k">Last run</div><div class="v mono s12">{{ h.stats }}</div>{% endif %}</div></div>
+  {% else %}<div class="empty"><b>No health records</b></div>{% endfor %}
+</section>
+{% endblock %}

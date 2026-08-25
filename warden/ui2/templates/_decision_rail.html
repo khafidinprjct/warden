@@ -1,0 +1,29 @@
+<aside class="card decision">
+  <div class="card-head"><div class="h">Decision</div><div class="num {{ 'crit' if d.expired else 'warn' }}">{% if d.expired %}Expired{% else %}Expires <time data-utc="{{ d.expires_iso }}" data-fmt="rel"></time>{% endif %}</div></div>
+  <div class="section-row">
+    <div class="stepper">
+      {% for s in rail %}
+      <div class="step-rail"><span class="n n-{{ s.cls }}"></span>{% if not loop.last %}<span class="l"></span>{% endif %}</div>
+      <div class="step {{ s.cls }}"><div class="t">{{ s.name }}</div><div class="d">
+        {% if s.name == 'Detected' %}{{ inc.rule }}{% elif s.name == 'Diagnosed' %}{% if diag %}Gemini · cross-check {{ 'passed' if cc.passed else 'failed' }}{% else %}—{% endif %}
+        {% elif s.name == 'Approval required' %}{{ d.explain[-2] if d.explain|length > 1 else 'Policy' }}{% elif s.name == 'Execute' %}{{ d.api or d.action_label }} · {{ d.target_short }}{% else %}{{ d.change }}{% endif %}</div></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="section-row"><div class="props narrow">
+    <div class="k">Action</div><div class="v strong">{{ d.action_label }}</div>
+    <div class="k">Target</div><div class="v mono">{{ d.target }}</div>
+    <div class="k">Change</div><div class="v">{{ d.change }}</div>
+    <div class="k">Affects</div><div class="v">{{ d.radius }}</div>
+    <div class="k">Cost impact</div><div class="v num">{{ d.cost_impact }}</div>
+    <div class="k">Reversible</div><div class="v">{{ d.reversible }}</div>
+  </div></div>
+  <div class="section-row" style="display:flex;flex-direction:column;gap:8px">
+    {% if d.expired %}<button class="btn btn-secondary btn-lg" data-act="/decisions/{{ d.decision_id }}/reevaluate?who=dashboard" data-key="{{ d.decision_id }}">Re-evaluate with current policy</button>
+    {% else %}<button class="btn btn-approve btn-lg" data-act="/decisions/{{ d.decision_id }}/approve?who=dashboard" data-key="{{ d.decision_id }}">Approve and {{ d.verb }} {{ d.target_short }}</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn btn-secondary" data-act="/decisions/{{ d.decision_id }}/deny?who=dashboard" data-key="{{ d.decision_id }}">Deny</button>
+      <button class="btn btn-secondary" data-act="/decisions/{{ d.decision_id }}/always?who=dashboard" data-key="{{ d.decision_id }}">Always for 24 h</button>
+    </div>{% endif %}
+  </div>
+</aside>

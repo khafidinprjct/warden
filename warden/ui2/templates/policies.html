@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-head"><div><div class="title">Policies</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+<section class="card"><div class="card-head"><div class="h">Autonomy by action</div></div>
+  <div class="th cols-policy"><div>Action</div><div>Level</div><div>Limits</div></div>
+  {% for r in rows %}<div class="tr cols-policy"><div>{{ r.action }}</div><div class="{{ r.cls }}">{{ r.level }}</div><div class="muted num">{{ r.limits }}</div></div>{% endfor %}
+</section>
+<section class="two">
+  <div class="card"><div class="card-head"><div class="h">Global caps</div></div><div class="card-body"><div class="props">{% for k, v in pol.global.items() %}<div class="k">{{ k|replace('_',' ')|capitalize }}</div><div class="v num">{{ v }}</div>{% endfor %}</div></div></div>
+  <div class="card"><div class="card-head"><div class="h">Circuit breaker</div></div><div class="card-body"><div class="props">{% for k, v in pol.circuit_breaker.items() %}<div class="k">{{ k|replace('_',' ')|capitalize }}</div><div class="v num">{{ v }}</div>{% endfor %}</div></div></div>
+</section>
+<section class="card"><div class="card-head"><div class="h">Never, by anyone, through Warden</div></div><div class="card-body">{% for h in hard %}<div class="crit">{{ h }}</div>{% endfor %}</div></section>
+{% endblock %}
