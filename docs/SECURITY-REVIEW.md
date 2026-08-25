@@ -14,3 +14,15 @@ Perintah: `make audit` (bandit + pip-audit). Hasil pertama:
 **LOW:** `try/except/pass` di agen = disengaja (agen tidak boleh mati karena satu sensor gagal; kegagalan terlihat sebagai denyut yang tidak bertambah — prinsip P4). `subprocess` tanpa shell dengan argumen list = benar.
 
 **Batas yang diketahui (belum ditutup):** dashboard `warden-ui` belum di balik IAP/OAuth (hanya rahasia sesi + URL tidak dipublikasikan); rotasi HMAC manual; dead-letter Pub/Sub belum dipasang. Ini sisa Fase 12.
+
+## Pembaruan Fase 12 — 25 Agu 2026 21:40 WIB
+| Kontrol | Status | Bukti |
+|---|---|---|
+| Endpoint push Pub/Sub (`/events`, `/budget`) | OIDC wajib (SA `warden-scheduler`, audience = URL core) | `warden/main.py`; langganan `billing-alerts-push`, `warden-events-push` dengan `--push-auth-service-account` |
+| Dead-letter | `warden-dead-letter` (5 percobaan), langganan inspeksi 7 hari, alert Monitoring `warden dead-letter messages` → email | `gcloud pubsub subscriptions list`; policy 9957601327191765404 |
+| Rotasi HMAC harness | tanpa downtime: core menerima secret aktif **atau** sebelumnya (`WARDEN_INGEST_HMAC_SECRET_PREV`) selama masa tenggang; `infra/rotate_hmac.py` (versi baru → core → metadata VM → `--finish`) | `warden/signals/ingest.py::verify` |
+| Notifikasi gagal-aman | Discord/Firestore notifikasi gagal → tindakan tetap jalan, dicatat `health/notify`, `health/discord` | `tick._safe_notify`, `main._notify`; uji `test_infra_chaos.py` |
+| Gemini tidak tersedia | 5× gagal → circuit OPEN 5 mnt, insiden ESCALATED ke manusia (deterministik saja) | `test_infra_chaos.py::test_gemini_failures_open_circuit…` |
+| Firestore lambat | tick tetap selesai < 10 s dan menulis denyut | `test_infra_chaos.py::test_slow_firestore…` |
+| Kanal Slack | dihapus (keputusan pemilik) | `warden/concierge/slack.py` dihapus |
+| **Login dashboard (IAP)** | **BELUM** — Cloud Run IAP butuh layar persetujuan OAuth; API pembuatan brand sudah dimatikan Google (Mar 2026) dan project tanpa organisasi → hanya bisa lewat Console oleh pemilik. IAP sempat diaktifkan → 502 untuk semua → dikembalikan `--no-iap`. Sampai IAP aktif, URL dashboard = rahasia bersama (risiko: siapa pun yang tahu URL bisa Approve/Freeze). | percobaan 25 Agu 21:20; binding `roles/iap.httpsResourceAccessor` untuk pemilik sudah dipasang |
