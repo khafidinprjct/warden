@@ -171,11 +171,14 @@ def send_markers() -> None:
     if not os.path.isdir(mdir):
         return
     for name in sorted(os.listdir(mdir)):
-        if not name.endswith(".json") or name in _sent_markers:
+        if not name.endswith(".json"):
             continue
         try:
             mk = json.load(open(os.path.join(mdir, name)))
         except Exception:
+            continue
+        key = f"{name}:{mk.get('run_id','')}:{int(os.path.getmtime(os.path.join(mdir, name)))}"   # RUN_FIN run baru menimpa nama yang sama → kunci = nama+run+mtime
+        if key in _sent_markers:
             continue
         payload = {"job_id": JOB, "run_id": mk.get("run_id", ""), "kind": mk.get("kind", name.replace(".json", "")),
                    "ts": mk.get("ts") if isinstance(mk.get("ts"), str) else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(mk.get("ts", time.time()))),
@@ -183,7 +186,7 @@ def send_markers() -> None:
                    "boot_id": mk.get("boot_id", ""), "artifacts": mk.get("artifacts", []), "evidence": mk.get("evidence", {}),
                    "signature": mk.get("signature", "")}
         if post("/ingest/marker", payload):
-            _sent_markers.add(name)
+            _sent_markers.add(key)
 
 
 _uploaded: set[str] = set()
