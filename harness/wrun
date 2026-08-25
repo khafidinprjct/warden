@@ -15,7 +15,13 @@ LOCK="/run/lock/warden-$JOB.lock"; exec 9>"$LOCK"
 flock -n 9 || { echo "wrun: job $JOB sudah berjalan (flock $LOCK) — tidak meluncurkan yang kedua" >&2; exit 75; }
 export WARDEN_JOB="$JOB" WARDEN_RUN="$RUN" WARDEN_DIR="${WARDEN_DIR:-/var/lib/warden}"
 LOG="$DIR/run.log"; START=$(date -u +%s); BOOT=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo "-")
-echo "{\"job_id\":\"$JOB\",\"run_id\":\"$RUN\",\"phase\":\"$PHASE\",\"ts\":$START,\"boot_id\":\"$BOOT\",\"cmd\":\"$*\"}" > "$DIR/markers/RUN_START.json"
+python3 - "$DIR" "$JOB" "$RUN" "$PHASE" "$START" "$BOOT" "$*" <<'PY'
+import json, os, sys
+d, job, run, phase, start, boot, cmd = sys.argv[1:8]
+tmp = os.path.join(d, "markers", "RUN_START.json.tmp")
+json.dump({"job_id": job, "run_id": run, "kind": "RUN_START", "phase": phase, "ts": int(start), "boot_id": boot, "cmd": cmd[:500]}, open(tmp, "w"))
+os.replace(tmp, os.path.join(d, "markers", "RUN_START.json"))
+PY
 echo "=== wrun $JOB $RUN phase=$PHASE start=$(date -u -Iseconds) ===" | tee -a "$LOG"
 "$@" 2>&1 | tee -a "$LOG"
 EXIT=${PIPESTATUS[0]}            # exit code proses anak, bukan tee (mode #11)
