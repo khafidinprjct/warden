@@ -195,7 +195,18 @@ def send_markers() -> None:
             _sent_markers.add(key)
 
 
-_uploaded: set[str] = set()
+_sync = {"running": False, "last": 0.0, "fin_mtime": 0.0}
+
+
+def _rsync_artifacts(adir: str) -> None:
+    """Satu proses rsync (bukan cp per file) di thread latar: insiden 25 Agu — 135×cp ≈ 10 mnt menyumbat loop denyut setelah boot."""
+    try:
+        subprocess.run(["gcloud", "storage", "rsync", adir, f"gs://{BUCKET}/jobs/{JOB}/artifacts", "-q",
+                        "-x", r".*\.(tmp|partial|corrupt)$|.*\.corrupt\..*"], capture_output=True, timeout=900)
+    except Exception as e:  # noqa: BLE001
+        log(f"rsync artefak gagal: {e}")
+    finally:
+        _sync["running"] = False; _sync["last"] = time.time()
 
 
 def upload_log() -> None:
@@ -205,19 +216,15 @@ def upload_log() -> None:
     if os.path.exists(logp):
         subprocess.run(["bash", "-c", f"tail -c 262144 '{logp}' | gcloud storage cp - gs://{BUCKET}/jobs/{JOB}/log/tail.log -q"],
                        capture_output=True, timeout=60)
-    # artefak: unggah berkas ≤200 MB yang mtime-nya sudah diam ≥ 60 dtk (ukur saat penulis diam)
-    adir = os.path.join(DIR, "artifacts")
-    if os.path.isdir(adir):
-        for name in os.listdir(adir):
-            fp = os.path.join(adir, name)
-            if not os.path.isfile(fp) or name.endswith((".tmp", ".partial")) or fp in _uploaded:
-                continue
-            fin_ada = os.path.exists(os.path.join(DIR, "markers", "RUN_FIN.json"))
-            if os.path.getsize(fp) > 200 * 1024 * 1024 or (time.time() - os.path.getmtime(fp) < 60 and not fin_ada):
-                continue            # setelah RUN_FIN semua artefak final → unggah segera
-            r = subprocess.run(["gcloud", "storage", "cp", fp, f"gs://{BUCKET}/jobs/{JOB}/artifacts/{name}", "-q"], capture_output=True, timeout=300)
-            if r.returncode == 0:
-                _uploaded.add(fp)
+    # artefak: rsync di thread latar — segera setelah RUN_FIN baru, selain itu paling cepat tiap 5 mnt; loop denyut tidak menunggu
+    adir = os.path.join(DIR, "artifacts"); finp = os.path.join(DIR, "markers", "RUN_FIN.json")
+    if not os.path.isdir(adir) or _sync["running"]:
+        return
+    fin_m = os.path.getmtime(finp) if os.path.exists(finp) else 0.0
+    if fin_m > _sync["fin_mtime"] or time.time() - _sync["last"] > 300:
+        _sync["running"] = True; _sync["fin_mtime"] = fin_m
+        import threading
+        threading.Thread(target=_rsync_artifacts, args=(adir,), daemon=True).start()
 
 
 def handle_cmd(c: dict) -> None:
