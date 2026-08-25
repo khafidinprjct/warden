@@ -14,9 +14,15 @@ Bahasa Indonesia: `docs/README.id.md`.
 
 | Capability | How |
 |---|---|
+| Job lifecycle from a spec | `POST /jobs/launch` / dashboard form / `warden launch spec.yaml`: ledger first, zone chosen around stock-outs and quota, spot VM with STOP-on-preempt and a never-auto-deleted disk, harness installed from metadata; first heartbeat = alive; artifacts verified → final report (spend, ETTR, incidents resolved by Warden vs. by a human) → machine stopped. |
 | Deterministic detection | The Watcher runs every minute: instance status, harness heartbeats, signed markers, artifacts. Two-signal rules (a silent signal *and* an activity signal) for stuck / idle / orphan, so a busy machine is never mistaken for a dead one. |
+| Patrol, not only reaction | Trend rules on the last 30 heartbeats: throughput drop vs. a learned baseline while the machine is busy, gradient spikes, loss plateau, disk-fill projection (acts before the disk is full), VRAM creep. Baselines (step rate, heartbeat interval, checkpoint size) are learned from verified data. |
 | Semantic diagnosis | Gemini 3.5 Flash via ADK (`LlmAgent` with a fixed `output_schema`) reads logs only when regexes cannot decide safely. Every claim must cite log line numbers; a **deterministic cross-check** verifies the citations and the numbers; Gemini 3.7 Flash gives a second opinion when confidence is low. |
 | Artifact verification | `torch.load`, CSV/JSONL/NPZ/Parquet parsers, sidecar checksums, size vs. expectation, "measure only when the writer is quiet". `VERIFIED` is written by Warden alone. |
+| Every recommendation has an executor | start / stop / resume (same, smaller batch, fewer workers, clean) / kill / quarantine / rollback to last good checkpoint with lower lr / clean_disk (local checkpoints already in Storage, hash-verified) / relocate_zone (snapshot → new zone) / change_machine_type / resize_disk. Machine-side actions travel as **signed** mailbox commands; the harness reports what happened. |
+| World-verified recovery loop | After every action the incident is *Verifying*: a new boot, the step advancing, the new run's exit code, disk free space, the harness result. Only the world resolves an incident. If it does not hold, Warden moves to the next hypothesis on a per-category ladder (OOM: batch 0.5 → 0.25 → bigger machine; NaN: rollback + lr 0.5 → two back + lr 0.25 → stop; disk: clean → resize; preempt: start → relocate) and asks a human only when the ladder is exhausted. |
+| Memory that changes decisions | Postmortems (vector-indexed) of the same pattern put the action that worked before at the front of the ladder — this job first, other jobs second — and are cited on the decision. Two human dismissals of the same alarm in 7 days make Warden withhold that action. |
+| Graduated trust | 5 consecutive human approvals without a failure promote an action to automatic for that job; a failed verification demotes it. Every limit that changes a decision is a visible event. Manual mode (`hold`) and per-job policy overrides. |
 | Policy-governed action | Graduated autonomy per action type (L0 observe → L1 propose → L2 act then report → L3 act silently), rate and cost limits, circuit breaker, `dry_run` for every action, explicit blast radius, per-job lease. **Delete does not exist as an action.** |
 | Budget stewardship | Real-time ledger, ETTR (effective training time ÷ paid machine time), orphan/idle → STOP, Billing Budget kill-switch at 50 / 80 / 100 %. |
 | External watchdog | `warden-deadman` — a separate service with its own identity. If Warden stops heartbeating for 15 minutes, it stops the fleet. |
@@ -72,7 +78,8 @@ flowchart LR
 2. **Watcher** (every minute) — provider status + heartbeats + markers + artifacts → deterministic rules → incidents with dedupe keys; writes its own heartbeat.
 3. **Incident pipeline** — the only place an LLM runs: evidence → `Diagnosis` JSON → deterministic cross-check (cited lines must exist, an OOM claim must match an OOM regex or VRAM ≥ 95 %) → policy verdict.
 4. **Executor** — per-job lease, audit *intent*, act through the provider, wait for the operation, compare requested vs. observed, audit *result*. A mismatch opens a new incident.
-5. **Steward** (every 10 minutes) — cost ledger, idle/orphan two-signal detection, runway projection, daily digest.
+5. **Recovery** (every minute) — every `VERIFYING` incident is checked against the world; a failed check moves to the next hypothesis (policy-evaluated, audited) or escalates with the reason.
+6. **Steward** (every 10 minutes) — cost ledger, idle/orphan two-signal detection, runway projection, learned baselines, autonomy promotion/demotion, postmortems, daily digest.
 
 Architecture decision records: `docs/adr/`. Failure catalog: `docs/FAILURE-CATALOG.md`. Observability: `docs/OBSERVABILITY.md`. Security review: `docs/SECURITY-REVIEW.md`. Phase plan and gates: `plan.md`, `docs/STATUS-FASE.md`.
 
@@ -114,8 +121,8 @@ WARDEN_CORE_URL=... WARDEN_HMAC=... WARDEN_RESUME_CMD='bash /opt/job_bootstrap.s
 An **existing** machine: `sudo WARDEN_JOB=<id> WARDEN_CORE_URL=... WARDEN_HMAC=... bash harness/install.sh`, then change the launch line to `wrun --job <id> -- <original command>`.
 
 ## Evidence
-- `make test` — 49 tests: policy matrix, state machine, Watcher rules, end-to-end tick, approvals, verifier, Discord, infrastructure chaos (Gemini down, Discord down, slow Firestore).
-- `make smoke` — real Gemini 3.5 diagnoses a real NaN crash log: category `nan_input`, cited lines 174–175, cross-check passed, cost ≈ $0.01.
+- `make test` — 74 tests: policy matrix, state machine, Watcher rules (incl. trend patrol), end-to-end tick, recovery ladders and world-verification, lifecycle (launch, close-out, budget, preflight, two jobs at once), promotion/demotion, false-positive memory, approvals, verifier, Discord, infrastructure chaos (Gemini down, Discord down, slow Firestore).
+- `python -m warden.eval.gold` — the Diagnostician against 6 **real** failure logs (NaN in LightGBM, ImportError, ModuleNotFoundError, SyntaxError, state_dict mismatch, a subprocess failure whose cause is not in the tail) and 5 realistic ones (CUDA OOM, host OOM exit 137, ENOSPC, connection reset, KeyError): 11/11 correct category and action, 0 fabricated citations, $0.07 per run; scheduled nightly, red health below 0.9.
 - `python -m chaos.run` — 25 scenarios covering every catalogued failure mode, 25/25.
 - **Live, on real machines** (25 Aug 2026): a Spot preemption triggered with `simulate-maintenance-event` → incident within one tick → automatic START (L2) → resume from the last phase → run COMPLETE and artifacts VERIFIED; measured downtime 348 s. The same test found and fixed three real defects (truncated emergency checkpoint, stale heartbeat overwriting the run id, artifact upload starving the heartbeat) — catalog #26–#28.
 - Dashboard: pixel parity with the approved design mockup 0.40 % (`python -m chaos.ui2_pixel`), every page rendered against production data before deploy.
@@ -135,6 +142,8 @@ Cloud Run, Firestore, Pub/Sub and Scheduler stay in the free tier at this load; 
 - Warden and the watchdog both depend on Firestore; if Firestore is unavailable both are blind (the watchdog still stops the fleet when Warden's heartbeat is absent, which is the safe direction).
 - Detection latency is bounded by the one-minute tick plus provider propagation; heartbeat-only preemptions carry no measured `detect_ms`.
 - Legacy (log-parser) jobs get lower autonomy by design.
+- Relocation and machine-type change are proven on the fake provider and by code review of the Compute Engine calls; the live drill (`chaos/live_lifecycle.py`) is the gate that turns that into evidence — see `docs/CEKLIS-WARDEN.md` M2/M4.
+- Discord is wired but not enabled (credentials are the owner's); the dashboard is the human channel.
 - Hardware silent-data-corruption detection is out of scope (needs a large fleet).
 
 ## Repository map
