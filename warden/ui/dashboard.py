@@ -52,7 +52,11 @@ body, .q-page, .q-layout, .q-page-container { background: var(--bg) !important; 
 .w-thaw { background:#d29922 !important; color:#0e1217 !important; font-weight: 700; }
 .w-link { color: var(--text); text-decoration: none; } .w-link:hover { color: var(--accent); }
 a { color: var(--accent); }
+.w-act { grid-template-columns: 70px 104px minmax(0,1fr) 18px; } .w-tl { grid-template-columns: 70px 150px minmax(0,1fr) 90px; }
 @media (max-width: 1023px) { .w-order-first { order: -1; } }
+@media (max-width: 640px) { .w-kpis { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
+@media (max-width: 640px) { .w-act { grid-template-columns: 62px minmax(0,1fr) 18px; } .w-act > :nth-child(2) { grid-column: 2; } .w-act > :nth-child(3) { grid-column: 1 / 3; } .w-act > :nth-child(4) { grid-column: 3; grid-row: 1; }
+  .w-tl { grid-template-columns: 62px minmax(0,1fr); } .w-tl > :nth-child(3), .w-tl > :nth-child(4) { grid-column: 1 / 3; } }
 </style>
 """
 
@@ -222,7 +226,7 @@ def shell(title: str, path: str, data: dict | None = None):
     frozen = data["frozen"] if data else is_frozen()
     pending = data["pending"] if data else [d for d in db.decisions.list(limit=100) if _s(d.status) == "PENDING" and _s(d.verdict) == "NEED_APPROVAL"]
     health = data["health"] if data else [d.to_dict() | {"src": d.id} for d in db.client().collection("health").stream()]
-    drawer = ui.left_drawer(value=True, bordered=False).props("show-if-above width=216").classes("w-nav")
+    drawer = ui.left_drawer(value=None, bordered=False).props("show-if-above width=216").classes("w-nav")
     with drawer:
         with ui.column().classes("w-full gap-0 p-2 h-full"):
             with ui.row().classes("items-center gap-2 px-2 pb-3 no-wrap"):
@@ -254,9 +258,9 @@ def shell(title: str, path: str, data: dict | None = None):
         with ui.row().classes("items-center gap-2 no-wrap"):
             if frozen:
                 tag("FROZEN · all actions at L0", "crit")
-                ui.button("Thaw", on_click=lambda: act("/freeze", b"freeze", on="false", who="dashboard")).props("dense no-caps").classes("w-thaw px-3")
+                ui.button("Thaw", on_click=lambda: act("/freeze", b"freeze", on="false", who="dashboard")).props("dense no-caps unelevated color=amber-8 text-color=black").classes("px-3 font-bold")
             else:
-                ui.button("FREEZE", icon="pause_circle", on_click=lambda: act("/freeze", b"freeze", on="true", who="dashboard")).props("dense no-caps").classes("w-freeze px-3").tooltip("Stop every autonomous action immediately")
+                ui.button("FREEZE", icon="pause_circle", on_click=lambda: act("/freeze", b"freeze", on="true", who="dashboard")).props("dense no-caps unelevated color=red-9").classes("px-3 font-bold").tooltip("Stop every autonomous action immediately")
 
 
 def card_head(title: str, right: str = ""):
@@ -279,6 +283,7 @@ def hb_status(h) -> tuple[str, str]:
 
 
 def chart_opts(hbs, contract: bool) -> dict:
+    hbs = sorted(hbs, key=lambda h: h.ts)
     x = [wib(h.ts, "%H:%M") for h in hbs]
     if contract:
         series = [{"type": "line", "data": [h.step for h in hbs], "name": "step", "lineStyle": {"color": "#7cc4ff"}, "itemStyle": {"color": "#7cc4ff"}, "symbol": "none"},
@@ -332,20 +337,20 @@ def approval_card(dec, inc, compact: bool = False):
         if plan:
             ui.html('<div class="w-lbl">DRY-RUN · WHAT WILL HAPPEN</div><div class="w-code mono">' + json.dumps(plan, ensure_ascii=False, indent=1)[:900] + "</div>")
         if expired:
-            ui.button("Re-evaluate with current context", on_click=lambda _, i=did: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps").classes("w-btn-ghost w-full").style("height:44px")
+            ui.button("Re-evaluate with current context", on_click=lambda _, i=did: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps unelevated color=blue-grey-9").classes("w-full").style("height:44px")
         else:
             with ui.element("div").classes("grid grid-cols-3 gap-2"):
-                ui.button("Approve", on_click=lambda _, i=did: act(f"/decisions/{i}/approve", i.encode(), who="dashboard")).props("no-caps").classes("w-btn-ok").style("height:44px")
-                ui.button("Deny", on_click=lambda _, i=did: act(f"/decisions/{i}/deny", i.encode(), who="dashboard")).props("no-caps").classes("w-btn-ghost").style("height:44px")
-                ui.button("Always 24h", on_click=lambda _, i=did: act(f"/decisions/{i}/always", i.encode(), who="dashboard")).props("no-caps").classes("w-btn-ghost").style("height:44px").tooltip("Approve, and run this action at L2 for this job for the next 24 hours")
+                ui.button("Approve", on_click=lambda _, i=did: act(f"/decisions/{i}/approve", i.encode(), who="dashboard")).props("no-caps unelevated color=green-8").classes("font-bold").style("height:44px")
+                ui.button("Deny", on_click=lambda _, i=did: act(f"/decisions/{i}/deny", i.encode(), who="dashboard")).props("no-caps unelevated color=blue-grey-9").style("height:44px")
+                ui.button("Always 24h", on_click=lambda _, i=did: act(f"/decisions/{i}/always", i.encode(), who="dashboard")).props("no-caps unelevated color=blue-grey-9").style("height:44px").tooltip("Approve, and run this action at L2 for this job for the next 24 hours")
 
 
 def incident_row(inc):
     with ui.element("div").classes("w-row px-3 py-2 grid gap-2 items-center cursor-pointer").style("grid-template-columns: 76px minmax(0,1fr) auto").on("click", lambda _, i=inc.incident_id: ui.navigate.to(f"/incidents/{i}")):
         tag(inc.severity.upper(), sev_kind(inc.severity))
         with ui.column().classes("gap-0 min-w-0"):
-            ui.label(f"{inc.rule} · {inc.job_id or inc.instance_ref}").classes("font-semibold text-sm truncate")
-            ui.label(f"{wib(inc.created_at, '%H:%M')} · {rel(inc.created_at)} · burn {usd(inc.cost_burning_usd_per_hour, 3)}/h · LLM {usd(inc.llm_cost_usd, 3)}").classes("text-xs w-muted truncate")
+            ui.label(f"{inc.rule} · {inc.job_id or inc.instance_ref}").classes("font-semibold text-sm truncate w-full")
+            ui.label(f"{wib(inc.created_at, '%H:%M')} · {rel(inc.created_at)} · burn {usd(inc.cost_burning_usd_per_hour, 3)}/h · LLM {usd(inc.llm_cost_usd, 3)}").classes("text-xs w-muted truncate w-full")
         tag(_s(inc.state), state_kind(_s(inc.state)))
 
 
@@ -417,7 +422,7 @@ def overview():
     soonest = min((d.expires_at for d in pending if d.expires_at), default=None)
     inst_by_job = {i.job_id: i for i in insts if i.job_id}
     with ui.column().classes("w-full gap-4 p-4"):
-        with ui.element("div").classes("grid gap-3 w-full").style("grid-template-columns: repeat(auto-fit, minmax(165px, 1fr))"):
+        with ui.element("div").classes("grid gap-3 w-full w-kpis").style("grid-template-columns: repeat(auto-fit, minmax(165px, 1fr))"):
             kpi("JOBS WATCHED", str(len(jobs)), f"{sum(1 for j in jobs if _s(j.status) == 'RUNNING')} running · {sum(1 for j in jobs if _s(j.status) == 'COMPLETE')} complete")
             kpi("MACHINES UP", f"{len(running)}<span style='font-size:14px;color:var(--dim)'>/{len(insts)}</span>", "Compute Engine · label warden-managed")
             kpi("OPEN INCIDENTS", str(len(open_incs)), f"{len(resolved_today)} resolved today", "w-warn" if open_incs else "")
@@ -433,12 +438,12 @@ def overview():
                 if not evs:
                     ui.label("No activity yet.").classes("w-dim p-4 text-sm")
                 for e in evs:
-                    with ui.element("div").classes("w-row px-3 py-2 grid gap-2 items-start cursor-pointer").style("grid-template-columns: 70px 100px minmax(0,1fr) 18px").on("click", lambda _, i=e["inc"]: ui.navigate.to(f"/incidents/{i}")):
+                    with ui.element("div").classes("w-row w-act px-3 py-2 grid gap-2 items-start cursor-pointer").on("click", lambda _, i=e["inc"]: ui.navigate.to(f"/incidents/{i}")):
                         ui.html(f'<div class="num text-xs w-muted">{wib(e["ts"])}<br><span class="w-dim">{rel(e["ts"])}</span></div>')
                         tag(e["label"], e["kind"])
                         with ui.column().classes("gap-0 min-w-0"):
-                            ui.label(e["title"]).classes("text-sm font-semibold truncate")
-                            ui.label(e["detail"]).classes("text-xs w-muted")
+                            ui.label(e["title"]).classes("text-sm font-semibold truncate w-full")
+                            ui.label(e["detail"]).classes("text-xs w-muted w-full")
                         ui.html('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle>%s</svg>'
                                 % (("#3fb950", '<path d="M8 12l3 3 5-6"></path>') if e["ok"] else ("#f85149", '<path d="M9 9l6 6M15 9l-6 6"></path>')))
             with ui.column().classes("gap-3 w-order-first w-full"):
@@ -487,7 +492,7 @@ def overview():
                                  ("RUNWAY", f"{proj['runway_days']} d" if proj["runway_days"] else "∞ · no burn")):
                         ui.html(f'<div><div class="w-lbl">{k}</div><div class="num text-lg font-semibold">{v}</div></div>')
                 ui.label("kill-switch at 50 / 80 / 100 % of cap").classes("text-xs w-dim")
-                ui.button("Run steward sweep now", on_click=lambda: (notify_result(core("/steward")), ui.timer(0.9, ui.navigate.reload, once=True))).props("no-caps dense").classes("w-btn-ghost")
+                ui.button("Run steward sweep now", on_click=lambda: (notify_result(core("/steward")), ui.timer(0.9, ui.navigate.reload, once=True))).props("no-caps dense unelevated color=blue-grey-9")
             cost_chart(proj)
         ui.label("every action leaves an audit entry · delete is not an action · STOP, never DELETE").classes("text-xs w-dim")
     auto_reload()
@@ -625,11 +630,11 @@ def incident_detail(incident_id: str):
                     if dec.result:
                         ui.label(f"requested {dec.result.get('requested')} → observed {dec.result.get('observed') or dec.result.get('error')}").classes("text-xs " + ("w-ok" if _s(dec.status) == "DONE" else "w-crit"))
                     if _s(dec.status) in ("EXPIRED", "REJECTED", "FAILED"):
-                        ui.button("Re-evaluate with current context", on_click=lambda _, i=dec.decision_id: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps dense").classes("w-btn-ghost")
+                        ui.button("Re-evaluate with current context", on_click=lambda _, i=dec.decision_id: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps dense unelevated color=blue-grey-9")
         with ui.element("div").classes("w-card w-full"):
             card_head("Timeline", f"{len(inc.timeline)} steps")
             for t in inc.timeline:
-                with ui.element("div").classes("w-row px-3 py-2 grid gap-2 items-start text-xs").style("grid-template-columns: 70px 150px minmax(0,1fr) 90px"):
+                with ui.element("div").classes("w-row w-tl px-3 py-2 grid gap-2 items-start text-xs"):
                     ui.html(f'<div class="num w-muted">{wib(t.get("ts"))}<br><span class="w-dim">{rel(t.get("ts"))}</span></div>')
                     ui.label(f"{_s(t.get('from', ''))} → {_s(t.get('to', ''))}").classes("num")
                     ui.label(t.get("note", "")).classes("w-muted")
@@ -656,7 +661,7 @@ def approvals_page():
                         with ui.column().classes("gap-0 min-w-0"):
                             ui.link(f"{d.action} · {d.job_id or '—'} · {_s(d.status)}", f"/incidents/{d.incident_id}").classes("text-sm font-semibold w-link")
                             ui.label(f"{when(d.created_at)} · {_s(d.autonomy)} · {(d.explain[-1] if d.explain else '')[:90]}").classes("text-xs w-muted truncate")
-                        ui.button("Re-evaluate", on_click=lambda _, i=d.decision_id: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps dense").classes("w-btn-ghost")
+                        ui.button("Re-evaluate", on_click=lambda _, i=d.decision_id: act(f"/decisions/{i}/reevaluate", i.encode(), who="dashboard")).props("no-caps dense unelevated color=blue-grey-9")
         ov = [x.to_dict() | {"id": x.id} for x in db.client().collection("policy_overrides").stream()]
         with ui.element("div").classes("w-card w-full"):
             card_head("Active overrides · Always 24h", str(len(ov)))
@@ -697,7 +702,7 @@ def budget():
     shell("Budget & ETTR", "/budget", data)
     p = data["proj"]
     with ui.column().classes("w-full gap-3 p-4"):
-        with ui.element("div").classes("grid gap-3 w-full").style("grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))"):
+        with ui.element("div").classes("grid gap-3 w-full w-kpis").style("grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))"):
             kpi("TODAY", usd(p["today_usd"]), "compute + LLM · ledger")
             kpi("MONTH TO DATE", usd(p["month_to_date_usd"]), f"cap {usd(p['cap_usd'], 0)} · {100 * p['month_to_date_usd'] / max(p['cap_usd'], 1):.1f} %")
             kpi("BURN NOW", f"{usd(p['burn_usd_per_hour'], 3)}/h", "running managed machines")
@@ -714,7 +719,7 @@ def budget():
                     ui.label(f"{j.job_id} · {_s(j.status)} · spent {usd(j.spent_usd, 3)}").classes("text-sm truncate")
                     ui.label(f"{e['ettr']:.2f}" if e.get("ettr") is not None else "—").classes("num font-semibold")
                     ui.label(f"{e.get('effective_h', '—')} h effective ÷ {e.get('paid_h', '—')} h paid" if e.get("ettr") is not None else str(e.get("note", ""))).classes("text-xs w-muted num truncate")
-        ui.button("Run steward sweep now", on_click=lambda: (notify_result(core("/steward")), ui.timer(0.9, ui.navigate.reload, once=True))).props("no-caps").classes("w-btn-ghost")
+        ui.button("Run steward sweep now", on_click=lambda: (notify_result(core("/steward")), ui.timer(0.9, ui.navigate.reload, once=True))).props("no-caps unelevated color=blue-grey-9")
     auto_reload()
 
 

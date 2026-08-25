@@ -19,6 +19,9 @@ def seed():
     for coll in ("fleet", "jobs", "incidents", "decisions", "evidence", "audit", "markers", "leases", "runs", "notifications", "policies", "policy_overrides", "health", "costs"):
         for d in db.client().collection(coll).limit(300).stream():
             d.reference.delete()
+    for jid in ("toy-train", "climate-demo"):
+        for d in db.client().collection("runs").document(jid).collection("heartbeats").limit(500).stream():
+            d.reference.delete()
     fake = registry.compute(); inst = fake.add("demo-train-2")
     job = Job(job_id="toy-train", instance_ref=inst.ref, status=JobStatus.COMPLETE, legacy=True, phase="export", run_id="r20260825T105835"); db.jobs.put(job); inst.job_id = "toy-train"
     j2 = Job(job_id="climate-demo", instance_ref="", status=JobStatus.RUNNING, phase="F3-4", run_id="r20260825T073658", legacy=True); db.jobs.put(j2)
