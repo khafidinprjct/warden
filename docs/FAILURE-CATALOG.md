@@ -47,3 +47,8 @@ Semua pernah terjadi pada kami (harga = yang benar-benar dibayar). Kolom "uji" =
 - **Symptom:** two real Spot preemptions in 4 minutes (us-central1-a) opened a `stopped_external` incident; after the restart was preempted again the ladder had nothing left and escalated — the `preempted` ladder would have offered `relocate_zone`.
 - **Cause:** `zoneOperations.list` with `targetLink : "<name>"` returned no operations; the substring filter does not match on that field.
 - **Fix:** filter by `operationType` only and match the target suffix in code; verified against the real operations of that VM (two events found).
+
+## #32 · Diagnosed before the evidence landed (26 Aug 2026, live drill #3)
+- **Symptom:** a textbook CUDA-OOM run (`exit=1`, traceback in the log) was diagnosed `unknown` → notify → **RESOLVED**; nothing was done.
+- **Cause:** the agent posted `RUN_FIN` 8 s after the run ended; the pipeline diagnosed on the same tick with an empty log tail (the per-run log was still being uploaded by `wrun`). The Investigator even wrote "log sync delay" as hypothesis #2 — and then wandered through other jobs' logs (21 tool calls, $0.27). A notify with an empty ladder was treated as resolution.
+- **Fix:** (1) `wrun` uploads the run log and artifacts **before** `RUN_FIN.json` becomes visible; (2) the pipeline reads the run's own log and defers up to 4 minutes while it is empty and the marker is fresh; (3) a notification on a critical / `unknown` / needs-human incident **escalates** instead of resolving.

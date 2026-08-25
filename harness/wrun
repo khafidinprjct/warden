@@ -55,19 +55,21 @@ sig = hmac.new(secret.encode(), f"{job}|{run}|{ex}|{ts}".encode(), hashlib.sha25
 fin = {"v": 1, "job_id": job, "run_id": run, "kind": "RUN_FIN", "ts": ts, "exit_code": int(ex), "signal": None,
        "phase": phase, "boot_id": boot, "started": int(start), "ended": int(end), "duration_s": int(end) - int(start),
        "artifacts": arts, "evidence": ev, "signature": sig}
-tmp = os.path.join(d, "markers", "RUN_FIN.json.tmp")
-json.dump(fin, open(tmp, "w")); os.replace(tmp, os.path.join(d, "markers", "RUN_FIN.json"))
-print(f"=== wrun selesai exit={ex} artefak={len(arts)} RUN_FIN ditulis ===")
+tmp = os.path.join(d, "markers", "RUN_FIN.json.pending")     # becomes RUN_FIN.json only after the log and artifacts have landed in Storage
+json.dump(fin, open(tmp, "w"))
+print(f"=== wrun selesai exit={ex} artefak={len(arts)} RUN_FIN disiapkan ===")
 PY
 echo "EXIT=$EXIT" >> "$LOG"
 # artefak WAJIB mendarat sebelum job dianggap selesai (mode #21; preempt nyata 25 Agu memakan jendela unggah agent):
 # unggah artefak + marker ke GCS secara SINKRON di sini, bukan menunggu agent.
 if [ -n "${WARDEN_BUCKET:-}" ] && command -v gcloud >/dev/null 2>&1; then
   gcloud storage cp -r "$DIR/artifacts/"* "gs://$WARDEN_BUCKET/jobs/$JOB/artifacts/" -q 2>/dev/null || echo "wrun: unggah artefak GAGAL" | tee -a "$LOG"
-  gcloud storage cp "$DIR/markers/RUN_FIN.json" "gs://$WARDEN_BUCKET/jobs/$JOB/markers/RUN_FIN_$RUN.json" -q 2>/dev/null || true
-  # log per run id: bukti run yang gagal tidak tertimpa run berikutnya (Investigator membaca log/<run_id>.log)
+  # log per run id FIRST: the Diagnostician must find the evidence in Storage the moment the marker appears (catalog #32)
   tail -c 1048576 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/$RUN.log" -q 2>/dev/null || echo "wrun: unggah log per run GAGAL" | tee -a "$LOG"
-  echo "wrun: artefak+RUN_FIN diunggah ke gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
+  tail -c 262144 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/tail.log" -q 2>/dev/null || true
+  gcloud storage cp "$DIR/markers/RUN_FIN.json.pending" "gs://$WARDEN_BUCKET/jobs/$JOB/markers/RUN_FIN_$RUN.json" -q 2>/dev/null || true
+  echo "wrun: log+artefak+RUN_FIN diunggah ke gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
 fi
+mv -f "$DIR/markers/RUN_FIN.json.pending" "$DIR/markers/RUN_FIN.json"   # now the agent may report the run as finished
 if [ "$POWEROFF" = 1 ] && [ "$EXIT" = 0 ]; then sleep 90; sudo poweroff; fi   # 90 dtk: beri agent waktu mengirim RUN_FIN
 exit "$EXIT"

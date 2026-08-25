@@ -145,3 +145,19 @@ def test_every_action_has_a_dry_run_plan():
         dec = Decision(job_id="j1", action=a, params={"instance_ref": inst.ref, "path": "x", "ckpt": "ckpt_1.npz"})
         plan = ex.dry_run(dec, fake)
         assert plan["ok"], (a, plan)
+
+
+def test_notify_on_critical_or_unknown_escalates_not_resolves():
+    from warden.core.models import Action, Decision, Incident, IncidentState as S
+    from warden.core.state_machine import transition
+    from warden.providers.base import OpResult
+    inc = Incident(job_id="j1", rule="run_fin_nonzero", severity="critical", summary="exit 1", diagnosis={"category": "unknown", "needs_human": True})
+    transition(inc, S.TRIAGED); transition(inc, S.DECIDED); transition(inc, S.EXECUTING); db.incidents.put(inc)
+    dec = Decision(job_id="j1", incident_id=inc.incident_id, action=Action.NOTIFY); db.decisions.put(dec)
+    recovery.after_execute(inc, dec, OpResult(True, "notify", observed="sent"))
+    assert inc.state == S.ESCALATED and "human" in inc.timeline[-1]["note"]
+    info = Incident(job_id="j1", rule="budget_80", severity="warning", summary="80%")
+    transition(info, S.TRIAGED); transition(info, S.DECIDED); transition(info, S.EXECUTING); db.incidents.put(info)
+    dec2 = Decision(job_id="j1", incident_id=info.incident_id, action=Action.NOTIFY); db.decisions.put(dec2)
+    recovery.after_execute(info, dec2, OpResult(True, "notify", observed="sent"))
+    assert info.state == S.RESOLVED

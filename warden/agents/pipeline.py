@@ -84,7 +84,15 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
     for inc in db.incidents.list(state="DIAGNOSING", limit=max_n):
         job = db.jobs.get(inc.job_id) if inc.job_id else None
         inst = compute().describe(inc.instance_ref) if inc.instance_ref else None
-        lines = read_log_tail(inc.job_id)
+        fin = db.get_marker(inc.job_id, job.run_id, "RUN_FIN") if job and job.run_id else None
+        lines = read_log_tail(inc.job_id, run_id=(fin.run_id if fin else (job.run_id if job else "")))
+        # measure only when the writer is quiet (P3): the marker arrives seconds before the log lands in Storage — diagnosing an
+        # empty log produced "unknown" on a textbook OOM (live drill #3, catalog #32). Wait up to 4 minutes for the evidence.
+        if not lines and fin and (now() - fin.ts).total_seconds() < 240:
+            if not any("waiting for the run log" in t.get("note", "") for t in inc.timeline[-3:]):
+                inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": "waiting for the run log to land in Storage before diagnosing", "actor": "warden"})
+                db.incidents.put(inc)
+            continue
         findings = [{"rule": inc.rule, "summary": inc.summary}] + [db.evidence.get(e).payload for e in inc.evidence_ids if db.evidence.get(e)]
         hbsum = _hb_summary(inc.job_id)
         memories, mem_best = _memory_context(inc.job_id, inc.rule, inc.summary)

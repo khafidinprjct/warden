@@ -243,7 +243,9 @@ def after_execute(inc, dec: Decision, r, notify=None) -> None:
     inc.verify = spec_for(dec, inst, job)
     transition(inc, S.VERIFYING, note=f"{dec.action.value}: {r.observed or 'done'} — verifying until {inc.verify['deadline'][11:16]} UTC")
     if dec.action == Action.NOTIFY:
-        transition(inc, S.RESOLVED if not inc.ladder else S.ESCALATED, note="notified" if not inc.ladder else "notified; remaining hypotheses need a human")
+        needs_human = bool(inc.ladder) or inc.severity == "critical" or bool((inc.diagnosis or {}).get("needs_human")) or (inc.diagnosis or {}).get("category") == "unknown"
+        transition(inc, S.ESCALATED if needs_human else S.RESOLVED,
+                   note="notified; a human is needed" + (" — remaining hypotheses: " + ", ".join(r["action"] for r in inc.ladder) if inc.ladder else "") if needs_human else "notified")
     db.decisions.put(dec); db.incidents.put(inc)
     _event(inc, "verifying", action=dec.action.value, deadline=inc.verify.get("deadline"))
 
