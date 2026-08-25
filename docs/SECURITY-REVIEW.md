@@ -34,4 +34,4 @@ Perintah: `make audit` (bandit + pip-audit). Hasil pertama:
 - **Launch metadata** carries the ingest secret to the machine (as before via `vm_create.sh`); metadata is readable by anyone with `compute.instances.get` on the project. Mitigation unchanged: rotation with grace (`infra/rotate_hmac.py`); planned: Secret Manager access from the VM service account instead of metadata.
 - **Harness kills by process group** with SIGTERM then SIGKILL after 20 s; only processes matching the job entrypoint (`WARDEN_ENTRY`) are targeted.
 - **Verification deadlines** are policy (`recovery.verify_deadline_minutes`); an action that never confirms escalates instead of being assumed done.
-- Residual: IAM condition on the core SA (name prefix `warden-`) is the next item (I2).
+- **IAM condition applied (26 Aug):** `wardenInstanceOperator` is bound to the core SA only for instances named `warden-*` (`resource.name.extract("/instances/{name}").startsWith("warden-")`; non-instance resources unaffected). Negative test: 403 on `demo-train-1`; positive: label written on `warden-live-1923-oom`. The owner account holds `serviceAccountTokenCreator` on the core SA for such tests.

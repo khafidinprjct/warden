@@ -67,7 +67,7 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 
 ## I. Security & credentials
 - ✅ I1 Separate SAs, minimal roles, OIDC push, HMAC ingest, Secret Manager.
-- ☐ I2 IAM condition limiting the core SA to Warden machines (negative test).
+- ✅ I2 IAM condition on the core SA: instances must be named `warden-*` (`infra/iam_condition.sh`). Proven 26 Aug by impersonation: add-labels on `demo-train-1` → 403; on `warden-live-1923-oom` → label written; project-level list still works; Warden's compute health stayed green.
 - ✅ I3 Mailbox commands signed by core and verified by the harness; harness reports results.
 - ✅ I4 Security review updated for D2–D8 (docs/SECURITY-REVIEW.md, 26 Aug).
 

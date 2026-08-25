@@ -208,3 +208,8 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Fase 2 (jalur operator, kebijakan sama): relocate_zone L1 → approve → stop+snapshot+disk+instance baru zona c (154 dtk), lama TERMINATED tidak dihapus, verifikasi boot baru+step maju ✔; change_machine_type L1 → e2-small RUNNING (77 dtk) ✔; clean_disk L2 otomatis → harness hapus 3 ckpt yang md5-nya cocok Storage ✔; stop L2 ✔.
 - Harga total 5 drill: ≈$0,06 VM + ≈$0,6 LLM + 3,5 jam. Lima cacat nyata ditemukan & ditutup (#29–#33) — nol di antaranya tertangkap fake/unit.
 - Semua VM drill STOPPED (tidak dihapus). Bukti: chaos/live_lifecycle_report.json, Firestore reports/live-1923-oom.
+
+## 26 Agu 2026 05:25 WIB — I2 diterapkan dan dibuktikan
+- Binding `wardenInstanceOperator` untuk SA core kini bersyarat: hanya instance bernama `warden-*`. Uji impersonasi: `add-labels demo-train-1` → 403 (negatif ✔), `add-labels warden-live-1923-oom` → label tertulis (positif ✔), `instances list` tetap jalan, health compute_api Warden tetap hijau. Akun pemilik diberi serviceAccountTokenCreator pada SA core untuk uji semacam ini.
+- Konsekuensi: VM lama `demo-train-1/2` tidak lagi bisa disentuh Warden (memang pensiun). VM buatan tangan harus bernama `warden-*` + label managed.
+- CATATAN BIAYA untuk pemilik: 9 VM drill/demo TERMINATED menyisakan 9 disk 20 GB pd-balanced ≈ $0,08/GB-bulan → ≈ $14/bulan + 1 snapshot. Menghapus = keputusan pemilik (aturan STOP≠DELETE); saya tidak menghapus apa pun.
