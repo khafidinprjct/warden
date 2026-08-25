@@ -13,6 +13,9 @@ def _reset():
     registry._fake = None; T._prev_status.clear()
     for coll in ("fleet", "jobs", "incidents", "decisions", "evidence", "audit", "markers", "leases", "runs", "notifications", "policies"):
         for d in db.client().collection(coll).limit(300).stream():
+            if coll == "runs":
+                for h in d.reference.collection("heartbeats").limit(500).stream():
+                    h.reference.delete()
             d.reference.delete()
 
 
@@ -31,5 +34,8 @@ def test_freeze_then_approve_flow():
     dec = [d for d in db.decisions.list(status="PENDING") if d.verdict == "NEED_APPROVAL"][0]
     r = approvals.approve(dec.decision_id, "khaf"); assert r["ok"], r
     assert fake.describe(inst.ref).status == "STOPPED"
-    inc = db.incidents.get(dec.incident_id); assert inc.state == IncidentState.RESOLVED
+    inc = db.incidents.get(dec.incident_id); assert inc.state == IncidentState.VERIFYING
+    from warden.executor import recovery
+    assert recovery.process_verifying()["resolved"] == 1          # fake: stop is immediate → world confirms
+    assert db.incidents.get(dec.incident_id).state == IncidentState.RESOLVED
     assert any(a.to_dict()["actor"] == "human:khaf" for a in db.client().collection("audit").stream())

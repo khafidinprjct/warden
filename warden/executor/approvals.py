@@ -24,8 +24,8 @@ def approve(decision_id: str, who: str) -> dict:
     r = ex.execute(dec, compute(), actor=f"human:{who}")
     dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED; db.decisions.put(dec)
     if inc:
-        transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
-        transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="requested vs observed match" if r.ok else r.error)
+        from warden.executor import recovery
+        recovery.after_execute(inc, dec, r)     # VERIFYING with a world-check (or next hypothesis if the call itself failed)
         db.incidents.put(inc)
     return {"ok": r.ok, "observed": r.observed, "error": r.error, "decision_id": decision_id}
 
@@ -109,8 +109,8 @@ def reevaluate(decision_id: str, who: str) -> dict:
         r = ex.execute(new, compute(), actor=f"human:{who}")
         new.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED; db.decisions.put(new)
         if inc:
-            inc.state = S.RESOLVED if r.ok else S.ESCALATED
-            inc.timeline.append({"ts": now().isoformat(), "from": "EXECUTING", "to": str(inc.state), "note": r.observed or r.error, "actor": "warden"})
+            from warden.executor import recovery
+            recovery.after_execute(inc, new, r)
             db.incidents.put(inc)
         return {"ok": r.ok, "observed": r.observed, "error": r.error, "decision_id": new.decision_id, "verdict": str(new.verdict)}
     if inc:

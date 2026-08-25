@@ -73,6 +73,8 @@ def tick(authorization: str | None = Header(default=None)):
     stats["llm"] = process_diagnosing(notify=_notify)
     from warden.verifier.run import process_pending
     stats["verify"] = process_pending(notify=_notify)
+    from warden.executor.recovery import process_verifying
+    stats["recovery"] = process_verifying(notify=_notify)
     return stats
 
 
@@ -134,6 +136,19 @@ async def ingest_marker(req: Request, x_warden_signature: str | None = Header(de
         raise HTTPException(401, "HMAC salah")
     mk = ing.ingest_marker(json.loads(body))
     return {"ok": True, "valid": mk.valid, "reason": mk.invalid_reason}
+
+
+@app.post("/ingest/cmd_result")
+async def ingest_cmd_result(req: Request, x_warden_signature: str | None = Header(default=None)):
+    """The harness reports what happened to a mailbox command (nonce, ok, detail, freed_bytes…) — the verifier reads it."""
+    body = await req.body()
+    if not ing.verify(body, x_warden_signature or ""):
+        raise HTTPException(401, "HMAC salah")
+    res = json.loads(body)
+    db.cmd_result_put(str(res.get("job_id", "")), res)
+    db.audit(__import__("warden.core.models", fromlist=["AuditEntry"]).AuditEntry(actor="harness", phase="result", action=str(res.get("cmd", "")), target=str(res.get("job_id", "")),
+             decision_id=str(res.get("decision_id", "")), after={k: v for k, v in res.items() if k not in ("job_id", "cmd", "decision_id")}, ok=bool(res.get("ok")), error=str(res.get("detail", "") if not res.get("ok") else "")))
+    return {"ok": True}
 
 
 @app.get("/cmd/{job_id}")

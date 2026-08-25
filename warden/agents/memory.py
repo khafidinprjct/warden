@@ -26,6 +26,7 @@ def compose(inc, decs: list) -> dict:
     """Ten-line postmortem, deterministic: symptom, evidence, diagnosis, action, outcome, cost, lesson."""
     d = inc.diagnosis or {}; cc = inc.crosscheck or {}
     actions = [{"action": _s(x.action), "verdict": _s(x.verdict), "autonomy": _s(x.autonomy), "status": _s(x.status),
+                "params": {k: v for k, v in (x.params or {}).items() if k not in ("instance_ref", "run_id", "reason", "new_instance_ref")},
                 "observed": (x.result or {}).get("observed", ""), "error": (x.result or {}).get("error", ""), "by": x.approved_by} for x in decs]
     ok = _s(inc.state) in ("RESOLVED", "CLOSED")
     lesson = d.get("falsifiable_check") or (f"{inc.rule}: handled by rule without LLM" if not d else "")
@@ -35,6 +36,7 @@ def compose(inc, decs: list) -> dict:
             f"Actions: {', '.join(f'{a['action']}={a['status']}' for a in actions) or 'none'}. Outcome: {_s(inc.state)}. "
             f"LLM cost ${inc.llm_cost_usd:.3f}. Lesson: {lesson}")
     return {"incident_id": inc.incident_id, "job_id": inc.job_id, "instance_ref": inc.instance_ref, "rule": inc.rule, "severity": inc.severity,
+            "attempts": inc.attempt, "verified": (inc.verify or {}).get("result", ""), "memory_ref": inc.memory_ref,
             "category": d.get("category"), "outcome": _s(inc.state), "ok": ok, "actions": actions, "evidence": evidence, "lesson": lesson,
             "llm_cost_usd": inc.llm_cost_usd, "opened_at": inc.created_at.isoformat(), "closed_at": inc.updated_at.isoformat(),
             "duration_s": int((inc.updated_at - inc.created_at).total_seconds()), "text": text, "created_at": now().isoformat()}

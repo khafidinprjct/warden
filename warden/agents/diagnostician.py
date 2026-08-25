@@ -18,7 +18,12 @@ SYSTEM = (
     "Diagnose ONLY from the evidence provided. Every claim must point to evidence_lines (line numbers in log_tail) "
     "and evidence_quotes must be exact quotes of those lines. Distinguish the process that RAN OUT of memory from the frame "
     "that CONSUMED it (culprit_frame). If the evidence is insufficient, use category=unknown and needs_human=true — never guess. "
-    "recommended_action only from the allowed list; no destructive action (delete/overwrite). "
+    "recommended_action only from the allowed list; no destructive action (delete/overwrite). Warden executes it and VERIFIES the "
+    "outcome; if the world does not change as your falsifiable_check predicts, Warden moves to the next hypothesis on its own. "
+    "action_params conventions: resume_smaller_batch {batch_scale: 0.5}, resume_fewer_workers {workers_scale: 0.5}, "
+    "rollback_last_good {lr_scale: 0.5, back: 1}, change_machine_type {machine_type: '<type>'} or {mode: 'bigger'}, "
+    "resize_disk {grow_pct: 50}, relocate_zone {target_zone: '<zone>'} (optional). remembered_incidents in deterministic_findings "
+    "are past postmortems of similar cases: prefer an action that resolved the same pattern before and say so in human_summary. "
     "human_summary: English, ≤280 characters, mention the cost when it is present in job_card. "
     "falsifiable_check: one sentence of the form 'if this diagnosis is right, after action X the number Y changes'."
 )

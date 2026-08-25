@@ -54,6 +54,7 @@ BLAST = {
     Action.RESIZE_DISK: BlastRadius.BUDGET,
     Action.KILL_PROCESS: BlastRadius.THIS_RUN,
     Action.CHANGE_MACHINE_TYPE: BlastRadius.BUDGET,
+    Action.CLEAN_DISK: BlastRadius.ARTIFACTS,
 }
 
 

@@ -31,12 +31,19 @@ class Transience(StrEnum):
 
 
 class Recommended(StrEnum):
-    resume_same = "resume_same"
-    resume_smaller_batch = "resume_smaller_batch"
-    restart_clean = "restart_clean"
-    stop = "stop"
+    resume_same = "resume_same"                    # transient failure: run the same command again from the last VERIFIED checkpoint
+    resume_smaller_batch = "resume_smaller_batch"  # GPU OOM: action_params {"batch_scale": 0.5}
+    resume_fewer_workers = "resume_fewer_workers"  # host OOM: action_params {"workers_scale": 0.5}
+    restart_clean = "restart_clean"                # corrupted local state: fresh run (old artifacts archived, not deleted)
+    rollback_last_good = "rollback_last_good"      # divergence: resume from an older intact checkpoint, action_params {"lr_scale": 0.5, "back": 1}
+    kill_and_resume = "kill_and_resume"            # hung / duplicate process
+    clean_disk = "clean_disk"                      # disk full: remove local checkpoints that already live in Storage
+    resize_disk = "resize_disk"                    # disk full and nothing to clean: action_params {"grow_pct": 50}
+    relocate_zone = "relocate_zone"                # zone stock-out
+    change_machine_type = "change_machine_type"    # needs more memory/CPU: action_params {"machine_type": "..."} or {"mode": "bigger"}
+    stop = "stop"                                  # permanent failure: stop the machine to stop the spend
     escalate = "escalate"
-    patch_suggest = "patch_suggest"
+    patch_suggest = "patch_suggest"                # permanent failure with a concrete code/config fix: machine is stopped, fix goes to the human
     noop = "noop"
 
 

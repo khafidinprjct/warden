@@ -145,3 +145,32 @@ def cost_add(day: str, field: str, usd: float, resource: str = "") -> None:
 def cost_today() -> dict[str, Any]:
     d = client().collection("costs").document(now().strftime("%Y-%m-%d")).get()
     return d.to_dict() if d.exists else {}
+
+
+def mailbox_post(job_id: str, cmd: str, args: dict[str, Any], decision_id: str = "", signer=None) -> dict[str, Any]:
+    """One pending command per job (the harness polls GET /cmd/<job>). Signed so the agent can reject forged commands."""
+    from warden.core.models import new_id
+    doc = {"cmd": cmd, "args": args, "decision_id": decision_id, "ts": now().isoformat(), "nonce": new_id("cmd")}
+    doc["sig"] = signer(doc) if signer else ""
+    client().collection("cmd").document(job_id).set(doc)
+    return doc
+
+
+def cmd_result_put(job_id: str, res: dict[str, Any]) -> None:
+    client().collection("cmd_results").document(f"{job_id}:{res.get('nonce', 'x')}").set({**res, "received_at": now().isoformat()})
+
+
+def cmd_result_get(job_id: str, nonce: str) -> dict[str, Any] | None:
+    d = client().collection("cmd_results").document(f"{job_id}:{nonce}").get()
+    return d.to_dict() if d.exists else None
+
+
+def stockout_mark(zone: str, machine_type: str, error: str = "") -> None:
+    client().collection("stockouts").document(f"{zone}:{machine_type}").set({"zone": zone, "machine_type": machine_type, "error": error[:200], "ts": now().isoformat()})
+
+
+def stockout_recent(zone: str, machine_type: str, minutes: int = 30) -> bool:
+    d = client().collection("stockouts").document(f"{zone}:{machine_type}").get()
+    if not d.exists:
+        return False
+    return (now() - datetime.fromisoformat(d.to_dict()["ts"])) < timedelta(minutes=minutes)

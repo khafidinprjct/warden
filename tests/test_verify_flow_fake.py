@@ -14,6 +14,9 @@ def _reset():
     registry._fake = None; T._prev_status.clear()
     for coll in ("fleet", "jobs", "incidents", "decisions", "evidence", "audit", "markers", "leases", "runs", "notifications", "policies"):
         for d in db.client().collection(coll).limit(300).stream():
+            if coll == "runs":
+                for h in d.reference.collection("heartbeats").limit(500).stream():
+                    h.reference.delete()
             d.reference.delete()
 
 
@@ -56,4 +59,5 @@ def test_fin_ok_but_corrupt_is_rejected(tmp_path, monkeypatch):
     assert db.jobs.get("jc").status == JobStatus.FINISHED_UNVERIFIED
     inc = [i for i in db.incidents.list(job_id="jc") if i.rule == "artifact_unverified"][0]
     assert "finished ≠ intact" in inc.summary and inc.state in (IncidentState.ESCALATED, IncidentState.AWAITING_APPROVAL)
-    assert any(c[0] == "set_metadata" and "quarantine" in str(c[3]) for c in fake.calls)   # karantina otomatis (L2)
+    cmd = db.client().collection("cmd").document("jc").get().to_dict()   # karantina otomatis (L2) via signed mailbox
+    assert cmd and cmd["cmd"] == "quarantine" and cmd["args"]["path"] == "pred.csv" and cmd["sig"]

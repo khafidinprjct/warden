@@ -21,6 +21,9 @@ def fresh():
     # bersihkan koleksi uji
     for coll in ("fleet", "jobs", "incidents", "decisions", "evidence", "audit", "markers", "leases", "runs", "notifications"):
         for d in db.client().collection(coll).limit(200).stream():
+            if coll == "runs":
+                for h in d.reference.collection("heartbeats").limit(500).stream():
+                    h.reference.delete()
             d.reference.delete()
     yield
 
@@ -43,7 +46,14 @@ def test_preempt_two_ticks_then_auto_start():
     s = T.run_tick(); assert s["auto"] == 1
     assert fake.describe(inst.ref).status == "RUNNING"
     inc = db.incidents.list(rule="preempted")[0]
-    assert inc.state == IncidentState.RESOLVED
+    assert inc.state == IncidentState.VERIFYING and inc.verify["kind"] == "start_instance"   # the world must confirm, not the API
+    from warden.executor import recovery
+    assert recovery.process_verifying()["resolved"] == 0                                     # no fresh heartbeat yet → pending
+    nb = fake.describe(inst.ref).boot_id
+    for i in range(3):
+        db.put_heartbeat(Heartbeat(job_id="j1", run_id="r2", ts=now() + timedelta(seconds=i), boot_id=nb, phase="F3", step=500 + i * 50, loss=0.4, procs=[{"pid": 1, "ppid": 1, "cmd": "x"}]))
+    assert recovery.process_verifying()["resolved"] == 1
+    inc = db.incidents.get(inc.incident_id); assert inc.state == IncidentState.RESOLVED and "new boot" in inc.timeline[-1]["note"]
     auds = db.client().collection("audit").limit(10).stream()
     phases = sorted(a.to_dict()["phase"] for a in auds)
     assert phases == ["intent", "result"]

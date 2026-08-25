@@ -13,6 +13,9 @@ def _reset():
     registry._fake = None; T._prev_status.clear()
     for coll in ("fleet", "jobs", "incidents", "decisions", "evidence", "audit", "markers", "leases", "runs", "notifications", "policies", "policy_overrides"):
         for d in db.client().collection(coll).limit(300).stream():
+            if coll == "runs":
+                for h in d.reference.collection("heartbeats").limit(500).stream():
+                    h.reference.delete()
             d.reference.delete()
 
 

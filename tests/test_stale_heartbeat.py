@@ -11,6 +11,9 @@ from warden.store import firestore as db
 def _reset():
     for coll in ("jobs", "markers", "runs"):
         for d in db.client().collection(coll).limit(300).stream():
+            if coll == "runs":
+                for h in d.reference.collection("heartbeats").limit(500).stream():
+                    h.reference.delete()
             d.reference.delete()
     for c in db.client().collection("jobs").document("j1").collection("heartbeats").limit(300).stream():
         c.reference.delete()

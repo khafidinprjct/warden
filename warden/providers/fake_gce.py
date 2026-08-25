@@ -110,3 +110,70 @@ class FakeGCE:
 
     def preempt_events(self, ref: str) -> list[dict]:
         return list(self.events.get(ref, []))
+
+    # --- recovery / lifecycle operations (same contract as GCE) ---
+    def price_of(self, machine_type: str, spot: bool) -> float:
+        base = {"e2-small": 0.01675, "e2-medium": 0.0335, "e2-standard-2": 0.067, "e2-standard-4": 0.134, "e2-standard-8": 0.268}.get(machine_type, 0.05)
+        return round(base * (0.3 if spot else 1.0), 5)
+
+    def set_machine_type(self, ref: str, machine_type: str, dry_run: bool = False) -> OpResult:
+        self.calls.append(("set_machine_type", ref, dry_run, machine_type)); self._load()
+        inst = self.instances.get(ref)
+        if inst is None:
+            return OpResult(False, f"set_machine_type {ref}", error="instance tidak ada")
+        plan = {"api": "instances.setMachineType", "instance": inst.name, "from": inst.machine_type, "to": machine_type,
+                "hourly_usd_from": inst.hourly_price_usd, "hourly_usd_to": self.price_of(machine_type, inst.spot)}
+        if dry_run:
+            return OpResult(True, f"set_machine_type {ref}", dry_run=True, plan=plan)
+        if inst.status == InstanceStatus.RUNNING:
+            return OpResult(False, f"set_machine_type {ref}", error="instance must be TERMINATED/STOPPED", plan=plan)
+        inst.machine_type = machine_type; inst.hourly_price_usd = plan["hourly_usd_to"]; self._save()
+        return OpResult(True, f"set_machine_type {ref}", observed=machine_type, op_id=f"op-{len(self.calls)}", plan=plan)
+
+    def resize_disk(self, ref: str, size_gb: int, dry_run: bool = False) -> OpResult:
+        self.calls.append(("resize_disk", ref, dry_run, size_gb)); self._load()
+        inst = self.instances.get(ref)
+        if inst is None:
+            return OpResult(False, f"resize_disk {ref}", error="instance tidak ada")
+        cur = int(inst.labels.get("_disk_gb", 20))
+        plan = {"api": "disks.resize", "instance": inst.name, "from_gb": cur, "to_gb": size_gb, "extra_usd_per_month": round((size_gb - cur) * 0.1, 2)}
+        if dry_run:
+            return OpResult(True, f"resize_disk {ref}", dry_run=True, plan=plan)
+        if size_gb <= cur:
+            return OpResult(False, f"resize_disk {ref}", error="disks can only grow", plan=plan)
+        inst.labels["_disk_gb"] = str(size_gb); self._save()
+        return OpResult(True, f"resize_disk {ref}", observed=f"{size_gb} GB", op_id=f"op-{len(self.calls)}", plan=plan)
+
+    def create(self, spec: dict, dry_run: bool = False) -> OpResult:
+        self.calls.append(("create", spec.get("zone"), dry_run, spec.get("name")))
+        zone, name = spec["zone"], spec["name"]
+        plan = {"api": "instances.insert", "zone": zone, "instance": name, "machine_type": spec.get("machine_type", "e2-medium"),
+                "spot": spec.get("spot", True), "hourly_usd": self.price_of(spec.get("machine_type", "e2-medium"), spec.get("spot", True))}
+        if dry_run:
+            return OpResult(True, f"create {zone}/{name}", dry_run=True, plan=plan)
+        if not self.stock.get(zone, True):
+            return OpResult(False, f"create {zone}/{name}", error="ZONE_RESOURCE_POOL_EXHAUSTED: The zone does not have enough resources", plan=plan)
+        inst = self.add(name, zone, machine_type=spec.get("machine_type", "e2-medium"), spot=spec.get("spot", True),
+                        labels={"warden-managed": "true", "warden-job": spec.get("job_id", ""), **spec.get("labels", {})},
+                        hourly_price_usd=plan["hourly_usd"])
+        inst.job_id = spec.get("job_id", ""); inst.boot_id = f"boot-{len(self.calls)}"; self._save()
+        return OpResult(True, f"create {zone}/{name}", observed=inst.ref, op_id=f"op-{len(self.calls)}", plan=plan)
+
+    def relocate(self, ref: str, target_zone: str, dry_run: bool = False) -> OpResult:
+        self.calls.append(("relocate", ref, dry_run, target_zone)); self._load()
+        inst = self.instances.get(ref)
+        if inst is None:
+            return OpResult(False, f"relocate {ref}", error="instance tidak ada")
+        new_name = f"{inst.name}-{target_zone.rsplit('-', 1)[-1]}"
+        plan = {"api": "disks.createSnapshot + disks.insert + instances.insert", "from": ref, "to": f"{target_zone}/{new_name}",
+                "machine_type": inst.machine_type, "old_instance": "kept STOPPED (never deleted)"}
+        if dry_run:
+            return OpResult(True, f"relocate {ref}", dry_run=True, plan=plan)
+        if inst.status == InstanceStatus.RUNNING:
+            return OpResult(False, f"relocate {ref}", error="instance must be stopped before relocation", plan=plan)
+        r = self.create({"zone": target_zone, "name": new_name, "machine_type": inst.machine_type, "spot": inst.spot, "job_id": inst.job_id,
+                         "labels": {"warden-relocated-from": inst.name}}, dry_run=False)
+        if not r.ok:
+            return OpResult(False, f"relocate {ref}", error=r.error, plan=plan)
+        inst.labels["warden-relocated-to"] = new_name; self._save()
+        return OpResult(True, f"relocate {ref}", observed=r.observed, op_id=r.op_id, plan=plan)

@@ -4,7 +4,26 @@ from __future__ import annotations
 import math
 import re
 
-from warden.agents.schemas import Category, Diagnosis, PERMANENT, Transience
+from warden.agents.schemas import Category, Diagnosis, PERMANENT, Recommended as R, Transience
+
+# which recommendations make sense for a category (LLM picks the first hypothesis; the ladder supplies the rest)
+FITS: dict[Category, set[R]] = {
+    Category.oom_gpu: {R.resume_smaller_batch, R.change_machine_type, R.stop, R.escalate, R.patch_suggest},
+    Category.oom_host: {R.resume_fewer_workers, R.change_machine_type, R.stop, R.escalate, R.patch_suggest},
+    Category.nan_divergence: {R.rollback_last_good, R.stop, R.escalate, R.patch_suggest},
+    Category.nan_input: {R.stop, R.patch_suggest, R.escalate},
+    Category.plateau: {R.noop, R.escalate, R.stop, R.rollback_last_good},
+    Category.dependency_missing: {R.stop, R.patch_suggest, R.escalate},
+    Category.env_broken: {R.stop, R.patch_suggest, R.escalate, R.restart_clean},
+    Category.kernel_fallback: {R.stop, R.patch_suggest, R.escalate, R.change_machine_type},
+    Category.disk_full: {R.clean_disk, R.resize_disk, R.stop, R.escalate},
+    Category.data_error: {R.stop, R.patch_suggest, R.escalate},
+    Category.network_transient: {R.resume_same, R.escalate, R.noop},
+    Category.preempt: {R.resume_same, R.relocate_zone, R.escalate, R.noop},
+    Category.config_error: {R.stop, R.patch_suggest, R.escalate},
+    Category.code_bug: {R.stop, R.patch_suggest, R.escalate},
+    Category.unknown: {R.escalate, R.noop, R.stop, R.restart_clean, R.kill_and_resume, R.resume_same},
+}
 
 RX = {
     Category.oom_gpu: re.compile(r"CUDA out of memory|OutOfMemoryError|CUBLAS_STATUS_ALLOC_FAILED", re.I),
@@ -60,6 +79,10 @@ def crosscheck(diag: Diagnosis, log_lines: list[str], hb: dict | None) -> dict:
     # 5) OOM wajib punya culprit_frame
     if diag.category == Category.oom_gpu:
         add("oom_has_culprit_frame", bool(diag.culprit_frame))
+    # 6) the recommended action must be a sensible response to the category (a stop for a preempt, or a resume for a code bug, is not)
+    fits = FITS.get(diag.category)
+    if fits is not None:
+        add("action_fits_category", diag.recommended_action in fits, "" if diag.recommended_action in fits else f"{diag.recommended_action} does not fit {diag.category}")
 
     adjusted = diag.confidence if ok_all else min(diag.confidence, 0.4)
     return {"passed": ok_all, "checks": checks, "adjusted_confidence": adjusted,

@@ -10,6 +10,7 @@ autonomy:                # tingkat awal per tindakan
   resize_disk: L1
   kill_process: L1
   change_machine_type: L1
+  clean_disk: L2          # files only (local checkpoints already in Storage, verified by hash); never disks
 limits:
   start_instance:   {per_hour: 3, per_day: 8, max_cost_usd: 2.0}   # ≤ 1 jam tarif (dibanding tarif instance saat evaluasi)
   resume_job:       {per_hour: 3, per_day: 12}
@@ -17,7 +18,26 @@ limits:
   rollback_last_good: {per_day: 2}
   relocate_zone:    {per_day: 1}
   resize_disk:      {per_day: 1, max_cost_usd: 2.0}
-  change_machine_type: {max_price_increase_pct: 50}
+  change_machine_type: {max_price_increase_pct: 50, per_day: 2}
+  clean_disk:       {per_hour: 2}
+  kill_process:     {per_hour: 3}
+recovery:
+  max_attempts_per_incident: 4     # rungs of the hypothesis ladder before escalating (each rung is still policy-evaluated)
+  verify_deadline_minutes:
+    start_instance: 8
+    resume_job: 10
+    rollback_last_good: 10
+    stop_instance: 4
+    kill_process: 4
+    clean_disk: 4
+    resize_disk: 6
+    relocate_zone: 15
+    change_machine_type: 12
+    quarantine_artifact: 4
+promotion:
+  auto: true               # streak of human approvals without failure → the action is promoted to L2 for that job (audited, reversible)
+  streak: 5
+  demote_on_failed_verification: true
 global:
   auto_spend_daily_cap_usd: 10.0
   approval_ttl_minutes: 30

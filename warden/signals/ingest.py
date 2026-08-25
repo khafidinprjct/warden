@@ -22,6 +22,15 @@ def verify(body: bytes, sig: str) -> bool:
     return bool(prev) and hmac.compare_digest(sign(body, prev), sig or "")
 
 
+def cmd_canonical(doc: dict) -> bytes:
+    return json.dumps({k: doc.get(k) for k in ("cmd", "args", "decision_id", "ts", "nonce")}, sort_keys=True, separators=(",", ":")).encode()
+
+
+def sign_cmd(doc: dict) -> str:
+    """Mailbox commands are signed by core; the harness verifies before executing (a forged Firestore doc is not enough)."""
+    return sign(cmd_canonical(doc))
+
+
 def validate_marker(mk: Marker) -> Marker:
     """Marker sah = RUN_FIN dengan exit_code, run_id, tanda tangan benar (mode #5/#6/#11)."""
     if mk.kind == "RUN_FIN":

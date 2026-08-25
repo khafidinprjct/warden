@@ -14,16 +14,26 @@ from warden.agents.schemas import Diagnosis, Recommended
 from warden.config import settings
 from warden.core.models import Action, DecisionStatus, Evidence, IncidentState as S, Verdict, now
 from warden.core.state_machine import transition
-from warden.executor import registry as ex
+from warden.executor import recovery, registry as ex
 from warden.policy.engine import load_policy
 from warden.providers.registry import compute
 from warden.store import firestore as db
 from warden.watcher.tick import _ctx_for, _is_frozen
 
 POLICY = load_policy()
-REC2ACT = {Recommended.resume_same: Action.RESUME_JOB, Recommended.resume_smaller_batch: Action.RESUME_JOB,
-           Recommended.restart_clean: Action.RESUME_JOB, Recommended.stop: Action.STOP_INSTANCE,
-           Recommended.escalate: Action.NOTIFY, Recommended.patch_suggest: Action.NOTIFY, Recommended.noop: Action.NOTIFY}
+
+def _memory_context(job_id: str, rule: str, summary: str) -> tuple[list[dict], str]:
+    """Similar past incidents (vector recall) for the Diagnostician + the id of the closest resolved one."""
+    try:
+        from warden.agents import memory
+        pms = memory.recall(job_id=job_id, rule=rule, query=f"{rule}: {summary}", n=5)
+    except Exception:  # noqa: BLE001
+        return [], ""
+    slim = [{"incident_id": p.get("incident_id"), "job_id": p.get("job_id"), "rule": p.get("rule"), "category": p.get("category"),
+             "actions": [f"{a.get('action')}={a.get('status')}" for a in p.get("actions", [])], "outcome": p.get("outcome"), "lesson": p.get("lesson", "")[:200]}
+            for p in pms]
+    best = next((p.get("incident_id", "") for p in pms if p.get("ok") and any(a.get("action") not in ("notify", "") for a in p.get("actions", []))), "")
+    return slim, best
 
 
 def read_log_tail(job_id: str, n: int = 200, run_id: str = "") -> list[str]:
@@ -77,6 +87,9 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         lines = read_log_tail(inc.job_id)
         findings = [{"rule": inc.rule, "summary": inc.summary}] + [db.evidence.get(e).payload for e in inc.evidence_ids if db.evidence.get(e)]
         hbsum = _hb_summary(inc.job_id)
+        memories, mem_best = _memory_context(inc.job_id, inc.rule, inc.summary)
+        if memories:
+            findings.append({"remembered_incidents": memories})
         notes = ""
         if settings.investigate_enabled:
             try:
@@ -120,12 +133,22 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         ev = Evidence(incident_id=inc.incident_id, kind="log_window", summary=f"{len(lines)} log lines", payload={"lines": diag.evidence_lines, "quotes": diag.evidence_quotes})
         db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
         transition(inc, S.DIAGNOSED, note=f"{diag.category} conf={conf:.2f} cc={'ok' if cc['passed'] else 'FAILED'}")
-        action = REC2ACT.get(diag.recommended_action, Action.NOTIFY)
-        if cc["needs_human"] and action != Action.NOTIFY:
-            forced_l1 = True
-        else:
-            forced_l1 = False
+        first = recovery.REC2RUNG.get(str(diag.recommended_action), ("notify", {}))
+        inc.ladder = recovery.build_ladder(str(diag.category), first, diag.action_params or {})
+        mem, ref = recovery.remembered_rung(inc.job_id, str(diag.category))
+        if mem and inc.ladder and (mem["action"], mem["params"]) != (inc.ladder[0]["action"], inc.ladder[0]["params"]):
+            inc.ladder.insert(0, mem); inc.memory_ref = ref
+        elif mem_best:
+            inc.memory_ref = mem_best
+        rung = inc.ladder.pop(0) if inc.ladder else {"action": "notify", "params": {}, "why": str(diag.recommended_action)}
+        action = Action(rung["action"])
+        forced_l1 = bool(cc["needs_human"] and action != Action.NOTIFY)
         ctx = _ctx_for(job, inst, action, frozen); ctx.llm_confidence = conf
+        if action == Action.CHANGE_MACHINE_TYPE and inst:
+            from warden.providers.gce import bigger_machine
+            _mt = rung["params"].get("machine_type") or bigger_machine(inst.machine_type)
+            if _mt and inst.hourly_price_usd:
+                ctx.price_increase_pct = max(0.0, (compute().price_of(_mt, inst.spot) / inst.hourly_price_usd - 1) * 100)
         from warden.policy.engine import evaluate as policy_eval
         dec = policy_eval(action, ctx, POLICY)
         if forced_l1 and dec.verdict == Verdict.AUTO:
@@ -133,7 +156,8 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
             from datetime import timedelta
             dec.expires_at = now() + timedelta(minutes=POLICY["global"]["approval_ttl_minutes"])
         dec.incident_id = inc.incident_id
-        dec.params = {"instance_ref": inc.instance_ref, "run_id": job.run_id if job else "", **diag.action_params}
+        dec.params = {"instance_ref": inc.instance_ref, "run_id": job.run_id if job else "", **rung["params"], "reason": rung.get("why", "")}
+        dec.explain.insert(0, f"hypothesis 1: {rung.get('why', '')}" + (f" · memory: {inc.memory_ref}" if inc.memory_ref else ""))
         if action != Action.NOTIFY:
             dec.dry_run_plan = ex.dry_run(dec, compute())
         db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
@@ -141,10 +165,12 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         text = f"🧠 {diag.human_summary} | {diag.category} conf {conf:.2f} → {action} ({dec.verdict})"
         if dec.verdict == Verdict.AUTO:
             transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
-            r = ex.execute(dec, compute()); dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED
-            transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
-            transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="requested vs observed match" if r.ok else r.error)
+            r = ex.execute(dec, compute())
+            if r.ok and action != Action.NOTIFY:
+                db.cost_add(now().strftime("%Y-%m-%d"), "auto_spend_usd", dec.cost_usd, inc.instance_ref)
             stats["auto"] += 1; text += f" → {'✅ ' + r.observed if r.ok else '❌ ' + r.error}"
+            db.incidents.put(inc)
+            recovery.after_execute(inc, dec, r, notify)
         elif dec.verdict == Verdict.NEED_APPROVAL:
             transition(inc, S.AWAITING_APPROVAL); stats["approval"] += 1
         elif dec.verdict == Verdict.HELD:

@@ -17,11 +17,20 @@ except ImportError:
     def beat(**kw): pass
 
 ap = argparse.ArgumentParser(); ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--out", default=os.environ.get("WARDEN_DIR", "/var/lib/warden") + "/" + os.environ.get("WARDEN_JOB", "toy") + "/artifacts")
-ap.add_argument("--sleep", type=float, default=0.05); ap.add_argument("--nan-at", type=int, default=0); a = ap.parse_args()
+ap.add_argument("--sleep", type=float, default=0.05); ap.add_argument("--nan-at", type=int, default=0)
+ap.add_argument("--oom-at", type=int, default=0, help="drill: raise a CUDA-style OOM at this step unless WARDEN_BATCH_SCALE < 1")
+ap.add_argument("--oom-until-scale", type=float, default=0.5, help="drill: OOM keeps happening until batch_scale <= this")
+a = ap.parse_args()
+BATCH_SCALE = float(os.environ.get("WARDEN_BATCH_SCALE", "1")); LR_SCALE = float(os.environ.get("WARDEN_LR_SCALE", "1"))
+RESUME_CKPT = os.environ.get("WARDEN_RESUME_CKPT", "")
+BATCH = max(4, int(64 * BATCH_SCALE))
 os.makedirs(a.out, exist_ok=True)
 rng = np.random.default_rng(0); X = rng.normal(size=(2000, 20)); w_true = rng.normal(size=20); y = (X @ w_true + rng.normal(scale=0.5, size=2000) > 0).astype(float)
-w = np.zeros(20); step = 0; lr = 0.1
+w = np.zeros(20); step = 0; lr = 0.1 * LR_SCALE
+print(f"=== [config] batch {BATCH} (scale {BATCH_SCALE}) lr {lr} (scale {LR_SCALE}) resume_ckpt {RESUME_CKPT or '-'} ===", flush=True)
 ck = sorted(glob.glob(os.path.join(a.out, "ckpt_*.npz")))
+if RESUME_CKPT:   # Warden asked for a specific checkpoint (rollback): only that one and older ones are eligible
+    ck = [c for c in ck if os.path.basename(c) <= os.path.basename(RESUME_CKPT)]
 # Resume dari checkpoint UTUH terakhir, bukan yang terbaru (katalog #7/#8): preempt nyata 25 Agu memotong
 # ckpt_001700.npz → np.load EOFError → run gagal. Yang rusak dikarantina (.corrupt), lalu mundur satu.
 resumed = False
@@ -55,8 +64,13 @@ t0 = time.time()
 while step < a.steps:
     if preempt["flag"] and not preempt["saved"]:
         save("(darurat: tanda preempt)"); preempt["saved"] = True
-    i = rng.integers(0, 2000, 64); xb, yb = X[i], y[i]
-    p = 1 / (1 + np.exp(-xb @ w)); g = xb.T @ (p - yb) / 64; w -= lr * g
+    i = rng.integers(0, 2000, BATCH); xb, yb = X[i], y[i]
+    p = 1 / (1 + np.exp(-xb @ w)); g = xb.T @ (p - yb) / BATCH; w -= lr * g
+    if a.oom_at and step == a.oom_at and BATCH_SCALE > a.oom_until_scale:
+        print(f"Traceback (most recent call last):\n  File \"toy_train.py\", line 60, in <module>\n    p = 1 / (1 + np.exp(-xb @ w))\n"
+              f"torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate {BATCH * 32} MiB (GPU 0; 15.77 GiB total capacity; "
+              f"15.10 GiB already allocated by batch of {BATCH})", flush=True)
+        sys.exit(1)
     last_loss = float(-np.mean(yb * np.log(p + 1e-9) + (1 - yb) * np.log(1 - p + 1e-9)))
     if a.nan_at and step == a.nan_at:
         w[:] = np.nan; last_loss = float("nan")

@@ -20,7 +20,7 @@ from warden.watcher.rules import Facts, Finding, evaluate as rules_eval
 POLICY = load_policy()
 _prev_status: dict[str, InstanceStatus] = {}
 SUGGEST = {"start_instance": Action.START_INSTANCE, "stop_instance": Action.STOP_INSTANCE, "resume_job": Action.RESUME_JOB,
-           "kill_process": Action.KILL_PROCESS, "notify": Action.NOTIFY}
+           "kill_process": Action.KILL_PROCESS, "notify": Action.NOTIFY, "clean_disk": Action.CLEAN_DISK}
 
 
 def _dedupe_recent(key: str, minutes: int = 30) -> bool:
@@ -152,9 +152,19 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
             notify(inc, None, f"🔎 {f.summary} — diagnosing")
         return
     action = SUGGEST.get(f.suggested_action, Action.NOTIFY)
+    from warden.executor import recovery
+    first = (action.value, dict(f.action_params)) if action != Action.NOTIFY else None
+    inc.ladder = recovery.build_ladder(f.rule, first)
+    mem, ref = recovery.remembered_rung(inc.job_id, f.rule)
+    if mem and inc.ladder and (mem["action"], mem["params"]) != (inc.ladder[0]["action"], inc.ladder[0]["params"]):
+        inc.ladder.insert(0, mem); inc.memory_ref = ref
+    if inc.ladder:
+        rung = inc.ladder.pop(0); action = Action(rung["action"]); f.action_params = {**f.action_params, **rung["params"]}
     dec = policy_eval(action, _ctx_for(job, inst, action, frozen), POLICY)
     dec.incident_id = inc.incident_id
-    dec.params = {"instance_ref": inst.ref if inst else "", "run_id": job.run_id if job else ""}
+    dec.params = {"instance_ref": inst.ref if inst else "", "run_id": job.run_id if job else "", **f.action_params}
+    if inc.memory_ref:
+        dec.explain.insert(0, f"memory: same pattern as {inc.memory_ref}")
     if action != Action.NOTIFY:
         dec.dry_run_plan = ex.dry_run(dec, compute())
     db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
@@ -164,16 +174,14 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
         stats["auto"] += 1
         transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
         r = ex.execute(dec, compute())
-        dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED
         if r.ok and action != Action.NOTIFY:
             db.cost_add(now().strftime("%Y-%m-%d"), "auto_spend_usd", dec.cost_usd, inst.ref if inst else "")
-        transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
-        if r.ok:
-            transition(inc, S.RESOLVED if action == Action.NOTIFY else S.VERIFYING if False else S.RESOLVED, note="requested vs observed match")
-        else:
-            transition(inc, S.ESCALATED, note=r.error)
         if notify:
             notify(inc, dec, f"{'✅' if r.ok else '❌'} {f.summary} → {action} ({dec.autonomy}): {r.observed or r.error}")
+        from warden.executor import recovery
+        recovery.after_execute(inc, dec, r, notify)      # VERIFYING with a world-check, or next hypothesis
+        db.decisions.put(dec); db.incidents.put(inc)
+        return
     elif dec.verdict == Verdict.NEED_APPROVAL:
         stats["approval"] += 1
         transition(inc, S.AWAITING_APPROVAL)

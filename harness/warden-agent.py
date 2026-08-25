@@ -47,15 +47,30 @@ def post(path: str, payload: dict) -> bool:
 
 
 def get_cmd() -> dict | None:
+    """Poll the mailbox. A command is executed only if its signature (HMAC over cmd/args/decision_id/ts/nonce) is valid:
+    a document written into Firestore by anything other than warden-core is ignored and reported."""
     if not CORE:
         return None
     req = urllib.request.Request(f"{CORE}/cmd/{JOB}", headers={"X-Warden-Signature": sig(JOB.encode())})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
-            return json.loads(r.read().decode())
+            c = json.loads(r.read().decode())
     except Exception as e:
         log(f"GET cmd gagal: {e}")
         return None
+    if not c or not c.get("cmd"):
+        return None
+    canon = json.dumps({k: c.get(k) for k in ("cmd", "args", "decision_id", "ts", "nonce")}, sort_keys=True, separators=(",", ":")).encode()
+    if not hmac.compare_digest(sig(canon), c.get("sig", "")):
+        log(f"perintah {c.get('cmd')} DITOLAK: tanda tangan tidak sah")
+        post_result(c, False, "signature invalid — command rejected by harness")
+        return None
+    return c
+
+
+def post_result(c: dict, ok: bool, detail: str = "", **extra) -> None:
+    post("/ingest/cmd_result", {"job_id": JOB, "cmd": c.get("cmd"), "nonce": c.get("nonce", ""), "decision_id": c.get("decision_id", ""),
+                                "ok": bool(ok), "detail": str(detail)[:400], "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **extra})
 
 
 def log(msg: str) -> None:
@@ -235,35 +250,177 @@ def upload_log() -> None:
         threading.Thread(target=_rsync_artifacts, args=(adir,), daemon=True).start()
 
 
+def _launch_resume(env: dict | None = None, reason: str = "") -> str:
+    """Re-run the job's resume command (wrun) with extra environment. Returns the pid of the shell."""
+    wd = os.environ.get("WARDEN_WORKDIR", "/"); os.makedirs(wd, exist_ok=True)
+    cmd = os.environ.get("WARDEN_RESUME_CMD", "")
+    if not cmd:
+        raise RuntimeError("WARDEN_RESUME_CMD not set on this machine")
+    e = dict(os.environ); e.update({k: str(v) for k, v in (env or {}).items()})
+    e["WARDEN_HMAC"] = SECRET; e["WARDEN_BUCKET"] = BUCKET
+    p = subprocess.Popen(["bash", "-c", cmd], cwd=wd, env=e, stdout=open("/var/log/warden-resume.log", "a"), stderr=subprocess.STDOUT, start_new_session=True)
+    log(f"resume diluncurkan pid={p.pid} env={ {k: v for k, v in (env or {}).items()} } alasan={reason}")
+    return str(p.pid)
+
+
+def _entry_pids() -> list[dict]:
+    return [p for p in host_stats()["procs"]]
+
+
+def _kill_entry(pid: int | None = None, grace_s: int = 20) -> list[int]:
+    """SIGTERM the entrypoint process(es) (whole process group), SIGKILL after grace. Returns pids killed."""
+    targets = [p["pid"] for p in _entry_pids() if not pid or p["pid"] == pid]
+    for t in targets:
+        try:
+            os.killpg(os.getpgid(t), signal.SIGTERM)
+        except Exception:
+            try: os.kill(t, signal.SIGTERM)
+            except Exception: pass
+    deadline = time.time() + grace_s
+    while time.time() < deadline and any(os.path.exists(f"/proc/{t}") for t in targets):
+        time.sleep(1)
+    for t in targets:
+        if os.path.exists(f"/proc/{t}"):
+            try: os.killpg(os.getpgid(t), signal.SIGKILL)
+            except Exception:
+                try: os.kill(t, signal.SIGKILL)
+                except Exception: pass
+    return targets
+
+
+def _md5(path: str) -> str:
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _gcs_md5(name: str) -> str:
+    """md5 of the object in Storage (base64 in gcloud output → hex)."""
+    if not BUCKET:
+        return ""
+    out = sh(["gcloud", "storage", "objects", "describe", f"gs://{BUCKET}/jobs/{JOB}/artifacts/{name}", "--format=value(md5_hash)"], 60).strip()
+    if not out:
+        return ""
+    import base64
+    try:
+        return base64.b64decode(out).hex()
+    except Exception:
+        return ""
+
+
+def _clean_disk(keep: int = 2) -> tuple[int, list[str], list[str]]:
+    """Delete local checkpoint FILES older than the newest `keep` whose md5 equals the copy in Storage. Never touches anything else."""
+    adir = os.path.join(DIR, "artifacts")
+    if not os.path.isdir(adir):
+        return 0, [], ["no artifacts dir"]
+    cks = sorted([p for p in os.listdir(adir) if p.startswith("ckpt_") and not p.endswith((".tmp", ".corrupt", ".sha256", ".json", ".rolledback"))])
+    freed = 0; removed: list[str] = []; skipped: list[str] = []
+    for name in cks[:-keep] if keep > 0 else cks:
+        fp = os.path.join(adir, name)
+        if not os.path.isfile(fp):
+            continue
+        remote = _gcs_md5(name)
+        if not remote or remote != _md5(fp):
+            skipped.append(f"{name}: no verified copy in Storage"); continue
+        size = os.path.getsize(fp)
+        os.remove(fp); freed += size; removed.append(name)
+        for side in (".meta.json", ".sha256", ".meta.json.sha256"):
+            if os.path.exists(fp + side):
+                os.remove(fp + side)
+    return freed, removed, skipped
+
+
+def _rollback(ckpt: str, back: int = 1) -> tuple[str, list[str]]:
+    """Set aside checkpoints newer than the target (rename → .rolledback; nothing deleted) so the trainer resumes from the target."""
+    adir = os.path.join(DIR, "artifacts")
+    cks = sorted([p for p in os.listdir(adir) if p.startswith("ckpt_") and p.endswith(".npz") or (p.startswith("ckpt_") and p.endswith((".pt", ".pth", ".ckpt")))]) if os.path.isdir(adir) else []
+    target = os.path.basename(ckpt) if ckpt else ""
+    if target not in cks:
+        # no explicit target: go `back` checkpoints from the newest
+        if len(cks) <= back:
+            raise RuntimeError(f"cannot roll back {back}: only {len(cks)} checkpoints")
+        target = cks[-1 - back]
+    moved: list[str] = []
+    for name in cks[cks.index(target) + 1:]:
+        fp = os.path.join(adir, name); os.replace(fp, fp + ".rolledback"); moved.append(name)
+        for side in (".meta.json", ".sha256"):
+            if os.path.exists(fp + side):
+                os.replace(fp + side, fp + ".rolledback" + side)
+    return target, moved
+
+
 def handle_cmd(c: dict) -> None:
-    cmd, args = c.get("cmd"), c.get("args", {})
+    cmd, args = c.get("cmd"), c.get("args", {}) or {}
     log(f"perintah: {cmd} {args}")
-    if cmd == "kill":
-        for p in host_stats()["procs"]:
-            if p["ppid"] == 1 or not args.get("pid") or p["pid"] == args.get("pid"):
-                os.kill(p["pid"], signal.SIGTERM)
-    elif cmd == "resume":
-        wd = os.environ.get("WARDEN_WORKDIR", "/"); os.makedirs(wd, exist_ok=True)
-        subprocess.Popen(["bash", "-c", os.environ.get("WARDEN_RESUME_CMD", "true")], cwd=wd,
-                         stdout=open("/var/log/warden-resume.log", "a"), stderr=subprocess.STDOUT)
-    elif cmd == "quarantine":
-        p = args.get("path", "")
-        if p and os.path.exists(p):
-            q = os.path.join(DIR, "quarantine"); os.makedirs(q, exist_ok=True)
-            os.replace(p, os.path.join(q, os.path.basename(p)))
-    elif cmd == "collect_diag":
-        with open(os.path.join(DIR, "diag.txt"), "w") as f:
-            f.write(sh(["dmesg", "--time-format", "iso"], 20)[-20000:])
-    elif cmd == "inject":                      # hanya untuk latihan/demo (Fase 10); aman: hanya menyentuh DIR job
-        what = args.get("what")
-        if what == "corrupt_csv":
-            for p in os.listdir(os.path.join(DIR, "artifacts")):
-                fp = os.path.join(DIR, "artifacts", p)
-                if p.endswith(".csv"):
-                    lines = open(fp).read().splitlines()
-                    keep = lines[: max(2, int(len(lines) * 0.6))]
-                    keep[1] = keep[1].rsplit(",", 1)[0] + ",nan"
-                    open(fp, "w").write("\n".join(keep) + "\n")
+    try:
+        if cmd == "kill":
+            killed = _kill_entry(args.get("pid"))
+            if args.get("then_resume"):
+                pid = _launch_resume(args.get("env"), "kill+resume")
+                post_result(c, True, f"killed {killed}; resumed pid {pid}", killed=killed)
+            else:
+                post_result(c, True, f"killed {killed}", killed=killed)
+        elif cmd == "resume":
+            if _entry_pids():
+                _kill_entry()
+            if args.get("clean"):
+                adir = os.path.join(DIR, "artifacts")
+                if os.path.isdir(adir):
+                    os.replace(adir, adir + ".prev-" + time.strftime("%Y%m%dT%H%M%S", time.gmtime()))   # archived, not deleted
+                os.makedirs(adir, exist_ok=True)
+                for m in ("RUN_FIN.json", "RUN_START.json"):
+                    try: os.remove(os.path.join(DIR, "markers", m))
+                    except FileNotFoundError: pass
+            pid = _launch_resume(args.get("env"), args.get("reason", ""))
+            post_result(c, True, f"resume launched pid {pid} mode={args.get('mode')}", pid=pid)
+        elif cmd == "rollback":
+            if _entry_pids():
+                _kill_entry()
+            target, moved = _rollback(args.get("ckpt", ""), int(args.get("back", 1)))
+            env = dict(args.get("env") or {}); env["WARDEN_RESUME_CKPT"] = target
+            pid = _launch_resume(env, args.get("reason", ""))
+            post_result(c, True, f"rolled back to {target}; set aside {moved}; resumed pid {pid}", target=target, moved=moved)
+        elif cmd == "quarantine":
+            p = args.get("path", "")
+            if p and not os.path.isabs(p):
+                p = os.path.join(DIR, "artifacts", p)
+            if p and os.path.exists(p):
+                q = os.path.join(DIR, "quarantine"); os.makedirs(q, exist_ok=True)
+                os.replace(p, os.path.join(q, os.path.basename(p)))
+                post_result(c, True, f"quarantined {p}")
+            else:
+                post_result(c, False, f"path not found: {p}")
+        elif cmd == "clean_disk":
+            freed, removed, skipped = _clean_disk(int(args.get("keep", 2)))
+            post_result(c, True, f"freed {freed} bytes: {removed}; skipped {skipped[:5]}", freed_bytes=freed, removed=removed)
+        elif cmd == "grow_fs":
+            out = sh(["bash", "-c", "growpart /dev/sda 1 2>&1; resize2fs /dev/sda1 2>&1 || xfs_growfs / 2>&1; df -h / | tail -1"], 120)
+            post_result(c, True, out[-300:])
+        elif cmd == "collect_diag":
+            with open(os.path.join(DIR, "diag.txt"), "w") as f:
+                f.write(sh(["dmesg", "--time-format", "iso"], 20)[-20000:])
+            post_result(c, True, "diag collected")
+        elif cmd == "inject":                      # drills only (Phase 10); safe: touches only the job dir
+            what = args.get("what")
+            if what == "corrupt_csv":
+                for p in os.listdir(os.path.join(DIR, "artifacts")):
+                    fp = os.path.join(DIR, "artifacts", p)
+                    if p.endswith(".csv"):
+                        lines = open(fp).read().splitlines()
+                        keep = lines[: max(2, int(len(lines) * 0.6))]
+                        keep[1] = keep[1].rsplit(",", 1)[0] + ",nan"
+                        open(fp, "w").write("\n".join(keep) + "\n")
+            elif what == "fill_disk":
+                fp = os.path.join(DIR, "artifacts", "ckpt_000001.npz")   # an old, unbacked-up-looking checkpoint + a big filler
+                subprocess.run(["bash", "-c", f"fallocate -l {int(args.get('gb', 1))}G {DIR}/filler.bin"], timeout=60)
+            post_result(c, True, f"injected {what}")
+        else:
+            post_result(c, False, f"unknown command {cmd}")
+    except Exception as e:  # noqa: BLE001 — always report, never die silently
+        log(f"perintah {cmd} GAGAL: {e}")
+        post_result(c, False, f"{type(e).__name__}: {e}")
 
 
 def main() -> None:

@@ -33,6 +33,7 @@ class Finding:
     needs_llm: bool = False
     suggested_action: str = ""
     evidence: dict = field(default_factory=dict)
+    action_params: dict = field(default_factory=dict)
 
 
 def _stale_threshold(hbs: list[Heartbeat], phase: str) -> timedelta:
@@ -104,7 +105,8 @@ def evaluate(f: Facts) -> list[Finding]:
         if hb.disk_avail_gb < max(2 * need, 5.0):
             sev = "critical" if hb.disk_avail_gb < max(need, 1.0) else "warning"
             out.append(Finding("disk_low", sev, f"{hb.job_id}: disk free {hb.disk_avail_gb:.1f} GB (need ≥ {max(2*need,5.0):.1f})",
-                               f"disk:{hb.job_id}:{sev}", suggested_action="notify", evidence={"avail_gb": hb.disk_avail_gb}))
+                               f"disk:{hb.job_id}:{sev}", suggested_action="clean_disk", evidence={"avail_gb": hb.disk_avail_gb},
+                               action_params={"keep": 2, "min_free_gb": max(2 * need, 5.0)}))
 
     # R7 proses ganda (entrypoint path penuh, worker dikecualikan via ppid)
     if hb and hb.procs and job and job.command:

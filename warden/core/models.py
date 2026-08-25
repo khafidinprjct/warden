@@ -97,6 +97,7 @@ class Action(StrEnum):
     RESIZE_DISK = "resize_disk"
     KILL_PROCESS = "kill_process"
     CHANGE_MACHINE_TYPE = "change_machine_type"
+    CLEAN_DISK = "clean_disk"                  # remove local checkpoints that already live in Storage (files only, never disks)
     # delete_* SENGAJA TIDAK ADA (P8)
 
 
@@ -138,6 +139,9 @@ class Job(BaseModel):
     spent_usd: float = 0.0
     legacy: bool = False                       # hanya stdout, tanpa warden.beat()
     autonomy_overrides: dict[str, str] = Field(default_factory=dict)
+    spec: dict[str, Any] = Field(default_factory=dict)       # launch spec (machine_type, zones, image, disk_gb, command, env) — Warden launches from this
+    zone_candidates: list[str] = Field(default_factory=list)  # zones the job may relocate to
+    report: dict[str, Any] = Field(default_factory=dict)     # final report written at close-out (cost, ETTR, artifacts, incidents)
 
 
 class Heartbeat(BaseModel):
@@ -197,6 +201,10 @@ class Incident(BaseModel):
     llm_cost_usd: float = 0.0
     cost_burning_usd_per_hour: float = 0.0
     timeline: list[dict[str, Any]] = Field(default_factory=list)
+    verify: dict[str, Any] = Field(default_factory=dict)      # post-action check: kind, since, deadline, baseline, params, result
+    attempt: int = 0                                          # how many recovery attempts (rungs) have been executed
+    ladder: list[dict[str, Any]] = Field(default_factory=list) # remaining hypotheses: [{action, params, why}]
+    memory_ref: str = ""                                      # incident_id of the remembered postmortem that shaped the plan
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
 
