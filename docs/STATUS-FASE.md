@@ -15,7 +15,7 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 9 Multimodal | 5/6 gambar benar, ≤$0,005/gambar | ✅ | kurva loss dibaca Gemini (`concierge/images.py`) |
 | 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
-| 12 Pengerasan | rate limit, circuit breaker Gemini/provider, IAM | ◐ | rate limit ingest + circuit breaker Gemini ada; IAP/OAuth dashboard belum |
+| 12 Pengerasan | rate limit, circuit breaker Gemini/provider, IAM, kekacauan infra terkendali | ◐ **selesai kecuali IAP**: OIDC push ✓, dead-letter + alert ✓, rotasi HMAC ✓, notifikasi gagal-aman ✓, chaos infra (Gemini/Discord/Firestore) ✓, pip-audit 0 / bandit HIGH 0 ✓; IAP menunggu layar persetujuan OAuth dari pemilik (Console) |
 | 13 Observability | metrik+alert core basi; SLO 7 hari | ◐ metrik `warden_heartbeat` + alert per-layanan ✓ (terbukti tanpa alarm palsu); dashboard Monitoring + SLO belum; **Slack dicoret (keputusan pemilik 25 Agu)** |
 | 14 Operasi berkelanjutan | 2 job berbeda dipantau 7 hari | ◐ | 2 job (climate-demo, toy-train) dipantau sejak 25 Agu; 7 hari belum genap |
 
