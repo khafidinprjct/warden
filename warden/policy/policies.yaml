@@ -20,7 +20,6 @@ limits:
   change_machine_type: {max_price_increase_pct: 50}
 global:
   auto_spend_daily_cap_usd: 10.0
-  llm_daily_cap_usd: 2.0
   approval_ttl_minutes: 30
   idle_grace_minutes: 15
   orphan_grace_minutes: 10

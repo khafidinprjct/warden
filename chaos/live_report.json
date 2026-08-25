@@ -1,0 +1,82 @@
+[
+ {
+  "ts": "2026-08-25T07:08:35.485110+00:00",
+  "step": "1 job COMPLETE (RUN_FIN \u2192 VERIFIED)",
+  "ok": true,
+  "seconds": 546,
+  "detail": [
+   "COMPLETE",
+   "r20260825T065601",
+   "F6",
+   94
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:08:35.723137+00:00",
+  "step": "1b VERIFIED marker",
+  "ok": true,
+  "artifacts": [
+   {
+    "bytes": 34062,
+    "sha256": "810a76ac49111151f3ff202b32bab7bc7aa8d9adbd86043dedd53eccb6f24b4b",
+    "name": "pred.csv"
+   }
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:10:38.603609+00:00",
+  "step": "2 run baru mencapai F3",
+  "ok": true,
+  "seconds": 121,
+  "detail": [
+   "RUNNING",
+   "r20260825T070910",
+   "F3-4",
+   94
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:10:44.892274+00:00",
+  "step": "3 simulate-maintenance-event",
+  "ok": true
+ },
+ {
+  "ts": "2026-08-25T07:16:30.505301+00:00",
+  "step": "3b insiden preempt terdeteksi",
+  "ok": true,
+  "seconds": 345,
+  "detail": [
+   "stopped_external",
+   "RESOLVED"
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:16:30.756071+00:00",
+  "step": "3c insiden RESOLVED (start otomatis)",
+  "ok": true,
+  "seconds": 0,
+  "detail": [
+   "stopped_external",
+   "RESOLVED"
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:16:33.151005+00:00",
+  "step": "3d mesin RUNNING lagi",
+  "ok": true,
+  "status": "RUNNING",
+  "kerugian_detik": 348
+ },
+ {
+  "ts": "2026-08-25T07:46:23.823812+00:00",
+  "step": "4 run pasca-preempt COMPLETE",
+  "ok": true,
+  "seconds": 1790,
+  "detail": [
+   "COMPLETE",
+   "r20260825T073658",
+   "F6",
+   94
+  ]
+ }
+]

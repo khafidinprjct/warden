@@ -1,0 +1,70 @@
+[
+ {
+  "ts": "2026-08-25T07:56:16.417312+00:00",
+  "step": "1 toy-train COMPLETE (verifikasi ulang)",
+  "ok": true,
+  "seconds": 1,
+  "detail": [
+   "COMPLETE",
+   "r20260825T074103",
+   "train",
+   6000,
+   6000,
+   "r20260825T074103"
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:59:06.598955+00:00",
+  "step": "2 run baru step \u2265 1000",
+  "ok": true,
+  "seconds": 167,
+  "detail": [
+   "RUNNING",
+   "r20260825T075642",
+   "train",
+   1250,
+   1250,
+   "r20260825T075642"
+  ]
+ },
+ {
+  "ts": "2026-08-25T07:59:12.892607+00:00",
+  "step": "3 simulate-maintenance-event",
+  "ok": true,
+  "err": " instance(s) [https://compute.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-a/instances/demo-train-2]...\n...........done.\n",
+  "step_saat_preempt": 1250
+ },
+ {
+  "ts": "2026-08-25T08:14:24.648619+00:00",
+  "step": "3b insiden RESOLVED (start otomatis)",
+  "ok": false,
+  "seconds": 911
+ },
+ {
+  "ts": "2026-08-25T08:14:26.019344+00:00",
+  "step": "3c mesin RUNNING lagi",
+  "ok": false,
+  "status": "TERMINATED",
+  "detik_sejak_preempt": 913
+ },
+ {
+  "ts": "2026-08-25T08:14:27.091139+00:00",
+  "step": "4a run lanjut (step melewati titik preempt, run_id sama)",
+  "ok": true,
+  "seconds": 1,
+  "detail": [
+   "RUNNING",
+   "r20260825T075642",
+   "train",
+   1600,
+   1600,
+   "r20260825T075642"
+  ]
+ },
+ {
+  "ts": "2026-08-25T08:39:38.429555+00:00",
+  "step": "4b run COMPLETE pasca-preempt",
+  "ok": false,
+  "seconds": 1511
+ }
+]

@@ -1,9 +1,8 @@
 """Investigator (Phase A-1): an ADK agent that gathers its own evidence with read-only tools before the Diagnostician decides.
-The tools read Firestore / Cloud Storage only; nothing here can act on infrastructure. Bounded: ≤ MAX_TOOL_CALLS tool calls per investigation."""
+The tools read Firestore / Cloud Storage only; nothing here can act on infrastructure. The agent decides how much to read; ADK's own max_llm_calls is the only loop guard.
 from __future__ import annotations
 
 import asyncio
-import contextvars
 import json
 import re
 from typing import Any
@@ -15,19 +14,6 @@ from google.genai import types
 from warden.config import settings
 from warden.store import firestore as db
 
-MAX_TOOL_CALLS = 12   # runaway guard only — the prompt asks the agent to stop as soon as the evidence is sufficient
-_budget: contextvars.ContextVar[dict | None] = contextvars.ContextVar("investigator_budget", default=None)
-
-
-def _spend() -> dict | None:
-    """Hard tool budget: after MAX_TOOL_CALLS every tool returns an error instead of data (the prompt asks for ≤ 4; this enforces it)."""
-    b = _budget.get()
-    if b is None:            # called outside an investigation (tests, concierge): no budget
-        return None
-    if b["left"] <= 0:
-        return {"error": f"tool budget exhausted ({MAX_TOOL_CALLS} calls) — write the investigation note now"}
-    b["left"] -= 1
-    return None
 PRICE = {"gemini-3.5-flash": (1.5, 9.0), "gemini-3.5-flash-lite": (0.3, 2.5), "gemini-3.7-flash": (0.75, 3.75)}
 
 
@@ -39,8 +25,6 @@ def _log_lines(job_id: str, run_id: str = "") -> list[str]:
 
 def get_log_window(job_id: str, start_line: int, end_line: int, run_id: str = "") -> dict:
     """Return numbered log lines [start_line, end_line] (1-based, inclusive, at most 120 lines) of the job's log; pass run_id to read a specific run's log."""
-    if (err := _spend()):
-        return err
     lines = _log_lines(job_id, run_id)
     s = max(1, int(start_line)); e = min(len(lines), int(end_line), s + 119)
     return {"job_id": job_id, "total_lines": len(lines), "lines": [f"{i:5d}| {lines[i - 1][:300]}" for i in range(s, e + 1)]}
@@ -48,8 +32,6 @@ def get_log_window(job_id: str, start_line: int, end_line: int, run_id: str = ""
 
 def search_log(job_id: str, pattern: str, max_hits: int = 20, run_id: str = "") -> dict:
     """Regex search over the job's log (case-insensitive); pass run_id to search a specific run's log. Returns line numbers and text."""
-    if (err := _spend()):
-        return err
     lines = _log_lines(job_id, run_id)
     try:
         rx = re.compile(pattern, re.I)
@@ -61,8 +43,6 @@ def search_log(job_id: str, pattern: str, max_hits: int = 20, run_id: str = "") 
 
 def get_heartbeats(job_id: str, n: int = 30) -> dict:
     """Recent heartbeats (oldest first): ts, run_id, phase, step, loss, grad_norm, cpu_pct, gpu_util, disk_avail_gb, synthetic."""
-    if (err := _spend()):
-        return err
     hbs = db.recent_heartbeats(job_id, min(int(n), 80))
     return {"job_id": job_id, "heartbeats": [{"ts": h.ts.isoformat(), "run_id": h.run_id, "phase": h.phase, "step": h.step, "loss": h.loss, "grad_norm": h.grad_norm,
                                               "cpu_pct": h.cpu_pct, "gpu_util": h.gpu_util, "disk_avail_gb": h.disk_avail_gb, "synthetic": h.synthetic} for h in hbs]}
@@ -70,8 +50,6 @@ def get_heartbeats(job_id: str, n: int = 30) -> dict:
 
 def get_artifacts(job_id: str) -> dict:
     """Artifacts declared by the latest RUN_FIN (name, bytes, sha256), the last VERIFIED marker and the last known-good checkpoint."""
-    if (err := _spend()):
-        return err
     job = db.jobs.get(job_id)
     if not job:
         return {"error": "job not found"}
@@ -84,8 +62,6 @@ def get_artifacts(job_id: str) -> dict:
 
 def get_incident_history(job_id: str, n: int = 5) -> dict:
     """Past incidents of this job (rule, state, diagnosis category, action, outcome) and remembered postmortems of similar incidents."""
-    if (err := _spend()):
-        return err
     from warden.agents import memory
     incs = sorted(db.incidents.list(job_id=job_id, limit=50), key=lambda i: i.created_at)[-int(n):]
     out = []
@@ -98,8 +74,6 @@ def get_incident_history(job_id: str, n: int = 5) -> dict:
 
 def get_instance(instance_ref: str) -> dict:
     """Current provider view of an instance: status, machine type, spot, price, last stop time, boot id."""
-    if (err := _spend()):
-        return err
     from warden.providers.registry import compute
     i = compute().describe(instance_ref)
     if not i:
@@ -114,7 +88,7 @@ SYSTEM = (
     "You are the investigator of an SRE system for long-running compute jobs. You are given an incident summary and a job id. "
     "Gather the evidence a diagnostician needs, using the read-only tools: widen or search the log around the failure, check heartbeats "
     "(is the step still advancing? loss finite? disk?), check artifacts (did RUN_FIN declare them? sizes sane?), check the instance, and "
-    "check past incidents/postmortems of this job for a repeat pattern. Use as many tool calls as the evidence requires and stop as soon as it is sufficient (a runaway guard stops you at 12). "
+    "check past incidents/postmortems of this job for a repeat pattern. Use as many tool calls as the evidence requires and stop when it is sufficient. "
     "Never guess: every claim must cite a tool result (log line numbers, timestamps, byte counts). "
     "Finish with a compact investigation note in English with these headings: Hypotheses (ranked), Evidence (with citations), "
     "Ruled out, Recommended check for the diagnostician."
@@ -128,8 +102,7 @@ def build_agent(model: str | None = None) -> LlmAgent:
 
 async def investigate_async(job_id: str, incident_summary: str, instance_ref: str = "", findings: list[dict] | None = None,
                             model: str | None = None, run_id: str = "") -> tuple[str, list[dict], dict[str, Any]]:
-    """Returns (investigation_note, tool_log, usage). tool_log = [{tool, args, result_preview}], bounded by MAX_TOOL_CALLS."""
-    _budget.set({"left": MAX_TOOL_CALLS})
+    """Returns (investigation_note, tool_log, usage). tool_log = [{tool, args, result_preview}]."""
     agent = build_agent(model)
     runner = InMemoryRunner(agent=agent, app_name="warden")
     session = await runner.session_service.create_session(app_name="warden", user_id="warden")
@@ -149,12 +122,10 @@ async def investigate_async(job_id: str, incident_summary: str, instance_ref: st
             tool_log.append(rec)
         if ev.is_final_response() and ev.content and ev.content.parts:
             final_text = "".join(p.text or "" for p in ev.content.parts)
-        if len(tool_log) >= MAX_TOOL_CALLS and not final_text:
-            pass  # the model is told the budget; the runner finishes naturally after the final text
     used = model or settings.gemini_model
     pin, pout = PRICE.get(used, (1.5, 9.0))
     usage["cost_usd"] = round(usage["prompt_tokens"] / 1e6 * pin + usage["output_tokens"] / 1e6 * pout, 6)
-    usage["model"] = used; usage["tool_calls"] = len(tool_log); usage["guard_hit"] = any("tool budget exhausted" in str(t.get("result_preview", "")) for t in tool_log)
+    usage["model"] = used; usage["tool_calls"] = len(tool_log)
     return final_text.strip(), tool_log, usage
 
 

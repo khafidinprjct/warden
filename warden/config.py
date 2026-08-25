@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash"
     gemini_model_lite: str = "gemini-3.5-flash-lite"
     gemini_model_second: str = "gemini-3.7-flash"
-    llm_daily_cap_usd: float = 10.0
     auto_spend_daily_cap_usd: float = 10.0
     discord_public_key: str = ""
     discord_bot_token: str = ""
