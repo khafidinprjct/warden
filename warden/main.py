@@ -135,7 +135,18 @@ async def budget(req: Request):
     return {"ok": True, **out}
 
 
+@app.post("/discord/interactions")
+async def discord_interactions(req: Request, x_signature_ed25519: str | None = Header(default=None), x_signature_timestamp: str | None = Header(default=None)):
+    from warden.concierge import discord as dc
+    body = await req.body()
+    if not settings.discord_public_key or not dc.verify_signature(settings.discord_public_key, x_signature_ed25519 or "", x_signature_timestamp or "", body):
+        raise HTTPException(401, "tanda tangan Discord tidak sah")
+    return dc.handle_interaction(json.loads(body))
+
+
 def _notify(inc, dec, text: str) -> None:
-    """Fase 7 mengganti ini dengan kartu Discord; sekarang: catat ke koleksi notifications (terlihat di dashboard)."""
-    db.client().collection("notifications").document(f"{inc.incident_id}:{now().strftime('%H%M%S%f')}").set(
-        {"incident_id": inc.incident_id, "decision_id": dec.decision_id if dec else "", "text": text, "ts": now().isoformat()})
+    """Kartu Discord (Fase 7) + salinan ke koleksi notifications (dashboard)."""
+    from warden.concierge import discord as dc
+    db.client().collection("notifications").document(f"{getattr(inc, 'incident_id', 'x')}:{now().strftime('%H%M%S%f')}").set(
+        {"incident_id": getattr(inc, "incident_id", ""), "decision_id": dec.decision_id if dec else "", "text": text, "ts": now().isoformat()})
+    dc.send(inc if hasattr(inc, "rule") else None, dec, text)
