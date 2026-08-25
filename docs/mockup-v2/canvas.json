@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1040, "title": "Overview · inbox-first" },
+    { "file": "Incident.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 1120, "title": "Incident · narrative + decision rail" },
+    { "file": "Components.dc.html", "x": 0, "y": 1260, "w": 1100, "h": 940, "title": "Design system" }
+  ],
+  "annotations": [
+    { "id": "prinsip", "x": 1160, "y": 1260, "w": 560, "text": "Warden v2 UI — grammar\n1. Inbox first: the page opens with what needs a decision; everything else is secondary.\n2. One status scale (Healthy / Degraded / Stale / Failing / Frozen) and one incident scale (Open / Awaiting approval / Executing / Resolved / Escalated / Closed) — used identically on every page.\n3. Three actors, three labels: Warden, Gemini, Operator.\n4. Incident = narrative (Summary → Evidence → Heartbeat) + decision rail (Detected → Diagnosed → Approval → Execute → Verify).\n5. Structure over sentences: stat card, property list, table row. No explanatory copy on screen.\n6. Light, neutral surfaces; color only for status, actor and the one accent." }
+  ],
+  "launch": { "view": "canvas" }
+}

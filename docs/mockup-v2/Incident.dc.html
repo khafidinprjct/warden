@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #f6f7f9; color: #1a2130; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; font-size: 13px; line-height: 1.45; }
+    a { color: #2f5fd6; text-decoration: none; } a:hover { color: #1f47ab; }
+    .mono { font-family: "IBM Plex Mono", Menlo, monospace; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1080px; display: grid; grid-template-columns: 224px minmax(0, 1fr); background: #f6f7f9;">
+  <aside style="display: flex; flex-direction: column; gap: 4px; padding: 20px 12px; background: #ffffff; border-right: 1px solid #e3e6eb;">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2f5fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+      <div style="font-weight: 600; font-size: 14px;">Warden</div>
+    </div>
+    <div style="padding: 8px 10px; border-radius: 6px; color: #3d4757;">Overview</div>
+    <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 6px; background: #eef2fb; font-weight: 600;"><span>Incidents</span><span style="font-size: 11px; color: #6b7686;">2</span></div>
+    <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 6px; color: #3d4757;"><span>Approvals</span><span style="padding: 1px 7px; border-radius: 999px; background: #b7791f; color: #fff; font-size: 11px; font-weight: 600;">1</span></div>
+    <div style="padding: 8px 10px; color: #3d4757;">Jobs</div><div style="padding: 8px 10px; color: #3d4757;">Fleet</div><div style="padding: 8px 10px; color: #3d4757;">Budget</div><div style="padding: 8px 10px; color: #3d4757;">Policies</div><div style="padding: 8px 10px; color: #3d4757;">Audit Log</div>
+  </aside>
+
+  <main style="display: flex; flex-direction: column; gap: 20px; padding: 24px 32px 40px; max-width: 1120px;">
+    <div style="font-size: 12px; color: #6b7686;"><a href="#">Incidents</a> / INC-4988</div>
+    <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 20px; font-weight: 600;">Orphan instance on demo-train-2</div>
+          <span style="display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #fdf3e1; color: #8a5a0b; font-size: 12px; font-weight: 500;">Awaiting approval</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; color: #b42323; font-weight: 500;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #d9363e;"></span>Critical</span>
+        </div>
+        <div class="num" style="display: flex; gap: 20px; color: #6b7686;">
+          <span>Rule <span style="color: #1a2130;">orphan</span></span><span>Job <a href="#">toy-train</a></span><span>Instance <span style="color: #1a2130;">us-central1-a/demo-train-2</span></span><span>Opened <span style="color: #1a2130;">19:22 WIB</span> · 1 h ago</span><span>Cost while open <span style="color: #1a2130;">$0.034/h</span></span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid #d5dae2; border-radius: 6px; background: #fff; font-weight: 500;">Hold 2 h</div>
+        <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 6px; background: #b42323; color: #fff; font-weight: 600;">Freeze</div>
+      </div>
+    </header>
+
+    <nav style="display: flex; gap: 24px; border-bottom: 1px solid #e3e6eb; font-weight: 500;">
+      <div style="padding: 8px 2px; border-bottom: 2px solid #2f5fd6; color: #1a2130;">Overview</div>
+      <div style="padding: 8px 2px; color: #6b7686;">Timeline <span class="num" style="color: #9aa3b1;">6</span></div>
+      <div style="padding: 8px 2px; color: #6b7686;">Evidence <span class="num" style="color: #9aa3b1;">3</span></div>
+      <div style="padding: 8px 2px; color: #6b7686;">Decisions <span class="num" style="color: #9aa3b1;">1</span></div>
+    </nav>
+
+    <section style="display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start;">
+      <!-- Narrative -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;">
+          <div style="font-size: 15px; font-weight: 600;">Summary</div>
+          <div style="font-size: 14px;">demo-train-2 has been running at $0.034/h with no active job since 10:58 WIB. The last run (r20260825T105835) finished with exit 0 and its 135 artifacts were verified.</div>
+          <div style="display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 6px 16px; font-size: 13px;">
+            <div style="color: #6b7686;">Detected by</div><div>Rule <span class="mono">orphan</span> · instance running, no active job, no heartbeat for 23 min</div>
+            <div style="color: #6b7686;">Diagnosis</div><div><span style="display: inline-flex; padding: 1px 7px; border-radius: 4px; background: #efeafd; color: #5b3fb8; font-size: 11px; font-weight: 600; margin-right: 6px;">Gemini</span>Orphan instance, permanent · confidence 0.93 · cross-check passed · $0.012</div>
+            <div style="color: #6b7686;">Proposed action</div><div>Stop instance demo-train-2 · Autonomy L1 (legacy job) · affects this job</div>
+            <div style="color: #6b7686;">If left as is</div><div class="num">$0.82 per day</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;">
+          <div style="padding: 14px 18px; border-bottom: 1px solid #e3e6eb; font-size: 15px; font-weight: 600;">Evidence</div>
+          <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 16px; padding: 14px 18px; border-bottom: 1px solid #eef0f3;">
+            <div style="color: #6b7686;">Log excerpt</div>
+            <div class="mono" style="padding: 10px 12px; border-radius: 6px; background: #f6f7f9; border: 1px solid #e3e6eb; font-size: 12px; color: #1a2130; white-space: pre;">412  RUN_FIN exit=0 10:58:35
+418  no active run since 10:58</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 16px; padding: 14px 18px; border-bottom: 1px solid #eef0f3;">
+            <div style="color: #6b7686;">Cross-check</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span style="color: #1f7a3d;">Passed — evidence lines exist in log</span><span style="color: #1f7a3d;">Passed — instance status matches claim</span></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 16px; padding: 14px 18px;">
+            <div style="color: #6b7686;">How to disprove</div>
+            <div>A new RUN_START within 10 minutes would refute this diagnosis.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;">
+          <div style="padding: 14px 18px; border-bottom: 1px solid #e3e6eb; font-size: 15px; font-weight: 600;">Host heartbeat · last 60</div>
+          <svg viewBox="0 0 640 140" role="img" aria-label="CPU percent over the last hour, flat near 5 percent" style="width: 100%; height: 160px; padding: 8px 12px; box-sizing: border-box;">
+            <line x1="40" y1="110" x2="620" y2="110" stroke="#e3e6eb"></line><line x1="40" y1="70" x2="620" y2="70" stroke="#eef0f3"></line><line x1="40" y1="30" x2="620" y2="30" stroke="#eef0f3"></line>
+            <text x="8" y="114" fill="#6b7686" font-size="10">0%</text><text x="8" y="74" fill="#6b7686" font-size="10">50%</text><text x="8" y="34" fill="#6b7686" font-size="10">100%</text>
+            <polyline fill="none" stroke="#2f5fd6" stroke-width="2" points="40,104 100,106 160,103 220,105 280,104 340,106 400,105 460,104 520,105 580,106 620,105"></polyline>
+            <text x="40" y="130" fill="#6b7686" font-size="10">18:20</text><text x="330" y="130" fill="#6b7686" font-size="10">18:50</text><text x="596" y="130" fill="#6b7686" font-size="10">19:20</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Decision rail: plan → approve → execute → verify -->
+      <aside style="display: flex; flex-direction: column; background: #fff; border: 1px solid #b7791f; border-radius: 8px; position: sticky; top: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e3e6eb;">
+          <div style="font-size: 15px; font-weight: 600;">Decision</div>
+          <div class="num" style="color: #b7791f; font-weight: 500;">Expires in 29 min</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0; padding: 14px 18px; border-bottom: 1px solid #e3e6eb;">
+          <div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 0 12px; align-items: start;">
+            <div style="display: flex; flex-direction: column; align-items: center;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #2ea043; margin-top: 4px;"></span><span style="width: 2px; height: 26px; background: #d5dae2;"></span></div>
+            <div><div style="font-weight: 600;">Detected</div><div class="num" style="color: #6b7686;">19:22:58 · rule orphan</div></div>
+            <div style="display: flex; flex-direction: column; align-items: center;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #2ea043; margin-top: 4px;"></span><span style="width: 2px; height: 26px; background: #d5dae2;"></span></div>
+            <div><div style="font-weight: 600;">Diagnosed</div><div class="num" style="color: #6b7686;">19:22:59 · Gemini, cross-check passed</div></div>
+            <div style="display: flex; flex-direction: column; align-items: center;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #e0a52a; box-shadow: 0 0 0 4px #fdf3e1; margin-top: 4px;"></span><span style="width: 2px; height: 26px; background: #d5dae2;"></span></div>
+            <div><div style="font-weight: 600; color: #8a5a0b;">Approval required</div><div style="color: #6b7686;">Policy: legacy job → L1</div></div>
+            <div style="display: flex; flex-direction: column; align-items: center;"><span style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid #d5dae2; box-sizing: border-box; margin-top: 4px;"></span><span style="width: 2px; height: 26px; background: #e3e6eb;"></span></div>
+            <div style="color: #9aa3b1;"><div style="font-weight: 600;">Execute</div><div>instances.stop · demo-train-2</div></div>
+            <div style="display: flex; flex-direction: column; align-items: center;"><span style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid #d5dae2; box-sizing: border-box; margin-top: 4px;"></span></div>
+            <div style="color: #9aa3b1;"><div style="font-weight: 600;">Verify</div><div>Instance status TERMINATED</div></div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 12px; padding: 14px 18px; border-bottom: 1px solid #e3e6eb; font-size: 13px;">
+          <div style="color: #6b7686;">Action</div><div style="font-weight: 600;">Stop instance</div>
+          <div style="color: #6b7686;">Target</div><div class="mono">us-central1-a/demo-train-2</div>
+          <div style="color: #6b7686;">Change</div><div>RUNNING → TERMINATED</div>
+          <div style="color: #6b7686;">Affects</div><div>This job only</div>
+          <div style="color: #6b7686;">Cost impact</div><div class="num">Saves $0.034/h · action $0.00</div>
+          <div style="color: #6b7686;">Reversible</div><div>Yes — instance can be started again; disk retained</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 18px;">
+          <div style="display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 6px; background: #1f7a3d; color: #fff; font-weight: 600;">Approve and stop instance</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="display: flex; align-items: center; justify-content: center; height: 36px; border: 1px solid #d5dae2; border-radius: 6px; background: #fff; font-weight: 500;">Deny</div>
+            <div style="display: flex; align-items: center; justify-content: center; height: 36px; border: 1px solid #d5dae2; border-radius: 6px; background: #fff; font-weight: 500;">Always for 24 h</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

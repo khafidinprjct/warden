@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #ffffff; color: #1a2130; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; font-size: 13px; line-height: 1.45; }
+    a { color: #2f5fd6; text-decoration: none; } a:hover { color: #1f47ab; }
+    .mono { font-family: "IBM Plex Mono", Menlo, monospace; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+<div style="width: 1100px; min-height: 900px; display: flex; flex-direction: column; gap: 28px; padding: 32px; box-sizing: border-box; background: #ffffff;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 20px; font-weight: 600;">Warden design system</div>
+    <div style="color: #6b7686;">One vocabulary, one status scale, one layout grammar — every page composes these and nothing else.</div>
+  </div>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Color</div>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px;">
+      <div><div style="height: 44px; border-radius: 6px; background: #f6f7f9; border: 1px solid #e3e6eb;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#f6f7f9 canvas</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #ffffff; border: 1px solid #e3e6eb;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#ffffff surface</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #e3e6eb;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#e3e6eb border</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #1a2130;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#1a2130 text</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #6b7686;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#6b7686 muted</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #2f5fd6;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#2f5fd6 accent</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: #5b3fb8;"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">#5b3fb8 Gemini</div></div>
+      <div><div style="height: 44px; border-radius: 6px; background: linear-gradient(90deg, #2ea043 33%, #e0a52a 33% 66%, #d9363e 66%);"></div><div class="mono" style="font-size: 11px; margin-top: 4px;">status ok / warn / crit</div></div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Status scale — used everywhere, nothing else</div>
+    <div style="display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px 16px; align-items: center;">
+      <div style="color: #6b7686;">Component health</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #e6f4ea; color: #1f7a3d; font-weight: 500;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #2ea043;"></span>Healthy</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #fdf3e1; color: #8a5a0b; font-weight: 500;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #e0a52a;"></span>Degraded</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #eef0f3; color: #6b7686; font-weight: 500;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #9aa3b1;"></span>Stale</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #fbe9e9; color: #b42323; font-weight: 500;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #d9363e;"></span>Failing</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #e8edf8; color: #2f5fd6; font-weight: 500;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #2f5fd6;"></span>Frozen</span>
+      </div>
+      <div style="color: #6b7686;">Incident status</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #fbe9e9; color: #b42323; font-weight: 500;">Open</span>
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #fdf3e1; color: #8a5a0b; font-weight: 500;">Awaiting approval</span>
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #e8edf8; color: #2f5fd6; font-weight: 500;">Executing</span>
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #e6f4ea; color: #1f7a3d; font-weight: 500;">Resolved</span>
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #fbe9e9; color: #b42323; font-weight: 500;">Escalated</span>
+        <span style="display: inline-flex; padding: 2px 10px; border-radius: 999px; background: #eef0f3; color: #6b7686; font-weight: 500;">Closed</span>
+      </div>
+      <div style="color: #6b7686;">Severity</div>
+      <div style="display: flex; gap: 16px;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: #b42323; font-weight: 500;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #d9363e;"></span>Critical</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: #8a5a0b; font-weight: 500;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #e0a52a;"></span>Warning</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: #3d4757; font-weight: 500;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #9aa3b1;"></span>Info</span>
+      </div>
+      <div style="color: #6b7686;">Actor</div>
+      <div style="display: flex; gap: 10px;">
+        <span style="display: inline-flex; padding: 1px 7px; border-radius: 4px; background: #eef0f3; color: #3d4757; font-size: 11px; font-weight: 600;">Warden</span>
+        <span style="display: inline-flex; padding: 1px 7px; border-radius: 4px; background: #efeafd; color: #5b3fb8; font-size: 11px; font-weight: 600;">Gemini</span>
+        <span style="display: inline-flex; padding: 1px 7px; border-radius: 4px; background: #e6f4ea; color: #1f7a3d; font-size: 11px; font-weight: 600;">Operator</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Type scale</div>
+    <div style="display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 8px 16px; align-items: baseline;">
+      <div style="color: #6b7686;">Page title · 20/600</div><div style="font-size: 20px; font-weight: 600;">Incidents</div>
+      <div style="color: #6b7686;">Section · 15/600</div><div style="font-size: 15px; font-weight: 600;">Needs your decision</div>
+      <div style="color: #6b7686;">Body · 13/400</div><div>demo-train-2 has been running with no active job since 10:58 WIB.</div>
+      <div style="color: #6b7686;">Meta · 12/400 muted</div><div class="num" style="font-size: 12px; color: #6b7686;">Updated 25 Aug 2026, 19:28 WIB · 2 min ago</div>
+      <div style="color: #6b7686;">Column header · 11 caps</div><div style="font-size: 11px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.06em;">Severity · Incident · Job · Status · Opened</div>
+      <div style="color: #6b7686;">Code · Plex Mono 12</div><div class="mono" style="font-size: 12px;">ckpt_001742.npz · us-central1-a/demo-train-2</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Buttons</div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 6px; background: #1f7a3d; color: #fff; font-weight: 600;">Approve</div>
+      <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 6px; background: #2f5fd6; color: #fff; font-weight: 600;">Primary</div>
+      <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid #d5dae2; border-radius: 6px; background: #fff; font-weight: 500;">Secondary</div>
+      <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 6px; background: #b42323; color: #fff; font-weight: 600;">Freeze</div>
+      <div style="display: flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid #d5dae2; border-radius: 6px; background: #fff; color: #9aa3b1; font-weight: 500;">Disabled</div>
+      <a href="#">Text link</a>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Layout grammar</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid #e3e6eb; border-radius: 8px; background: #f6f7f9;">
+        <div style="font-weight: 600;">Stat card</div>
+        <div style="font-size: 12px; color: #6b7686;">Label · number · one supporting line. Never a sentence.</div>
+        <div style="padding: 14px 16px; background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;"><div style="font-size: 12px; color: #6b7686;">Open incidents</div><div class="num" style="font-size: 26px; font-weight: 600; line-height: 1;">2</div><div class="num" style="font-size: 12px; color: #6b7686;">10 resolved today</div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid #e3e6eb; border-radius: 8px; background: #f6f7f9;">
+        <div style="font-weight: 600;">Property list</div>
+        <div style="font-size: 12px; color: #6b7686;">Label column fixed at 130–160 px, values left-aligned, tabular numbers.</div>
+        <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 12px; padding: 14px 16px; background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;"><div style="color: #6b7686;">Action</div><div style="font-weight: 600;">Stop instance</div><div style="color: #6b7686;">Target</div><div class="mono">demo-train-2</div><div style="color: #6b7686;">Change</div><div>RUNNING → TERMINATED</div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid #e3e6eb; border-radius: 8px; background: #f6f7f9;">
+        <div style="font-weight: 600;">Table row</div>
+        <div style="font-size: 12px; color: #6b7686;">Header in 11-px caps; one primary link per row; secondary line muted.</div>
+        <div style="background: #fff; border: 1px solid #e3e6eb; border-radius: 8px;"><div style="display: grid; grid-template-columns: 70px minmax(0, 1fr) 90px; gap: 10px; padding: 6px 12px; font-size: 11px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #eef0f3;"><div>Sev.</div><div>Incident</div><div>Status</div></div><div style="display: grid; grid-template-columns: 70px minmax(0, 1fr) 90px; gap: 10px; padding: 10px 12px; align-items: center;"><div style="display: inline-flex; align-items: center; gap: 6px; color: #b42323;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #d9363e;"></span>Crit</div><div style="min-width: 0;"><a href="#" style="color: #1a2130; font-weight: 600;">Orphan instance</a><div style="color: #6b7686;">demo-train-2</div></div><div><span style="display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #fdf3e1; color: #8a5a0b; font-size: 12px;">Awaiting</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 12px; color: #6b7686; text-transform: uppercase; letter-spacing: 0.08em;">Empty and error states</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px; border: 1px dashed #d5dae2; border-radius: 8px; color: #6b7686;"><div style="font-weight: 600; color: #3d4757;">No pending approvals</div><div>Warden will list decisions here when a policy requires you.</div></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px solid #f1c9c9; border-radius: 8px; background: #fbe9e9; color: #b42323;"><span style="font-weight: 600;">Compute Engine API unreachable</span><span style="color: #8a2a2a;">3 consecutive failures · last OK 19:10 WIB · actions paused</span></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>
