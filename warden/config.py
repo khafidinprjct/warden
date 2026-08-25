@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="WARDEN_", env_file=".env", extra="ignore")
 
     project: str = "warden-local"            # GCP project id (lokal: warden-local + emulator)
+    self_url: str = ""                        # public URL of warden-core (harness posts here); set on Cloud Run
     region: str = "us-central1"            # Cloud Run/Firestore
     genai_location: str = "global"           # Vertex Gemini 3.5/3.7 hanya di endpoint global (terverifikasi 25 Agu)
     firestore_db: str = ""                    # kosong = (default); emulator lokal boleh pakai nama lain

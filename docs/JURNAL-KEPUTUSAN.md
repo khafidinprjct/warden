@@ -163,3 +163,9 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Ditolak: RESOLVED langsung setelah API sukses (perilaku lama) — itu klaim tanpa bukti.
 - Bukti: pytest 59/59 (tests/test_recovery_fake.py 7 skenario: stockout→relocate, disk_low→clean→verified, clean kosong→resize L1, deadline→ladder→escalate, memori dahulukan aksi terbukti, idempoten 5 tick = 1 start, dry-run semua aksi).
 - Risiko: relocate/set_machine_type/resize di GCE nyata belum diuji hidup (M2) — dijadwalkan dengan mesin e2 spot (sen).
+
+## 26 Agu 2026 01:20 WIB — Butir A (siklus hidup job) dibangun
+- `warden/lifecycle.py`: launch(spec) → ledger dulu (P7) → pilih zona (lewati stock-out 30 mnt & kuota CPU) → `compute.create` dengan metadata harness + startup-script → job PENDING → denyut pertama = RUNNING (ingest). close-out: VERIFIED → laporan akhir (`reports/<job>`: biaya, ETTR, artefak, insiden) + aturan `complete_running` mematikan mesin ≤1 tick.
+- Aturan baru: preflight_fail → stop; smoke_invalid (member SMOKE_FIN ⊄ expect.smoke_members) → notify; budget_80 → notify; budget_exhausted → stop (J3).
+- Endpoint `POST /jobs/launch` (HMAC) + CLI `warden launch spec.yaml`. Provider: `create()` GCE nyata (SPOT+STOP+no-auto-delete, SA warden-vm, label managed) + fake.
+- Bukti: tests/test_lifecycle_fake.py 6 skenario; total pytest 65/65. Uji hidup launch di GCE nyata = M2/M4 (menyusul, e2 spot ≈ $0,01/jam).

@@ -111,6 +111,19 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
         return {"ok": False, "error": str(e)[:200]}
 
 
+@app.post("/jobs/launch")
+async def jobs_launch(req: Request, x_warden_signature: str | None = Header(default=None)):
+    """One spec → Warden creates the machine and guards the job (checklist A1). HMAC over the body (dashboard/CLI)."""
+    body = await req.body()
+    if not ing.verify(body, x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
+        raise HTTPException(401, "HMAC salah")
+    from warden import lifecycle
+    try:
+        return lifecycle.launch(json.loads(body), actor="operator")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.post("/freeze")
 def freeze(on: bool = True, who: str = "dashboard", x_warden_signature: str | None = Header(default=None)):
     if not ing.verify(b"freeze", x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":

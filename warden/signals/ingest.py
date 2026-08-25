@@ -81,6 +81,9 @@ def ingest_heartbeat(payload: dict) -> Heartbeat:
     hb = Heartbeat.model_validate(payload)
     db.put_heartbeat(hb)
     _touch_job(hb.job_id, source="heartbeat", run_id=hb.run_id, phase=hb.phase, last_step=hb.step, last_heartbeat_at=hb.ts)
+    job = db.jobs.get(hb.job_id)
+    if job and job.status == "PENDING":            # launched by Warden: the first heartbeat is the proof the machine and harness are alive
+        job.status = "RUNNING"; db.jobs.put(job)
     return hb
 
 

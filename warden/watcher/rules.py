@@ -18,6 +18,8 @@ class Facts:
     run_fin: Marker | None = None
     done_legacy: Marker | None = None
     preempt_events: list[dict] = field(default_factory=list)
+    preflight_fail: Marker | None = None
+    smoke_fin: Marker | None = None
     prev_status: InstanceStatus | None = None  # status pada tick sebelumnya (dua tick berturut)
     in_ledger: bool = True
     boot_age_min: float = 999.0
@@ -82,6 +84,30 @@ def evaluate(f: Facts) -> list[Finding]:
                            f"verify:{f.run_fin.job_id}:{f.run_fin.run_id}", suggested_action="verify",
                            evidence={"artifacts": f.run_fin.artifacts}))
 
+    # A6 close-out: job COMPLETE (artifacts VERIFIED) but the machine still runs → stop it now, do not wait for idle grace
+    if inst and inst.status == InstanceStatus.RUNNING and job and job.status == JobStatus.COMPLETE and f.boot_age_min > 2:
+        out.append(Finding("complete_running", "info", f"{job.job_id} is COMPLETE (verified) — stopping {inst.ref} (${inst.hourly_price_usd:.3f}/h)",
+                           f"complete:{inst.ref}:{job.run_id}", suggested_action="stop_instance", evidence={"hourly": inst.hourly_price_usd}))
+    # A3 preflight failed on the machine → nothing expensive should start; stop the spend and tell the human what is missing
+    if f.preflight_fail and job and job.status in (JobStatus.PENDING, JobStatus.RUNNING) and inst and inst.status == InstanceStatus.RUNNING:
+        out.append(Finding("preflight_fail", "critical", f"{job.job_id}: preflight failed on {inst.ref}: {f.preflight_fail.evidence.get('reason', '?')}",
+                           f"preflight:{job.job_id}:{inst.boot_id}", suggested_action="stop_instance", evidence=dict(f.preflight_fail.evidence)))
+    # A7 smoke that did not load the declared components is not a smoke
+    if f.smoke_fin and job:
+        want = set((job.expect or {}).get("smoke_members", [])); got = set(f.smoke_fin.evidence.get("members", []))
+        if want and not want <= got:
+            out.append(Finding("smoke_invalid", "critical", f"{job.job_id}: smoke missing members {sorted(want - got)} — not accepted",
+                               f"smoke:{job.job_id}:{f.smoke_fin.run_id}", suggested_action="notify", evidence={"want": sorted(want), "got": sorted(got)}))
+    # J3 job budget: 80 % warn, 100 % stop
+    if job and job.budget_cap_usd > 0 and job.status == JobStatus.RUNNING and inst and inst.status == InstanceStatus.RUNNING:
+        pct = job.spent_usd / job.budget_cap_usd
+        if pct >= 1.0:
+            out.append(Finding("budget_exhausted", "critical", f"{job.job_id}: spent ${job.spent_usd:.2f} ≥ budget ${job.budget_cap_usd:.2f} — stopping",
+                               f"budget100:{job.job_id}", suggested_action="stop_instance", evidence={"spent": job.spent_usd, "cap": job.budget_cap_usd}))
+        elif pct >= 0.8:
+            out.append(Finding("budget_80", "warning", f"{job.job_id}: spent ${job.spent_usd:.2f} = {pct*100:.0f}% of budget ${job.budget_cap_usd:.2f}",
+                               f"budget80:{job.job_id}", suggested_action="notify", evidence={"spent": job.spent_usd, "cap": job.budget_cap_usd}))
+
     # R6 macet dua-syarat: denyut basi DAN (gpu < 5% ATAU cpu < 10%)
     if inst and inst.status == InstanceStatus.RUNNING and job and job.status == JobStatus.RUNNING and hb and f.run_fin is None:
         age = f.t - hb.ts
@@ -119,7 +145,8 @@ def evaluate(f: Facts) -> list[Finding]:
     # R5 yatim & idle (dua-syarat, grace)
     if inst and inst.status == InstanceStatus.RUNNING and f.boot_age_min > g["boot_grace_minutes"]:
         quiet = hb is None or ((hb.gpu_util or 0) < 5 and (hb.cpu_pct or 0) < 10)
-        if not f.in_ledger or (job is None) or job.status in (JobStatus.COMPLETE, JobStatus.FAILED, JobStatus.ABANDONED):
+        if not f.in_ledger or (job is None) or job.status in (JobStatus.FAILED, JobStatus.ABANDONED) \
+                or (job.status == JobStatus.COMPLETE and not any(o.rule == "complete_running" for o in out)):   # COMPLETE is handled by close-out
             if quiet and f.boot_age_min > g["orphan_grace_minutes"]:
                 out.append(Finding("orphan", "warning", f"{inst.ref} running at ${inst.hourly_price_usd:.3f}/h with no active job",
                                    f"orphan:{inst.ref}:{inst.boot_id}", suggested_action="stop_instance",

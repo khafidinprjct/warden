@@ -21,7 +21,12 @@ def main(argv=None) -> int:
     sub.add_parser("tick"); sub.add_parser("steward"); f = sub.add_parser("freeze"); f.add_argument("state", choices=["on", "off"])
     ap_ = sub.add_parser("approve"); ap_.add_argument("decision_id"); dn = sub.add_parser("deny"); dn.add_argument("decision_id")
     e = sub.add_parser("ettr"); e.add_argument("job_id")
+    l = sub.add_parser("launch", help="one job spec (json/yaml) → Warden creates the machine and guards the job"); l.add_argument("spec")
     ns = ap.parse_args(argv)
+    if ns.cmd == "launch":
+        import yaml
+        from warden import lifecycle
+        spec = yaml.safe_load(open(ns.spec)); r = lifecycle.launch(spec, actor="cli"); print(json.dumps(r, indent=1, default=str)); return 0 if r.get("ok") else 2
     if ns.cmd == "job" and ns.jcmd == "add":
         job = Job(job_id=ns.job_id, name=ns.job_id, instance_ref=ns.instance, command=ns.command, phase=ns.phase,
                   status=JobStatus.RUNNING, expect=json.loads(ns.expect_json), legacy=ns.legacy, budget_cap_usd=ns.budget)

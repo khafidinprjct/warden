@@ -35,12 +35,17 @@ def _facts_for(inst, job, t) -> Facts:
     hbs = db.recent_heartbeats(job.job_id, 30) if job else []
     run_fin = db.get_marker(job.job_id, job.run_id, "RUN_FIN") if job and job.run_id else None
     done_legacy = db.get_marker(job.job_id, job.run_id, "DONE_LEGACY") if job and job.run_id else None
+    preflight = db.get_marker(job.job_id, "", "PREFLIGHT_FAIL") if job else None
+    if preflight and inst and preflight.boot_id and preflight.boot_id != inst.boot_id:
+        preflight = None                                   # belongs to an earlier boot
+    smoke = db.get_marker(job.job_id, job.run_id, "SMOKE_FIN") if job and job.run_id else None
     ev = compute().preempt_events(inst.ref) if inst and inst.status == InstanceStatus.TERMINATED else []
     prev = _prev_status.get(inst.ref) if inst else None
     boot_age = 999.0
     if inst and inst.last_seen and hb and hb.boot_id == inst.boot_id:
         boot_age = max(0.0, (t - min(h.ts for h in hbs if h.boot_id == inst.boot_id)).total_seconds() / 60) if hbs else 999.0
     return Facts(t=t, inst=inst, job=job, hb=hb, hbs=hbs, run_fin=run_fin, done_legacy=done_legacy, preempt_events=ev,
+                 preflight_fail=preflight, smoke_fin=smoke,
                  prev_status=prev, in_ledger=bool(job), boot_age_min=boot_age, policy=POLICY)
 
 

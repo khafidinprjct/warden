@@ -69,7 +69,9 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
             job.last_good_ckpt = {"path": ck[-1]["name"], "sha256": ck[-1]["sha256"], "step": job.last_step}
         db.jobs.put(job)
         transition(inc, S.DECIDED, note="artifacts opened & intact"); transition(inc, S.RESOLVED, note="VERIFIED written"); db.incidents.put(inc)
-        if notify: notify(inc, None, f"✅ {inc.job_id}: {len(results)} artifacts opened & intact → COMPLETE (VERIFIED)")
+        from warden.lifecycle import report
+        rep = report(job)     # close-out (A6): final cost, ETTR, artifacts, incidents; the machine is stopped by rule complete_running
+        if notify: notify(inc, None, f"✅ {inc.job_id}: {len(results)} artifacts opened & intact → COMPLETE (VERIFIED) · ${rep['spent_usd']:.2f} · ETTR {rep['ettr']} · {rep['incidents']['total']} incidents")
         return {"ok": True, "results": results}
     # gagal: job tetap FINISHED_UNVERIFIED; karantina otomatis (L2) artefak yang rusak
     job.status = JobStatus.FINISHED_UNVERIFIED; db.jobs.put(job)
