@@ -19,7 +19,7 @@
 
 ## Ceklis
 - [ ] Repo dibagikan ke testing@devpost.com + cloudhackathons@google.com (atau publik)
-- [ ] README teruji dari mesin bersih ≤ 30 mnt
+- [x] README teruji dari mesin bersih ≤ 30 mnt — 25 Agu 14:55 WIB: clone segar → venv → pip → 41 tes + chaos 25/25 dalam **34 s** (belum termasuk deploy Cloud Run ±10 mnt)
 - [ ] Diagram arsitektur (Mermaid di README + PNG `docs/architecture.png`)
 - [ ] Video ≤ 4:00 di YouTube (publik, CC Inggris), Console terlihat, satu take
 - [ ] URL hosted: dashboard `warden-ui` (read-only untuk juri)
