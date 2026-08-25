@@ -26,6 +26,11 @@ def _dump(m: BaseModel) -> dict[str, Any]:
     return m.model_dump(mode="json")
 
 
+def _docid(x: str) -> str:
+    """ID dokumen Firestore tidak boleh memuat '/'; ref mesin 'zone/name' → 'zone__name'."""
+    return x.replace("/", "__")
+
+
 class Repo:
     """CRUD generik per koleksi. ID dokumen = field kunci model."""
 
@@ -33,11 +38,11 @@ class Repo:
         self.coll, self.model, self.key = coll, model, key
 
     def put(self, m: T) -> T:
-        client().collection(self.coll).document(getattr(m, self.key)).set(_dump(m))
+        client().collection(self.coll).document(_docid(getattr(m, self.key))).set(_dump(m))
         return m
 
     def get(self, id_: str) -> T | None:
-        d = client().collection(self.coll).document(id_).get()
+        d = client().collection(self.coll).document(_docid(id_)).get()
         return self.model.model_validate(d.to_dict()) if d.exists else None
 
     def list(self, limit: int = 500, **eq) -> list[T]:
@@ -47,7 +52,7 @@ class Repo:
         return [self.model.model_validate(d.to_dict()) for d in q.limit(limit).stream()]
 
     def delete(self, id_: str) -> None:
-        client().collection(self.coll).document(id_).delete()
+        client().collection(self.coll).document(_docid(id_)).delete()
 
 
 fleet = Repo("fleet", Instance, "ref")

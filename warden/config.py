@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="WARDEN_", env_file=".env", extra="ignore")
 
     project: str = "warden-local"            # GCP project id (lokal: warden-local + emulator)
-    region: str = "us-central1"
+    region: str = "us-central1"            # Cloud Run/Firestore
+    genai_location: str = "global"           # Vertex Gemini 3.5/3.7 hanya di endpoint global (terverifikasi 25 Agu)
     firestore_db: str = "warden"              # lokal 'warden' (emulator menolak '(default)' ter-encode); produksi '(default)'
     bucket: str = ""                          # gs bucket artefak/log/marker; kosong = lokal (data/gcs/)
     events_topic: str = "warden-events"

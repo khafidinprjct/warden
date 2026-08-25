@@ -16,3 +16,11 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - KEPUTUSAN KEAMANAN: role kustom `wardenInstanceOperator` (get/list/start/stop/setMetadata/setLabels/setMachineType + baca operasi/kuota) **tanpa compute.instances.delete / disks.delete** untuk core & deadman. IAM condition berbasis label DITOLAK API (label bukan tag) → pembatasan "hanya mesin warden-managed" dipindah ke kode (allowlist label) + tidak adanya izin delete di IAM. Alternatif ditolak: roles/compute.instanceAdmin.v1 penuh (terlalu luas).
 - Emulator: gcloud 581, Java 21. Emulator Firestore menolak `(default)` ter-encode oleh client 2.29 → keputusan: database lokal bernama `warden`, produksi `(default)` (konfigurasi `WARDEN_FIRESTORE_DB`).
 - Biaya sejauh ini: $0 (semua free tier / tanpa mesin).
+
+## 25 Agu 2026 13:05 WIB — Fase 1 LULUS gerbang
+- `make smoke`: (A) preempt → dua tick → start otomatis L2 → RESOLVED, audit niat+hasil; (B) marker DONE tanpa exit code ditolak; (C) Gemini 3.5 Flash asli (ADK `LlmAgent` + `output_schema`) mendiagnosis log nyata `run_eks_gagal1.log` → `nan_input`, confidence 1,00, evidence_lines [174,175], cek silang LOLOS, biaya $0,0107.
+- Tes: 25 unit (policy/state machine/rules) + 4 tick end-to-end di emulator = 29 hijau.
+- KEPUTUSAN: Vertex AI + service account (bukan API key). Gemini 3.5/3.7 di Vertex hanya tersedia di lokasi `global` (us-central1/us-east5 = 404) → `GOOGLE_CLOUD_LOCATION=global`. Dev lokal memakai berkas kunci SA `warden-core` di `~/.config/warden/` (chmod 600, di luar repo) — dirotasi/dihapus di Fase 12; produksi Cloud Run tanpa berkas kunci.
+- KEPUTUSAN: ID dokumen Firestore untuk ref mesin `zone/name` → `zone__name` (Firestore melarang '/').
+- Uji pembatal ADK (output_schema + agen LLM + runner) LULUS — rancangan §3.3 tetap.
+- Biaya: $0,01 (Gemini).
