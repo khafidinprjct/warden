@@ -306,10 +306,13 @@ class GCE:
         zone, name = self._split(ref)
         out: list[dict] = []
         try:
-            req = compute_v1.ListZoneOperationsRequest(project=self.project, zone=zone, max_results=100,
-                                                       filter=f'(operationType = "compute.instances.preempted") AND (targetLink : "{name}")')
+            # filter on operationType only; the target is matched here (the API's substring filter on targetLink returned nothing
+            # for a real preemption on 26 Aug → the incident was labelled stopped_external and the relocate rung never applied)
+            req = compute_v1.ListZoneOperationsRequest(project=self.project, zone=zone, max_results=200,
+                                                       filter='operationType = "compute.instances.preempted"')
             for op in self.zc.list(request=req):
-                out.append({"type": op.operation_type, "ts": op.insert_time, "target": op.target_link})
+                if (op.target_link or "").endswith(f"/instances/{name}"):
+                    out.append({"type": op.operation_type, "ts": op.insert_time, "target": op.target_link})
         except Exception as e:
             out.append({"type": "_error", "msg": str(e)[:120]})
         return out
