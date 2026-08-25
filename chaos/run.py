@@ -173,7 +173,8 @@ def s19():
         for i in range(3): db.put_heartbeat(Heartbeat(job_id="j1", run_id="r1", ts=now(), boot_id=fake.describe(inst.ref).boot_id, phase="F3", step=1000 + k * 10 + i, gpu_util=90, cpu_pct=80, disk_avail_gb=40))
         T._prev_status.clear()
     starts = [c for c in fake.calls if c[0] == "start" and not c[2]]
-    return len(starts) == 3 and any(str(i.state) in ("ESCALATED", "AWAITING_APPROVAL") for i in db.incidents.list(rule="preempted")), {"start": len(starts)}
+    storm = [i for i in db.incidents.list(rule="preempt_storm")]     # B4: the third preemption in an hour is a storm → relocate (L1), no further start
+    return len(starts) <= 3 and storm and str(storm[0].state) == "AWAITING_APPROVAL" and db.decisions.get(storm[0].decision_ids[0]).action == "relocate_zone", {"start": len(starts), "storm": len(storm)}
 
 @scenario(20, "proses ganda → dup_process")
 def s20():
