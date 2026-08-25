@@ -1,1 +1,1 @@
-web: python -m warden.ui.dashboard
+web: python -m warden.ui2.app
