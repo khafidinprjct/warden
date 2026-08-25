@@ -23,7 +23,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ C2 Investigator with read-only tools (per-run log, heartbeats, artifacts, history, instance).
 - ✅ C3 No artificial limits; framework defaults only.
 - ✅ C4 Gold evaluation set (11/11, 0 fabricated, $0.07/run; nightly `warden-gold-eval`) from real logs (NaN, OOM, wake-loop, kernel fallback, deps) — action accuracy ≥ 90 %, zero fabricated evidence, re-run on every prompt/model change.
-- ☐ C5 Multimodal: loss curve rendered and judged when numbers are ambiguous; phone screenshots read (labelled, never auto-acting).
+- ✅ C5 Multimodal (training-curve PNG attached for plateau/throughput/grad/NaN/stuck incidents; Ask Warden reads a phone photo, labelled, never acting): loss curve rendered and judged when numbers are ambiguous; phone screenshots read (labelled, never auto-acting).
 
 ## D. Actions — every recommendation has a real executor
 - ✅ D1 start after preempt · stop idle/orphan · resume from VERIFIED · quarantine artifact.
@@ -63,19 +63,19 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25. Live GCE test of D2/D7 pendi
 - ✅ H2 Separate deadman; DLQ; retries; Gemini/provider breaker; HMAC rotation.
 - ✅ H3 Idempotency proven (5 ticks = 1 start; test_idempotent_ticks_do_not_double_act).
 - ✅ H4 Two jobs guarded concurrently without interference (test).
-- ◐ H5 Soak: 7 days healthy synthetic job = zero false actions.
+- ◐ H5 Soak: measurement in place (`python -m chaos.soak --days 7`, writes eval/soak-*); 2-day baseline 0 false actions; the 7-day window closes 1 Sep.
 
 ## I. Security & credentials
 - ✅ I1 Separate SAs, minimal roles, OIDC push, HMAC ingest, Secret Manager.
 - ☐ I2 IAM condition limiting the core SA to Warden machines (negative test).
 - ✅ I3 Mailbox commands signed by core and verified by the harness; harness reports results.
-- ☐ I4 Security review updated for D2–D8.
+- ✅ I4 Security review updated for D2–D8 (docs/SECURITY-REVIEW.md, 26 Aug).
 
 ## J. Cost — the user's GPU money
 - ✅ J1 Ledger rate × age per machine, cost per incident.
 - ✅ J2 ETTR per job (digest, overview, jobs, job detail, final report).
 - ✅ J3 Runway vs job budget; 80 % warn, 100 % stop — automatic.
-- ☐ J4 Ledger vs Billing ± 10 %.
+- ◐ J4 Ledger vs Billing ± 10 % — `infra/billing_reconcile.py` ready; needs the owner to enable the BigQuery billing export (console-only setting), then run.
 
 ## K. Human interface
 - ◐ K1 Dashboard v2: phone audit passed; desktop not audited.
@@ -95,6 +95,6 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25. Live GCE test of D2/D7 pendi
 - ☐ M4 Full lifecycle A1→A6 without a human touch.
 
 ## N. Documentation & reproducibility
-- ◐ N1 README/ADR/diagram — update after A–G.
+- ◐ N1 README + ADR-0014/15/16 updated; diagram still shows the pre-recovery loop (redraw pending).
 - ☐ N2 Clean machine follows README → Warden live ≤ 30 min (tested).
-- ☐ N3 Operator runbook for when Warden itself misbehaves.
+- ✅ N3 Operator runbook (docs/RUNBOOK.md, English, incl. Warden self-recovery).
