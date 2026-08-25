@@ -175,3 +175,9 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - F3: `false_positive(incident)` (state FALSE_POSITIVE baru); alarm yang dibuang 2× dalam 7 hari → aksi ditahan, hanya notifikasi info. F5: memori lintas job — bila job ini belum punya riwayat, postmortem job lain dengan kategori sama dipakai (ditandai "remembered from job X").
 - G2: `apply_promotions()` di steward tiap 10 mnt — 5 persetujuan beruntun tanpa gagal → L2 untuk job itu; verifikasi gagal aksi L2 → turun L1; keduanya di audit + notifikasi. G3: setiap batas kebijakan yang mengubah keputusan → event `warden.limit`. G4: `POST /jobs/{id}/hold?minutes=`. G5: `policies/<job_id>` menimpa autonomy/limits global.
 - Bukti: pytest 73/73, chaos 25/25.
+
+## 26 Agu 2026 02:40 WIB — Set emas Diagnostician (C4/M3) + UI K2/K3/L2
+- Set uji: 6 log NYATA (NaN LightGBM Climate, ImportError torchcodec Chimera, ModuleNotFoundError pandas DaT, SyntaxError, state_dict mismatch, CalledProcessError Modal dgn sebab tersembunyi) + 5 log realistis (CUDA OOM format torch, host OOM exit 137, ENOSPC, ConnectionReset, KeyError). Kriteria per kasus: kategori ∈ himpunan sah, aksi ∈ himpunan sah, nol bukti palsu (evidence_lines & kutipan diverifikasi), needs_human utk sebab tersembunyi, culprit frame utk OOM.
+- Hasil (Gemini 3.5 Flash, Vertex): 11/11, 0 bukti palsu, $0,068 per putaran. Scheduler `warden-gold-eval` tiap 02:00 WIB → `/eval` → health `gold_eval` + notifikasi bila < 0,9.
+- UI: kartu Recovery (percobaan, verifikasi thd dunia, hipotesis berikutnya, rujukan memori, tombol false positive), jejak penalaran Investigator (tool call+argumen+hasil) di tab Evidence, halaman detail job (spec, laporan akhir, baseline, override, hold, minta aksi lewat jalur kebijakan yang sama), form Launch.
+- Deploy core+ui berjalan (rev berikutnya). Uji hidup M2/M4 menyusul setelah deploy.
