@@ -221,6 +221,16 @@ def steward(authorization: str | None = Header(default=None)):
     return out
 
 
+@app.post("/eval")
+def eval_gold(authorization: str | None = Header(default=None)):
+    """Nightly gold evaluation of the Diagnostician (Scheduler). Below threshold → health + notification."""
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
+    from warden.eval import gold
+    rep = gold.run(); gold.record(rep, notify=_notify)
+    return {k: v for k, v in rep.items() if k != "rows"} | {"failed": [r["file"] for r in rep["rows"] if not r.get("ok")]}
+
+
 @app.post("/digest")
 def digest(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):

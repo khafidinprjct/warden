@@ -1,0 +1,107 @@
+threshold: 0.9
+cases:
+- file: real_nan_lightgbm.log
+  tier: gold
+  category:
+  - nan_divergence
+  - nan_input
+  - data_error
+  action:
+  - stop
+  - patch_suggest
+  - escalate
+  - rollback_last_good
+  note: 'real Climate run: LightGBM valid metric nan from the first rounds — data/feature
+    problem, not a transient'
+- file: real_import_torchcodec.log
+  tier: gold
+  category:
+  - dependency_missing
+  - env_broken
+  action:
+  - stop
+  - patch_suggest
+  note: 'real Chimera download: ImportError torchcodec'
+- file: real_no_module_pandas.log
+  tier: gold
+  category:
+  - dependency_missing
+  action:
+  - stop
+  - patch_suggest
+  note: 'real DaT prep: ModuleNotFoundError pandas, three times in a row (retrying
+    does not help)'
+- file: real_syntax_error.log
+  tier: gold
+  category:
+  - code_bug
+  action:
+  - stop
+  - patch_suggest
+  note: 'real: SyntaxError in the script'
+- file: real_state_dict_mismatch.log
+  tier: gold
+  category:
+  - code_bug
+  - config_error
+  action:
+  - stop
+  - patch_suggest
+  - escalate
+  note: 'real: state_dict keys mismatch (wrong checkpoint/model pairing)'
+- file: real_subprocess_failed_hidden_cause.log
+  tier: gold
+  category:
+  - unknown
+  - code_bug
+  - env_broken
+  action:
+  - escalate
+  - stop
+  - patch_suggest
+  needs_human: true
+  note: 'real Modal smoke: subprocess CalledProcessError, the root cause is not in
+    the tail — must not guess'
+- file: silver_cuda_oom.log
+  tier: silver
+  category:
+  - oom_gpu
+  action:
+  - resume_smaller_batch
+  - change_machine_type
+  culprit: attention
+  note: torch OOM format; culprit frame is the attention matmul, not train.py
+- file: silver_host_oom_killed.log
+  tier: silver
+  category:
+  - oom_host
+  action:
+  - resume_fewer_workers
+  - change_machine_type
+  - stop
+  - escalate
+  note: exit 137 + 'Killed' with no Python traceback
+- file: silver_disk_full.log
+  tier: silver
+  category:
+  - disk_full
+  action:
+  - clean_disk
+  - resize_disk
+  note: ENOSPC while saving a checkpoint
+- file: silver_network_transient.log
+  tier: silver
+  category:
+  - network_transient
+  action:
+  - resume_same
+  note: connection reset mid-download
+- file: silver_config_keyerror.log
+  tier: silver
+  category:
+  - config_error
+  - code_bug
+  action:
+  - stop
+  - patch_suggest
+  note: KeyError on a config key
