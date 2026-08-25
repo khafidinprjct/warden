@@ -1,7 +1,10 @@
 """Compute palsu in-memory: meniru API GCE untuk tes & latihan tanpa biaya. Bisa disuntik skenario."""
 from __future__ import annotations
 
+import json
+import os
 from datetime import datetime
+from pathlib import Path
 
 from warden.core.models import Instance, InstanceStatus, now
 from warden.providers.base import OpResult
@@ -15,6 +18,30 @@ class FakeGCE:
         self.events: dict[str, list[dict]] = {}
         self.calls: list[tuple] = []           # jejak panggilan untuk asersi tes
         self.fail_next: dict[str, str] = {}    # ref -> pesan error yang akan dikembalikan sekali
+        # persistensi opsional (WARDEN_FAKE_STATE=path): dua proses (core + uji) melihat armada palsu yang sama
+        self._path = Path(os.environ["WARDEN_FAKE_STATE"]) if os.environ.get("WARDEN_FAKE_STATE") else None
+        self._mtime = 0.0
+        self._load()
+
+    def _load(self) -> None:
+        if not self._path or not self._path.exists():
+            return
+        m = self._path.stat().st_mtime
+        if m <= self._mtime:
+            return
+        self._mtime = m
+        try:
+            data = json.loads(self._path.read_text())
+            self.instances = {k: Instance.model_validate(v) for k, v in data.get("instances", {}).items()}
+        except (ValueError, OSError):
+            pass
+
+    def _save(self) -> None:
+        if not self._path:
+            return
+        tmp = self._path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"instances": {k: v.model_dump(mode="json") for k, v in self.instances.items()}}))
+        os.replace(tmp, self._path); self._mtime = self._path.stat().st_mtime
 
     # --- pengaturan skenario ---
     def add(self, name: str, zone: str = "us-central1-a", **kw) -> Instance:
@@ -26,6 +53,7 @@ class FakeGCE:
                         boot_id=kw.pop("boot_id", "boot-1"), hourly_price_usd=kw.pop("hourly_price_usd", 0.0335), **kw)
         inst.managed = inst.labels.get("warden-managed") == "true"
         self.instances[inst.ref] = inst
+        self._save()
         return inst
 
     def preempt(self, ref: str) -> None:
@@ -33,16 +61,20 @@ class FakeGCE:
         i.status = InstanceStatus.TERMINATED
         i.last_stop_at = now()
         self.events.setdefault(ref, []).append({"type": "compute.instances.preempted", "ts": now().isoformat()})
+        self._save()
 
     # --- antarmuka Compute ---
     def list_instances(self) -> list[Instance]:
+        self._load()
         return list(self.instances.values())
 
     def describe(self, ref: str) -> Instance | None:
+        self._load()
         return self.instances.get(ref)
 
     def _op(self, kind: str, ref: str, dry_run: bool, target: InstanceStatus) -> OpResult:
         self.calls.append((kind, ref, dry_run))
+        self._load()
         inst = self.instances.get(ref)
         if inst is None:
             return OpResult(False, f"{kind} {ref}", error="instance tidak ada")
@@ -54,6 +86,7 @@ class FakeGCE:
         inst.status = target
         if kind == "start":
             inst.boot_id = f"boot-{len(self.calls)}"
+        self._save()
         return OpResult(True, f"{kind} {ref}", observed=str(inst.status), op_id=f"op-{len(self.calls)}", plan=plan)
 
     def start(self, ref: str, dry_run: bool = False) -> OpResult:

@@ -85,7 +85,11 @@ def decide(decision_id: str, verb: str, who: str = "dashboard", x_warden_signatu
         return approvals.approve(decision_id, who)
     if verb == "deny":
         return approvals.deny(decision_id, who)
-    raise HTTPException(400, "verb: approve|deny")
+    if verb == "always":
+        return approvals.always(decision_id, who)
+    if verb == "reevaluate":
+        return approvals.reevaluate(decision_id, who)
+    raise HTTPException(400, "verb: approve|deny|always|reevaluate")
 
 
 @app.post("/freeze")

@@ -56,3 +56,64 @@ def expire_stale() -> int:
             if inc and inc.state == S.AWAITING_APPROVAL:
                 transition(inc, S.ESCALATED, note="izin kedaluwarsa"); db.incidents.put(inc)
     return n
+
+
+def always(decision_id: str, who: str, hours: int = 24) -> dict:
+    """Setujui + naikkan tindakan ini ke L2 selama N jam untuk job yang sama (override kedaluwarsa otomatis)."""
+    dec = db.decisions.get(decision_id)
+    if dec is None:
+        return {"ok": False, "error": "keputusan tidak ada"}
+    r = approve(decision_id, who)
+    if r.get("ok"):
+        db.client().collection("policy_overrides").document(f"{dec.job_id}:{dec.action.value}").set(
+            {"level": "L2", "until": now().timestamp() + hours * 3600, "by": who})
+        r["override"] = f"{dec.job_id}:{dec.action.value} → L2 {hours}h"
+    return r
+
+
+def reevaluate(decision_id: str, who: str) -> dict:
+    """Keputusan yang kedaluwarsa/ditolak dinilai ulang dengan konteks SEKARANG (breaker, limit, frozen) →
+    keputusan baru: AUTO dieksekusi, NEED_APPROVAL menunggu lagi. Tidak pernah melewati kebijakan."""
+    from warden.policy.engine import evaluate as policy_eval, load_policy
+    from warden.watcher.tick import _ctx_for, _is_frozen
+    dec = db.decisions.get(decision_id)
+    if dec is None:
+        return {"ok": False, "error": "keputusan tidak ada"}
+    if dec.status not in (DecisionStatus.EXPIRED, DecisionStatus.REJECTED, DecisionStatus.FAILED) and not (
+            dec.status == DecisionStatus.PENDING and dec.expires_at and dec.expires_at < now()):
+        return {"ok": False, "error": f"status {dec.status} — hanya EXPIRED/REJECTED/FAILED yang bisa dinilai ulang"}
+    inc = db.incidents.get(dec.incident_id)
+    job = db.jobs.get(dec.job_id) if dec.job_id else None
+    inst = None
+    ref = dec.params.get("instance_ref") or (inc.instance_ref if inc else "")
+    if ref:
+        try:
+            inst = compute().describe(ref)
+        except Exception:  # noqa: BLE001 — mesin tak ditemukan: tetap nilai tanpa konteks mesin
+            inst = None
+    if dec.status == DecisionStatus.PENDING:
+        dec.status = DecisionStatus.EXPIRED; db.decisions.put(dec)
+    new = policy_eval(dec.action, _ctx_for(job, inst, dec.action, _is_frozen()), load_policy())
+    new.incident_id, new.job_id, new.params = dec.incident_id, dec.job_id, dict(dec.params)
+    new.explain = [f"dinilai ulang oleh {who} dari {dec.decision_id}"] + list(new.explain)
+    new.dry_run_plan = ex.dry_run(new, compute())
+    db.decisions.put(new)
+    if inc:
+        inc.decision_ids.append(new.decision_id)
+        inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state),
+                             "note": f"dinilai ulang → {new.action}: {new.verdict} ({new.autonomy})", "actor": f"human:{who}"})
+    if new.verdict == Verdict.AUTO:
+        new.status = DecisionStatus.EXECUTING; db.decisions.put(new)
+        if inc:
+            inc.state = S.EXECUTING
+        r = ex.execute(new, compute(), actor=f"human:{who}")
+        new.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED; db.decisions.put(new)
+        if inc:
+            inc.state = S.RESOLVED if r.ok else S.ESCALATED
+            inc.timeline.append({"ts": now().isoformat(), "from": "EXECUTING", "to": str(inc.state), "note": r.observed or r.error, "actor": "warden"})
+            db.incidents.put(inc)
+        return {"ok": r.ok, "observed": r.observed, "error": r.error, "decision_id": new.decision_id, "verdict": str(new.verdict)}
+    if inc:
+        inc.state = S.AWAITING_APPROVAL if new.verdict == Verdict.NEED_APPROVAL else S.HELD if new.verdict == Verdict.HELD else S.ESCALATED
+        inc.updated_at = now(); db.incidents.put(inc)
+    return {"ok": True, "decision_id": new.decision_id, "verdict": str(new.verdict), "autonomy": str(new.autonomy)}
