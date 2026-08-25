@@ -36,7 +36,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ D8 stop + patch suggestion for env/deps/code/config.
 - ✅ D9 No delete anywhere.
 - ✅ D10 Every action: dry_run, blast radius, intent → result audit, requested-vs-observed.
-Evidence: tests/test_recovery_fake.py, chaos 25/25. Live GCE test of D2/D7 pending (M2).
+Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 
 ## E. Closing the loop
 - ✅ E1 Post-action verification against the world (status, new boot, step advancing, disk, harness result) — `executor/recovery.py`.
@@ -90,9 +90,9 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25. Live GCE test of D2/D7 pendi
 
 ## M. Testing
 - ✅ M1 25 chaos scenarios, unit tests, infra chaos.
-- ☐ M2 Live test of each new action (D2–D8) on a real machine.
+- ✅ M2 Live on Compute Engine (26 Aug, drill #5, `chaos/live_lifecycle_report.json`): resume_smaller_batch (auto, L2), relocate_zone (snapshot → zone c, source kept TERMINATED), change_machine_type (e2-medium → e2-small), clean_disk (3 checkpoints freed after md5 match), stop — each verified against the world. resize_disk, rollback and kill are proven on the fake provider only.
 - ✅ M3 Gold set + nightly evaluation (C4).
-- ☐ M4 Full lifecycle A1→A6 without a human touch.
+- ✅ M4 Full lifecycle without a human touch (26 Aug, drill #5): spec → VM in 22 s → RUNNING 64 s → OOM at step 600 → diagnosis oom_gpu → resume batch 0.5 (47 s after the incident) → verified → COMPLETE, 22 artifacts opened → report (ETTR 0.73, $0.0017) → machine stopped by close-out. Five earlier drills each found one real defect (catalog #29–#33).
 
 ## N. Documentation & reproducibility
 - ◐ N1 README + ADR-0014/15/16 updated; diagram still shows the pre-recovery loop (redraw pending).

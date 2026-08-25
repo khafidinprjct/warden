@@ -1,99 +1,454 @@
 {
  "core": "https://warden-core-hfgre6y7ta-uc.a.run.app",
- "jobs": [],
+ "jobs": [
+  "live-1923-oom",
+  "live-1923-ops"
+ ],
  "events": [
   {
    "t": 0,
    "msg": "core",
    "url": "https://warden-core-hfgre6y7ta-uc.a.run.app",
-   "latest": "warden-core-00019-qs2"
+   "latest": "warden-core-00020-pxw"
   },
   {
-   "t": 0,
+   "t": 1,
+   "msg": "health rows that are RED before the drill (a red gcs/gemini/memory row invalidates the drill)",
+   "red": "none"
+  },
+  {
+   "t": 1,
    "msg": "PHASE 1: launch from spec with a GPU-OOM drill at step 600 (batch scale 1.0 \u2192 OOM; 0.5 passes)"
   },
   {
-   "t": 39,
+   "t": 22,
    "msg": "launch",
    "result": {
     "ok": true,
-    "job_id": "live-1901-oom",
-    "instance_ref": "us-central1-b/warden-live-1901-oom",
+    "job_id": "live-1923-oom",
+    "instance_ref": "us-central1-b/warden-live-1923-oom",
     "hourly_usd": 0.01005
    },
    "attempts": 1
   },
   {
-   "t": 82,
+   "t": 64,
    "msg": "\u2714 job RUNNING on first heartbeat",
    "value": true
   },
   {
-   "t": 143,
+   "t": 126,
    "msg": "\u2714 training advancing",
    "value": true
   },
   {
-   "t": 281,
+   "t": 279,
    "msg": "\u2714 incident run_fin_nonzero opened after the OOM",
    "value": {
-    "instance_ref": "us-central1-b/warden-live-1901-oom",
-    "crosscheck": {},
+    "decision_ids": [],
+    "cost_burning_usd_per_hour": 0.01005,
+    "instance_ref": "us-central1-b/warden-live-1923-oom",
+    "state": "DIAGNOSING",
+    "verify": {},
+    "severity": "critical",
+    "rule": "run_fin_nonzero",
+    "memory_ref": "",
+    "evidence_ids": [
+     "ev_01M0X6A2BZQS0M45E860VWBH2A"
+    ],
+    "summary": "job live-1923-oom ended with exit=1",
+    "ladder": [],
+    "llm_cost_usd": 0.0,
+    "diagnosis": {},
+    "updated_at": "2026-08-25T19:28:15.283861Z",
     "timeline": [
      {
       "from": "DETECTED",
-      "ts": "2026-08-25T19:06:09.008632+00:00",
       "note": "rule run_fin_nonzero",
-      "to": "TRIAGED",
-      "actor": "warden"
+      "actor": "warden",
+      "ts": "2026-08-25T19:28:15.283624+00:00",
+      "to": "TRIAGED"
      },
      {
       "from": "TRIAGED",
-      "ts": "2026-08-25T19:06:09.008811+00:00",
       "note": "LLM diagnosis required",
-      "to": "DIAGNOSING",
-      "actor": "warden"
-     },
-     {
-      "from": "DIAGNOSING",
-      "ts": "2026-08-25T19:06:10.290616+00:00",
-      "note": "waiting for the run log to land in Storage before diagnosing",
-      "to": "DIAGNOSING",
-      "actor": "warden"
+      "actor": "warden",
+      "ts": "2026-08-25T19:28:15.283846+00:00",
+      "to": "DIAGNOSING"
      }
     ],
-    "severity": "critical",
-    "cost_burning_usd_per_hour": 0.01005,
-    "state": "DIAGNOSING",
-    "evidence_ids": [
-     "ev_01M0X51K6EAT8SATK6RA79NJHT"
-    ],
-    "diagnosis": {},
-    "incident_id": "inc_01M0X51K6EAT8SATK6RA79NJHS",
-    "llm_cost_usd": 0.0,
-    "created_at": "2026-08-25T19:06:08.974201Z",
-    "verify": {},
-    "ladder": [],
-    "rule": "run_fin_nonzero",
-    "decision_ids": [],
+    "crosscheck": {},
     "attempt": 0,
-    "memory_ref": "",
-    "updated_at": "2026-08-25T19:06:09.008823Z",
-    "dedupe_key": "exit:live-1901-oom:r20260825T190252",
-    "summary": "job live-1901-oom ended with exit=1",
-    "job_id": "live-1901-oom"
+    "incident_id": "inc_01M0X6A2BZQS0M45E860VWBH29",
+    "dedupe_key": "exit:live-1923-oom:r20260825T192454",
+    "created_at": "2026-08-25T19:28:15.231689Z",
+    "job_id": "live-1923-oom"
    }
   },
   {
-   "t": 890,
-   "msg": "\u2718 TIMEOUT diagnosis \u2192 resume_job smaller batch executed (L2, no human) after 600s"
+   "t": 326,
+   "msg": "\u2714 diagnosis \u2192 resume_job smaller batch executed (L2, no human)",
+   "value": {
+    "action": "resume_job",
+    "verdict": "AUTO",
+    "params": {
+     "batch_scale": 0.5,
+     "mode": "smaller_batch",
+     "reason": "diagnostician recommendation"
+    },
+    "status": "DONE",
+    "diag": "oom_gpu"
+   }
   },
   {
-   "t": 890,
-   "msg": "LIVE TEST FAILED: AssertionError: None"
+   "t": 389,
+   "msg": "\u2714 resumed run past the OOM step (batch 32)",
+   "value": true
   },
   {
-   "t": 956,
+   "t": 419,
+   "msg": "\u2714 incident RESOLVED by world-verification (new run advancing)",
+   "value": "RESOLVED"
+  },
+  {
+   "t": 420,
+   "msg": "verify record",
+   "verify": {
+    "kind": "resume_job",
+    "result": "ok"
+   },
+   "last_check": {
+    "why": "new run r20260825T192946 advancing: step 700\u2192700",
+    "ts": "2026-08-25T19:30:37.667037+00:00",
+    "status": "ok"
+   },
+   "attempt": 1
+  },
+  {
+   "t": 590,
+   "msg": "\u2714 job COMPLETE (artifacts opened & VERIFIED)",
+   "value": true
+  },
+  {
+   "t": 590,
+   "msg": "\u2714 final report written",
+   "value": {
+    "ettr": 0.732,
+    "incidents": {
+     "resolved_by_warden": 1,
+     "total": 2,
+     "by_rule": {
+      "run_fin_nonzero": 1,
+      "fin_ok_pending_verify": 1
+     },
+     "needed_human": 0
+    },
+    "artifacts": [
+     {
+      "name": "ckpt_000200.npz",
+      "bytes": 912,
+      "sha256": "e79f370444e9670e85fb4e929afe8e18d1e93a8f0f1f2be2517a8a2445bb1eff"
+     },
+     {
+      "name": "ckpt_000200.npz.meta.json",
+      "bytes": 62,
+      "sha256": "f7f4d54a70dd7065ce28cc90ce08d1af4e0a05d0d1133fc3b616d9d6fdfb5d68"
+     },
+     {
+      "name": "ckpt_000200.npz.meta.json.sha256",
+      "bytes": 65,
+      "sha256": "7ce30339612a4e8c72ed3e495dafc06fdc9e679f638ae19f5a938589c03cf43d"
+     },
+     {
+      "name": "ckpt_000200.npz.sha256",
+      "bytes": 65,
+      "sha256": "7ea6b760f0873d90c9c6d89df7ea3827cbe50b78de1d1656562d7701f52ac0a7"
+     },
+     {
+      "name": "ckpt_000400.npz",
+      "bytes": 912,
+      "sha256": "f31c7d21d44a89b25a1dfe2fb38310a98835de98576c2db4143f79e402efe354"
+     },
+     {
+      "name": "ckpt_000400.npz.meta.json",
+      "bytes": 62,
+      "sha256": "ec066541c53c61967992007bfe4707c6a2c740f357633f30ec791de4b3c6d422"
+     },
+     {
+      "name": "ckpt_000400.npz.meta.json.sha256",
+      "bytes": 65,
+      "sha256": "b32d3d8de3a0ae0e7bad4ffce13d926ab6cc19bbe74d7c71b80b689f3e6c4124"
+     },
+     {
+      "name": "ckpt_000400.npz.sha256",
+      "bytes": 65,
+      "sha256": "592632c8b693f46094761ad9b074f008ec715443477f21e610c5cc54903af275"
+     },
+     {
+      "name": "ckpt_000600.npz",
+      "bytes": 912,
+      "sha256": "8a0b7bc72f0e2d58d647c4638562a30ddebf805573cc1615065c19d451e45017"
+     },
+     {
+      "name": "ckpt_000600.npz.meta.json",
+      "bytes": 60,
+      "sha256": "50490f135e586d79ac8214e7b6cb1b825af2b39496dc7d100c0d542f46bea8de"
+     },
+     {
+      "name": "ckpt_000600.npz.meta.json.sha256",
+      "bytes": 65,
+      "sha256": "9272dd2fd9381501be28748b10df944f2a59ca7a3371133d15da418ad2e2c986"
+     },
+     {
+      "name": "ckpt_000600.npz.sha256",
+      "bytes": 65,
+      "sha256": "1c93ae6beaab057824406f5cad526843cb8dc520a2c359dfd34314bb36d82511"
+     },
+     {
+      "name": "ckpt_000800.npz",
+      "bytes": 912,
+      "sha256": "2cc871991ffdf095a5e3a44e5964440e2dce7ad5a83b160b69dce0611dcacfa5"
+     },
+     {
+      "name": "ckpt_000800.npz.meta.json",
+      "bytes": 62,
+      "sha256": "9b9a8298ec47aacbb70869007bcb41a46f02b7e8e1e70378c406258983ad8403"
+     },
+     {
+      "name": "ckpt_001000.npz",
+      "bytes": 912,
+      "sha256": "e54ab4d777244d3e926036f1c7934e9b843dcbcb6aa1ca893031ccbce76f93ce"
+     },
+     {
+      "name": "ckpt_001000.npz.meta.json",
+      "bytes": 63,
+      "sha256": "787ef5b84ad8a864e3624e45eb21b07b399ed8da48fa03ff4d453d47b7c8b114"
+     },
+     {
+      "name": "ckpt_001200.npz",
+      "bytes": 912,
+      "sha256": "ceda5d9045479ae4d4de0447af4e6962fbd7ae0824428757a5baaf161e930a14"
+     },
+     {
+      "name": "ckpt_001200.npz.meta.json",
+      "bytes": 63,
+      "sha256": "d28e72048371e62fd9acd6ff2b60705d773f7c00f68933530e77d62d2a04d840"
+     },
+     {
+      "name": "ckpt_001400.npz",
+      "bytes": 912,
+      "sha256": "78aae764e99d462c33d772347ffafc8577b2a091352dea131dc1c442828a4a3a"
+     },
+     {
+      "name": "ckpt_001400.npz.meta.json",
+      "bytes": 63,
+      "sha256": "413676a24b99b9b441070ee87494f480a6709531e7ef21f1dc7b676babefe3e1"
+     },
+     {
+      "name": "eval.jsonl",
+      "bytes": 255,
+      "sha256": "49443abb16aaf696b081b784692905db741359983e68a3a5f1c98803e86bb790"
+     },
+     {
+      "name": "pred.csv",
+      "bytes": 30913,
+      "sha256": "fe16500f579b377a773a8c9ae248da33b2a557fde6e0344344d19176771b109d"
+     }
+    ],
+    "run_id": "r20260825T192946",
+    "budget_cap_usd": 0.5,
+    "status": "COMPLETE",
+    "wall_h": 0.14,
+    "finished_at": "2026-08-25T19:33:00+00:00",
+    "spent_usd": 0.0017,
+    "job_id": "live-1923-oom",
+    "started_at": "2026-08-25T19:24:43+00:00",
+    "llm_usd": 0.0353,
+    "written_at": "2026-08-25T19:33:26.159994+00:00",
+    "instance_ref": "us-central1-b/warden-live-1923-oom"
+   }
+  },
+  {
+   "t": 590,
+   "msg": "report",
+   "spent": 0.0017,
+   "ettr": 0.732,
+   "incidents": {
+    "resolved_by_warden": 1,
+    "total": 2,
+    "by_rule": {
+     "run_fin_nonzero": 1,
+     "fin_ok_pending_verify": 1
+    },
+    "needed_human": 0
+   },
+   "artifacts": 22
+  },
+  {
+   "t": 648,
+   "msg": "\u2714 machine stopped by close-out rule",
+   "value": true
+  },
+  {
+   "t": 648,
+   "msg": "PHASE 2: long job; relocate_zone, change_machine_type, clean_disk, stop through propose \u2192 approve \u2192 world-verified"
+  },
+  {
+   "t": 703,
+   "msg": "\u2714 job RUNNING",
+   "value": true
+  },
+  {
+   "t": 908,
+   "msg": "\u2714 advancing \u2265 400 steps (checkpoints exist)",
+   "value": true
+  },
+  {
+   "t": 910,
+   "msg": "propose relocate",
+   "r": {
+    "ok": true,
+    "incident_id": "inc_01M0X6XR8R8HFZHAX6VF3PYET6",
+    "decision_id": "dec_01M0X6XREGG0CSFQQC55DSZZ64",
+    "verdict": "NEED_APPROVAL",
+    "explain": [
+     "operator request by live-test",
+     "hard guards passed; base level L1",
+     "L1: human approval required"
+    ]
+   }
+  },
+  {
+   "t": 1064,
+   "msg": "approved relocate_zone",
+   "r": {
+    "ok": true,
+    "observed": "us-central1-c/warden-live-1923-ops-c3956",
+    "error": "",
+    "decision_id": "dec_01M0X6XREGG0CSFQQC55DSZZ64"
+   }
+  },
+  {
+   "t": 1066,
+   "msg": "\u2714 job now points at a new instance in another zone",
+   "value": "us-central1-c/warden-live-1923-ops-c3956"
+  },
+  {
+   "t": 1168,
+   "msg": "\u2714 relocation VERIFIED (new boot, steps advancing)",
+   "value": "RESOLVED"
+  },
+  {
+   "t": 1173,
+   "msg": "old instance state",
+   "old": "TERMINATED",
+   "new": {
+    "labels": {
+     "warden-job": "live-1923-ops",
+     "warden-managed": "true",
+     "warden-relocated-from": "warden-live-1923-ops",
+     "warden-role": "job"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-c/machineTypes/e2-medium",
+    "status": "RUNNING"
+   }
+  },
+  {
+   "t": 1175,
+   "msg": "propose change_machine_type",
+   "r": {
+    "ok": true,
+    "incident_id": "inc_01M0X75TW2D3KG6TV7ZTPCJ7YK",
+    "decision_id": "dec_01M0X75TYF8RXBQRY0P761XC9X",
+    "verdict": "NEED_APPROVAL",
+    "explain": [
+     "operator request by live-test",
+     "hard guards passed; base level L1",
+     "L1: human approval required"
+    ]
+   }
+  },
+  {
+   "t": 1252,
+   "msg": "approved change_machine_type",
+   "r": {
+    "ok": true,
+    "observed": "e2-small RUNNING",
+    "error": "",
+    "decision_id": "dec_01M0X75TYF8RXBQRY0P761XC9X"
+   }
+  },
+  {
+   "t": 1356,
+   "msg": "\u2714 machine type changed and verified",
+   "value": "RESOLVED"
+  },
+  {
+   "t": 1359,
+   "msg": "instance after type change",
+   "inst": {
+    "labels": {
+     "warden-job": "live-1923-ops",
+     "warden-managed": "true",
+     "warden-relocated-from": "warden-live-1923-ops",
+     "warden-role": "job"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-c/machineTypes/e2-small",
+    "status": "RUNNING"
+   }
+  },
+  {
+   "t": 1360,
+   "msg": "propose clean_disk",
+   "r": {
+    "ok": true,
+    "incident_id": "inc_01M0X7BG5QYGQS7A6Z6635DGA1",
+    "decision_id": "dec_01M0X7BG80FK3GJMKECG5DCKGN",
+    "verdict": "AUTO",
+    "observed": "queued nonce=cmd_01M0X7BGFDAFQMNG2YQJ0P9X0R",
+    "error": ""
+   }
+  },
+  {
+   "t": 1407,
+   "msg": "\u2714 clean_disk verified by harness result + heartbeat",
+   "value": "RESOLVED"
+  },
+  {
+   "t": 1409,
+   "msg": "harness results",
+   "results": [
+    {
+     "cmd": "clean_disk",
+     "ok": true,
+     "detail": "freed 2736 bytes: ['ckpt_000200.npz', 'ckpt_000400.npz', 'ckpt_000600.npz']; skipped []",
+     "freed_bytes": 2736
+    }
+   ]
+  },
+  {
+   "t": 1463,
+   "msg": "propose stop",
+   "r": {
+    "ok": true,
+    "incident_id": "inc_01M0X7D0KY2NCTNV4ZMBQ08VQW",
+    "decision_id": "dec_01M0X7D0PYDM62MX61283VGRQV",
+    "verdict": "AUTO",
+    "observed": "TERMINATED",
+    "error": ""
+   }
+  },
+  {
+   "t": 1480,
+   "msg": "\u2714 stop verified",
+   "value": "RESOLVED"
+  },
+  {
+   "t": 1480,
+   "msg": "LIVE TEST FINISHED"
+  },
+  {
+   "t": 1504,
    "msg": "cleanup: STOP issued for all live-test instances (never delete)"
   }
  ]

@@ -195,7 +195,8 @@ def check(inc, spec: dict[str, Any]) -> tuple[str, str]:
         if (f := new_run_failed()):
             return "fail", f
         newrun = [h for h in hbs if h.run_id and h.run_id != base.get("run_id")]
-        if newrun and steps_advance():
+        nsteps = [h.step for h in newrun if h.step is not None]
+        if newrun and (len(nsteps) >= 2 and nsteps[-1] > nsteps[0] or (len(nsteps) >= 1 and nsteps[-1] > int(base.get("step") or 0))):   # progress within the NEW run
             if kind == "rollback_last_good":
                 import math
                 bad = [h for h in newrun[-3:] if h.loss is not None and (math.isnan(h.loss) or math.isinf(h.loss))]

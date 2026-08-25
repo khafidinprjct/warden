@@ -202,3 +202,9 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - FAKTA: log run ada di Storage (1.094 B, traceback OOM), tetapi `download_as_text(errors=...)` ditolak pustaka → semua pembacaan log gagal senyap; health `gcs` merah 25× beruntun tanpa saya lihat. Investigator 11 tool call $0,09 lalu `unknown` → ESCALATED (perilaku #32 benar: tidak lagi RESOLVED palsu).
 - Ganti: decode bytes; tes stub; drill mencetak baris health merah di awal (aturan: health merah = drill tidak sah). Harga: ≈$0,01 VM + $0,09 LLM + 20 mnt.
 - Pelajaran (untuk saya): sistem sudah bicara lewat halaman System; pemantau saya hanya membaca log drill. Tambahkan health ke setiap gerbang hidup.
+
+## 26 Agu 2026 05:10 WIB — Drill hidup #5 LULUS PENUH (M2 + M4)
+- Fase 1 (tanpa sentuhan manusia): launch 22 dtk → RUNNING 64 dtk → OOM step 600 → insiden 8 dtk → Investigator+Diagnostician `oom_gpu` → resume batch 0,5 (AUTO L2) 47 dtk setelah insiden → run baru lewat titik OOM → RESOLVED oleh verifikasi dunia → COMPLETE, 22 artefak dibuka → laporan (ETTR 0,73; $0,0017; 2 insiden, 1 diselesaikan Warden, 0 manusia) → mesin dimatikan aturan close-out.
+- Fase 2 (jalur operator, kebijakan sama): relocate_zone L1 → approve → stop+snapshot+disk+instance baru zona c (154 dtk), lama TERMINATED tidak dihapus, verifikasi boot baru+step maju ✔; change_machine_type L1 → e2-small RUNNING (77 dtk) ✔; clean_disk L2 otomatis → harness hapus 3 ckpt yang md5-nya cocok Storage ✔; stop L2 ✔.
+- Harga total 5 drill: ≈$0,06 VM + ≈$0,6 LLM + 3,5 jam. Lima cacat nyata ditemukan & ditutup (#29–#33) — nol di antaranya tertangkap fake/unit.
+- Semua VM drill STOPPED (tidak dihapus). Bukti: chaos/live_lifecycle_report.json, Firestore reports/live-1923-oom.
