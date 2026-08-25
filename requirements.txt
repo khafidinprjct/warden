@@ -21,3 +21,4 @@ python-ulid==4.0.1
 PyYAML==6.0.3
 uvicorn==0.52.4
 jinja2>=3.1
+python-multipart>=0.0.9

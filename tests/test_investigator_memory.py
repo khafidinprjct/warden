@@ -64,7 +64,7 @@ def test_pipeline_uses_investigation_notes_and_records_evidence(monkeypatch):
     def fake_diagnose(job_card, findings, hbsum, lines, model=None, investigation="", **kw):
         seen["investigation"] = investigation
         d = Diagnosis(category="data_error", confidence=0.9, evidence_lines=[300], evidence_quotes=["EOFError: No data left in file"], transient_or_permanent="permanent",
-                      recommended_action="escalate", blast_radius="this_run", needs_human=True, human_summary="Checkpoint truncated at preemption.", falsifiable_check="np.load fails")
+                      recommended_action="escalate", blast_radius="this_run", needs_human=True, human_summary="Checkpoint truncated at preemption.", falsifiable_check="np.load fails", root_cause="Emergency checkpoint truncated by the preemption")
         return d, {"cost_usd": 0.01, "model": model or "gemini-3.5-flash", "prompt_tokens": 1, "output_tokens": 1}
     monkeypatch.setattr(P, "investigate", fake_investigate); monkeypatch.setattr(P, "diagnose", fake_diagnose)
     inc = Incident(job_id="j1", rule="run_fin_nonzero", severity="critical", summary="job j1 ended with exit=1", state=IncidentState.DIAGNOSING); db.incidents.put(inc)

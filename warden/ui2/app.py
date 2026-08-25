@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -122,6 +122,30 @@ def audit(request: Request):
         r["result"] = "—" if ok is None else (str((r.get("after") or {}).get("observed") or "Done")[:60] if ok else "Failed · " + str(r.get("error", ""))[:60])
         r["result_cls"] = "" if ok is None else ("ok" if ok else "crit")
     return render(request, "audit.html", "audit", "Audit Log", data.base_context(), rows=rows)
+
+
+@app.get("/ask", response_class=HTMLResponse)
+def ask_get(request: Request):
+    ctx = data.base_context()
+    return render(request, "ask.html", "ask", "Ask Warden", ctx, jobs=data.db.jobs.list(limit=100), refresh=0)
+
+
+@app.post("/ask", response_class=HTMLResponse)
+def ask_post(request: Request, question: str = Form(""), job_id: str = Form("")):
+    ctx = data.base_context()
+    q = question.strip()[:1000]
+    answer = None; error = ""
+    if q:
+        try:
+            r = httpx.post(f"{CORE}/ask", json={"question": q, "job_id": job_id}, headers={"X-Warden-Signature": sign(q.encode())}, timeout=120)
+            j = r.json()
+            if j.get("ok"):
+                answer = j
+            else:
+                error = str(j.get("error") or j.get("detail") or f"HTTP {r.status_code}")
+        except Exception as e:  # noqa: BLE001
+            error = str(e)[:200]
+    return render(request, "ask.html", "ask", "Ask Warden", ctx, jobs=data.db.jobs.list(limit=100), question=q, job_id=job_id, answer=answer, error=error, refresh=0)
 
 
 @app.get("/system", response_class=HTMLResponse)
