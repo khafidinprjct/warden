@@ -35,8 +35,8 @@ flowchart LR
   H -- "log & artefak" --> G[(GCS)]
   S[Cloud Scheduler] -- "/tick 2 mnt · /steward 10 mnt · /digest" --> C
   subgraph C["Cloud Run · warden-core"]
-    W[Watcher] --> P[Pipeline insiden: bukti → Gemini 3.5 (ADK, JSON) → cek silang → 3.7 vonis kedua]
-    P --> K[Kebijakan (murni) → AUTO / MINTA IZIN / TAHAN / TOLAK]
+    W[Watcher] --> P["Pipeline insiden: bukti → Gemini 3.5 (ADK, JSON) → cek silang → 3.7 vonis kedua"]
+    P --> K["Kebijakan (murni) → AUTO / MINTA IZIN / TAHAN / TOLAK"]
     K --> X[Executor: dry_run · lease · audit niat/hasil]
     V[Verifier artefak] --> K
     T[Steward: ledger · ETTR · kill-switch]
