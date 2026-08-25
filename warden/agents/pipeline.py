@@ -26,15 +26,16 @@ REC2ACT = {Recommended.resume_same: Action.RESUME_JOB, Recommended.resume_smalle
            Recommended.escalate: Action.NOTIFY, Recommended.patch_suggest: Action.NOTIFY, Recommended.noop: Action.NOTIFY}
 
 
-def read_log_tail(job_id: str, n: int = 200) -> list[str]:
-    """Log dari GCS (jalur pasif) bila bucket ada; lokal data/gcs/ untuk pengembangan."""
+def read_log_tail(job_id: str, n: int = 200, run_id: str = "") -> list[str]:
+    """Log dari GCS (jalur pasif) bila bucket ada; per-run `log/<run_id>.log` bila diminta dan ada, selain itu `log/tail.log`; lokal data/gcs/ untuk pengembangan."""
     if settings.bucket:
         try:
             from google.cloud import storage
             b = storage.Client().bucket(settings.bucket)
-            blob = b.blob(f"jobs/{job_id}/log/tail.log")
-            if blob.exists():
-                return blob.download_as_text(errors="ignore").splitlines()[-n:]
+            for name in ([f"jobs/{job_id}/log/{run_id}.log"] if run_id else []) + [f"jobs/{job_id}/log/tail.log"]:
+                blob = b.blob(name)
+                if blob.exists():
+                    return blob.download_as_text(errors="ignore").splitlines()[-n:]
         except Exception as e:
             db.health("gcs", False, str(e)[:200])
     p = Path("data/gcs") / job_id / "tail.log"
@@ -84,7 +85,7 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         if settings.investigate_enabled:
             try:
                 _ti = now()
-                notes, tool_log, usage_i = investigate(inc.job_id, inc.summary, inc.instance_ref, findings)
+                notes, tool_log, usage_i = investigate(inc.job_id, inc.summary, inc.instance_ref, findings, run_id=(db.get_marker(inc.job_id, job.run_id, "RUN_FIN").run_id if job and db.get_marker(inc.job_id, job.run_id, "RUN_FIN") else (job.run_id if job else "")))
                 ev_i = Evidence(incident_id=inc.incident_id, kind="investigation", summary=notes[:200] or "no note", payload={"notes": notes, "tool_calls": tool_log, "cost_usd": usage_i.get("cost_usd", 0.0)})
                 db.evidence.put(ev_i); inc.evidence_ids.append(ev_i.evidence_id); inc.llm_cost_usd += usage_i.get("cost_usd", 0.0)
                 stats["llm_usd"] += usage_i.get("cost_usd", 0.0); db.cost_add(now().strftime("%Y-%m-%d"), "llm_usd", usage_i.get("cost_usd", 0.0), inc.job_id)

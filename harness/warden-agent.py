@@ -216,6 +216,14 @@ def upload_log() -> None:
     if os.path.exists(logp):
         subprocess.run(["bash", "-c", f"tail -c 262144 '{logp}' | gcloud storage cp - gs://{BUCKET}/jobs/{JOB}/log/tail.log -q"],
                        capture_output=True, timeout=60)
+        # per-run copy so the log of a failed run survives the next run (evidence for the investigator)
+        rs = os.path.join(DIR, "markers", "RUN_START.json")
+        try:
+            rid = json.load(open(rs)).get("run_id", "") if os.path.exists(rs) else ""
+        except Exception:
+            rid = ""
+        if rid:
+            subprocess.run(["bash", "-c", f"tail -c 262144 '{logp}' | gcloud storage cp - gs://{BUCKET}/jobs/{JOB}/log/{rid}.log -q"], capture_output=True, timeout=60)
     # artefak: rsync di thread latar — segera setelah RUN_FIN baru, selain itu paling cepat tiap 5 mnt; loop denyut tidak menunggu
     adir = os.path.join(DIR, "artifacts"); finp = os.path.join(DIR, "markers", "RUN_FIN.json")
     if not os.path.isdir(adir) or _sync["running"]:

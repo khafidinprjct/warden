@@ -59,7 +59,7 @@ def test_postmortem_written_once_and_recalled_without_embeddings(monkeypatch):
 def test_pipeline_uses_investigation_notes_and_records_evidence(monkeypatch):
     _reset(); _seed_job()
     seen = {}
-    def fake_investigate(job_id, summary, instance_ref="", findings=None, model=None):
+    def fake_investigate(job_id, summary, instance_ref="", findings=None, model=None, **kw):
         return "Hypotheses: 1) truncated checkpoint. Evidence: line 300 EOFError.", [{"tool": "search_log", "args": {"pattern": "EOFError"}, "result_preview": "{}"}], {"cost_usd": 0.004, "model": "gemini-3.5-flash", "tool_calls": 1}
     def fake_diagnose(job_card, findings, hbsum, lines, model=None, investigation="", **kw):
         seen["investigation"] = investigation
