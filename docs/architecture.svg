@@ -24,7 +24,7 @@
   <rect class="box" x="60" y="205" width="240" height="150" rx="6"/>
   <text class="t" x="180" y="232" text-anchor="middle" font-weight="600">Harness</text>
   <text class="s" x="180" y="254" text-anchor="middle">wrun — signed RUN_START / RUN_FIN</text>
-  <text class="s" x="180" y="272" text-anchor="middle">warden-agent — heartbeat 30 s, mailbox</text>
+  <text class="s" x="180" y="272" text-anchor="middle">warden-agent — heartbeat 30 s, signed mailbox, results</text>
   <text class="s" x="180" y="290" text-anchor="middle">warden.beat() — step, loss, grad_norm</text>
   <text class="s" x="180" y="308" text-anchor="middle">preempt notice → emergency checkpoint</text>
   <text class="s" x="180" y="326" text-anchor="middle">resume from last intact checkpoint</text>
@@ -42,14 +42,14 @@
   <!-- ===== core ===== -->
   <rect class="tb" x="400" y="130" width="580" height="480" rx="8"/>
   <text class="tbl" x="414" y="150">CLOUD RUN · WARDEN-CORE</text>
-  <text class="id" x="414" y="166">identity: SA warden-core — custom role: instances.start / stop / setMetadata · no delete</text>
+  <text class="id" x="414" y="166">identity: SA warden-core — custom role: instances / disks / snapshots · no delete</text>
   <rect class="core" x="430" y="180" width="240" height="46" rx="6"/><text class="t" x="550" y="199" text-anchor="middle" font-weight="600">Ingest</text><text class="s" x="550" y="216" text-anchor="middle">verifies HMAC · stores · never decides</text>
-  <rect class="core" x="430" y="250" width="240" height="46" rx="6"/><text class="t" x="550" y="269" text-anchor="middle" font-weight="600">Watcher</text><text class="s" x="550" y="286" text-anchor="middle">deterministic rules · every minute</text>
+  <rect class="core" x="430" y="250" width="240" height="46" rx="6"/><text class="t" x="550" y="269" text-anchor="middle" font-weight="600">Watcher</text><text class="s" x="550" y="286" text-anchor="middle">deterministic + trend rules · every minute</text>
   <rect class="core" x="430" y="320" width="240" height="46" rx="6"/><text class="t" x="550" y="339" text-anchor="middle" font-weight="600">Incident pipeline</text><text class="s" x="550" y="356" text-anchor="middle">evidence → Gemini → cross-check</text>
   <rect class="core" x="430" y="390" width="240" height="46" rx="6"/><text class="t" x="550" y="409" text-anchor="middle" font-weight="600">Policy engine</text><text class="s" x="550" y="426" text-anchor="middle">pure · L0–L3 · circuit breaker · dry-run</text>
-  <rect class="core" x="430" y="460" width="240" height="46" rx="6"/><text class="t" x="550" y="479" text-anchor="middle" font-weight="600">Executor</text><text class="s" x="550" y="496" text-anchor="middle">lease · audit intent / result</text>
+  <rect class="core" x="430" y="460" width="240" height="46" rx="6"/><text class="t" x="550" y="479" text-anchor="middle" font-weight="600">Executor</text><text class="s" x="550" y="496" text-anchor="middle">lease · audit · verify against the world · next hypothesis</text>
   <rect class="core" x="430" y="540" width="240" height="46" rx="6"/><text class="t" x="550" y="559" text-anchor="middle" font-weight="600">Artifact verifier</text><text class="s" x="550" y="576" text-anchor="middle">opens every declared file</text>
-  <rect class="core" x="720" y="540" width="230" height="46" rx="6"/><text class="t" x="835" y="559" text-anchor="middle" font-weight="600">Steward</text><text class="s" x="835" y="576" text-anchor="middle">ledger · ETTR · budget kill-switch</text>
+  <rect class="core" x="720" y="540" width="230" height="46" rx="6"/><text class="t" x="835" y="559" text-anchor="middle" font-weight="600">Steward</text><text class="s" x="835" y="576" text-anchor="middle">ledger · ETTR · baselines · promotion · budget</text>
   <path class="eb" d="M550 226 V250"/><path class="eb" d="M550 296 V320"/><path class="eb" d="M550 366 V390"/><path class="eb" d="M550 436 V460"/>
   <text class="s" x="740" y="248">read models and write-backs</text>
   <text class="s" x="740" y="265">go through Firestore only;</text>
@@ -60,8 +60,8 @@
   <rect class="ext" x="1020" y="40" width="360" height="56" rx="6"/><text class="t" x="1200" y="62" text-anchor="middle" font-weight="600">Cloud Scheduler</text><text class="s" x="1200" y="80" text-anchor="middle">SA warden-scheduler · OIDC tokens</text>
   <rect class="ext" x="1020" y="180" width="360" height="46" rx="6"/><text class="t" x="1200" y="199" text-anchor="middle" font-weight="600">Billing Budget → Pub/Sub</text><text class="s" x="1200" y="216" text-anchor="middle">thresholds 25 / 50 / 80 / 100 % · OIDC push · dead-letter</text>
   <rect class="ext" x="1020" y="320" width="360" height="46" rx="6"/><text class="t" x="1200" y="339" text-anchor="middle" font-weight="600">Vertex AI · Gemini</text><text class="s" x="1200" y="356" text-anchor="middle">3.5 Flash diagnosis · 3.7 Flash second opinion</text>
-  <rect class="ext" x="1020" y="390" width="360" height="46" rx="6"/><text class="t" x="1200" y="409" text-anchor="middle" font-weight="600">Discord</text><text class="s" x="1200" y="426" text-anchor="middle">cards with evidence · Approve / Deny / Always · /warden freeze</text>
-  <rect class="ext" x="1020" y="460" width="360" height="46" rx="6"/><text class="t" x="1200" y="479" text-anchor="middle" font-weight="600">Compute Engine API</text><text class="s" x="1200" y="496" text-anchor="middle">start · stop · setMetadata</text>
+  <rect class="ext" x="1020" y="390" width="360" height="46" rx="6"/><text class="t" x="1200" y="409" text-anchor="middle" font-weight="600">Discord</text><text class="s" x="1200" y="426" text-anchor="middle">cards with evidence · Approve / Deny / Always · freeze (later)</text>
+  <rect class="ext" x="1020" y="460" width="360" height="46" rx="6"/><text class="t" x="1200" y="479" text-anchor="middle" font-weight="600">Compute Engine API</text><text class="s" x="1200" y="496" text-anchor="middle">start · stop · create · relocate · setMachineType · resize</text>
 
   <rect class="tb" x="1020" y="620" width="360" height="110" rx="8"/>
   <text class="tbl" x="1034" y="640">CLOUD RUN · WARDEN-DEADMAN</text>
