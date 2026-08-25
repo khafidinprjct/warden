@@ -64,3 +64,12 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - Bug #4 run nyata: verifier berlomba dgn unggahan (RUN_FIN datang sebelum artefak terakhir sampai GCS) → "tidak tersedia" → gagal. Fix: tenggang 10 mnt (tunda, bukan gagal) + agent mengunggah semua artefak segera setelah RUN_FIN. Karantina kini hanya untuk artefak yang ADA tapi rusak.
 - 14:40 WIB — Uji preempt hidup #1 (climate-demo): simulate-maintenance-event → Warden mendeteksi `stopped_external` (bukan `preempted`: operasi preempted tidak muncul untuk simulasi) dan MENYALAKAN mesin otomatis dalam ~6 mnt (2 tick). BUG #5: setelah boot, RUN_FIN milik run LAMA masih ada di disk → startup mengira job selesai → tidak resume. Fix: `wrun` menghapus RUN_FIN lama saat run baru mulai; `startup.sh` membandingkan run_id RUN_START vs RUN_FIN. Dipasang ke kedua mesin (wrun via scp, skrip boot via `set_startup.py`).
 - Gerbang hidup preempt yang jujur dipindah ke `toy-train` (checkpoint nyata): `chaos/live_toy.py` berjalan.
+
+## 25 Agu 2026 14:46 WIB — Gerbang live Fase 2/3/5/10 lulus di GCP nyata (climate-demo)
+**Bukti** (`chaos/live.py`, log tugas b4rl1159e/bxumhmn70):
+- Langkah 1: run r20260825T065601 COMPLETE → RUN_FIN → verifier membuka pred.csv (34.062 B, sha 810a76ac…) → VERIFIED (546 s dari start pengamatan).
+- Langkah 2: perintah `resume` via mailbox → run baru r20260825T070910 mencapai F3 dalam 121 s.
+- Langkah 3: `simulate-maintenance-event` pada demo-train-1 (spot) → mesin TERMINATED; Watcher membuka insiden `stopped_external` (tanpa RUN_FIN) → policy L2 → executor START → RESOLVED; mesin RUNNING lagi. **Kerugian 348 s** (target ≤ 5 mnt = 300 s; selisih 48 s berasal dari tick 2 mnt + boot e2).
+- Langkah 4: startup.sh melanjutkan (run r20260825T073658) → F6 → COMPLETE → VERIFIED True (1.790 s).
+**Keputusan:** kerugian 348 s diterima untuk demo; untuk produksi turunkan `warden-tick` ke */1 (biaya Cloud Run tetap ≈ $0). Tidak diubah sekarang (bukan diminta).
+**Catatan toy-train:** uji live_toy putaran-1 tidak sah — perintah resume pada job yang sudah tamat (ckpt_006000 masih di disk) selesai seketika (<1 mnt), sehingga simulate-maintenance jatuh pada mesin yang sudah punya RUN_FIN → Warden **benar** tidak menyalakan ulang (mesin tamat dibiarkan mati). Perbaikan uji, bukan produk: bersihkan artefak + TOY_STEPS=20000 lalu ulang.
