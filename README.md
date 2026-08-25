@@ -27,6 +27,10 @@ Bahasa Indonesia: `docs/README.id.md`.
 
 Three services, three identities. Actions never depend on the UI, and the watchdog never shares fate with what it watches.
 
+![Warden architecture — trust boundaries and identities](docs/architecture.png)
+
+<details><summary>Same diagram as Mermaid (renders on GitHub)</summary>
+
 ```mermaid
 flowchart LR
   subgraph VM["Trust boundary: managed instance · SA warden-vm (write only to gs://…/jobs/{job})"]
@@ -59,6 +63,7 @@ flowchart LR
   B[Billing Budget] -- "Pub/Sub push (OIDC) + dead-letter" --> T
   P -- "Vertex AI, location global" --> GEM[Gemini 3.5 Flash · 3.7 Flash]
 ```
+</details>
 
 **Google Cloud services:** Cloud Run (3 services), Firestore, Pub/Sub (with dead-letter), Cloud Scheduler, Secret Manager, Compute Engine, Cloud Storage, Cloud Logging/Monitoring (log-based metrics, SLOs, alerts), Billing Budgets, Vertex AI. **Models:** `gemini-3.5-flash` (diagnosis, multimodal), `gemini-3.5-flash-lite` (prefilter), `gemini-3.7-flash` (second opinion), all through Vertex AI with service-account identity — no API keys in production. **Agent framework:** Google ADK (`LlmAgent`, `InMemoryRunner`, schema-constrained output).
 
