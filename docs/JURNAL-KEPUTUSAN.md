@@ -73,3 +73,10 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - Langkah 4: startup.sh melanjutkan (run r20260825T073658) → F6 → COMPLETE → VERIFIED True (1.790 s).
 **Keputusan:** kerugian 348 s diterima untuk demo; untuk produksi turunkan `warden-tick` ke */1 (biaya Cloud Run tetap ≈ $0). Tidak diubah sekarang (bukan diminta).
 **Catatan toy-train:** uji live_toy putaran-1 tidak sah — perintah resume pada job yang sudah tamat (ckpt_006000 masih di disk) selesai seketika (<1 mnt), sehingga simulate-maintenance jatuh pada mesin yang sudah punya RUN_FIN → Warden **benar** tidak menyalakan ulang (mesin tamat dibiarkan mati). Perbaikan uji, bukan produk: bersihkan artefak + TOY_STEPS=20000 lalu ulang.
+
+## 25 Agu 2026 15:15 WIB — live_toy putaran-2: circuit breaker memicu, START minta izin manusia (perilaku benar)
+**Kejadian:** `simulate-maintenance-event` pada demo-train-2 saat toy-train step 1250 (run r20260825T075642, 20.000 langkah). 15:04 Watcher membuka `stopped_external` → kebijakan: "pagar keras lolos; tingkat awal L2 → **circuit terpicu → L1** → minta izin". Keputusan `dec_01M0VZ5C8FSKXA5VBC15MR08FE` (start_instance) PENDING.
+**Pemicu breaker** (keputusan AUTO toy-train 1 jam terakhir): 07:18 quarantine, 07:26 quarantine (keduanya dari balapan unggahan sebelum perbaikan tenggang), 07:34 **notify** → 3 = `max_auto_actions_per_hour`.
+**Keputusan:** (1) TIDAK menyetujui sendiri secara terprogram — L1 memang berarti manusia; keputusan dibiarkan menunggu (kedaluwarsa 30 mnt → ESCALATED, itu pun gerbang yang diuji). (2) Perbaikan produk kecil: `notify` tidak lagi dihitung breaker (`watcher/tick.py`), karena tidak mengubah keadaan; 41 tes + chaos 25/25. Dua karantina tetap terhitung — itu benar.
+**Harga:** mesin demo-train-2 mati sejak 15:02; tidak ada biaya berjalan. Uji live_toy putaran-2 akan gagal di langkah 3c (batas waktu) — dicatat sebagai bukti bahwa breaker bekerja, bukan sebagai gerbang lulus preempt-resume toy.
+**Cara lanjut (user):** buka `https://warden-ui-hfgre6y7ta-uc.a.run.app/incidents/inc_01M0VZ5C3N5ZEPHTKB4CHK19TP` → Approve; atau beri izin ke saya untuk menyetujui atas nama operator.

@@ -47,7 +47,7 @@ def _ctx_for(job, inst, action: Action, frozen: bool) -> Ctx:
     hour_ago = now() - timedelta(hours=1)
     recent = [d for d in db.decisions.list(job_id=job.job_id if job else "", limit=200) if d.created_at > now() - timedelta(days=1)]
     same = [d for d in recent if d.action == action and d.status in (DecisionStatus.DONE, DecisionStatus.EXECUTING)]
-    auto_hr = [d for d in recent if d.verdict == Verdict.AUTO and d.created_at > hour_ago and d.status != DecisionStatus.PENDING]
+    auto_hr = [d for d in recent if d.verdict == Verdict.AUTO and d.created_at > hour_ago and d.status != DecisionStatus.PENDING and d.action != Action.NOTIFY]   # notify tidak mengubah keadaan → tidak dihitung breaker
     failed_row = 0
     for d in sorted(recent, key=lambda d: d.created_at, reverse=True):
         if d.status == DecisionStatus.FAILED:
