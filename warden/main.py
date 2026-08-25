@@ -133,8 +133,10 @@ def mailbox(job_id: str, x_warden_signature: str | None = Header(default=None)):
 
 
 @app.post("/events")
-async def events(req: Request):
-    """Pub/Sub push (warden-events). Fase 4: insiden needs_llm diproses di sini."""
+async def events(req: Request, authorization: str | None = Header(default=None)):
+    """Pub/Sub push (warden-events), OIDC dari service account push (Fase 12)."""
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
     msg = (await req.json()).get("message", {})
     data = json.loads(base64.b64decode(msg.get("data", "e30=")).decode() or "{}")
     return {"ok": True, "received": data.get("kind", "?")}
@@ -162,8 +164,10 @@ def digest(authorization: str | None = Header(default=None)):
 
 
 @app.post("/budget")
-async def budget(req: Request):
-    """Billing budget → Pub/Sub → sini. Ambang 0,5/0,8/1,0 (Fase 6 mengaktifkan kill-switch)."""
+async def budget(req: Request, authorization: str | None = Header(default=None)):
+    """Billing budget → Pub/Sub push (OIDC) → sini. Ambang 0,5/0,8/1,0 (Fase 6 mengaktifkan kill-switch)."""
+    if not _oidc_ok(authorization):
+        raise HTTPException(401, "OIDC diperlukan")
     msg = (await req.json()).get("message", {})
     data = json.loads(base64.b64decode(msg.get("data", "e30=")).decode() or "{}")
     pct = float(data.get("alertThresholdExceeded", 0) or 0)
@@ -185,6 +189,13 @@ async def discord_interactions(req: Request, x_signature_ed25519: str | None = H
 def _notify(inc, dec, text: str) -> None:
     """Kartu Discord (Fase 7) + salinan ke koleksi notifications (dashboard)."""
     from warden.concierge import discord as dc
-    db.client().collection("notifications").document(f"{getattr(inc, 'incident_id', 'x')}:{now().strftime('%H%M%S%f')}").set(
-        {"incident_id": getattr(inc, "incident_id", ""), "decision_id": dec.decision_id if dec else "", "text": text, "ts": now().isoformat()})
-    dc.send(inc if hasattr(inc, "rule") else None, dec, text)
+    try:
+        db.client().collection("notifications").document(f"{getattr(inc, 'incident_id', 'x')}:{now().strftime('%H%M%S%f')}").set(
+            {"incident_id": getattr(inc, "incident_id", ""), "decision_id": dec.decision_id if dec else "", "text": text, "ts": now().isoformat()})
+    except Exception as e:  # noqa: BLE001 — notification copy must never block an action
+        db.health("notifications", False, str(e)[:200])
+    try:
+        dc.send(inc if hasattr(inc, "rule") else None, dec, text)
+        db.health("discord", True)
+    except Exception as e:  # noqa: BLE001 — Discord down: action already taken; degrade to health record
+        db.health("discord", False, str(e)[:200])

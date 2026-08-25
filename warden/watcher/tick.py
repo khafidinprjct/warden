@@ -73,7 +73,20 @@ def _is_frozen() -> bool:
     return bool(d.exists and d.to_dict().get("frozen"))
 
 
+def _safe_notify(notify):
+    """Notification failures (Discord down, network) never block or abort a tick — they become a health record."""
+    if notify is None:
+        return None
+    def _n(inc, dec, text):
+        try:
+            notify(inc, dec, text)
+        except Exception as e:  # noqa: BLE001
+            db.health("notify", False, str(e)[:200])
+    return _n
+
+
 def run_tick(notify=None) -> dict[str, Any]:
+    notify = _safe_notify(notify)
     """notify(incident, decision, text) → kartu Discord (disuntik supaya tick bisa diuji tanpa jaringan)."""
     t = now()
     stats = {"instances": 0, "findings": 0, "incidents_new": 0, "auto": 0, "approval": 0, "denied": 0, "held": 0, "errors": []}

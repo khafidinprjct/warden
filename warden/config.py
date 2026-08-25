@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     managed_label: str = "warden-managed"     # hanya mesin berlabel ini yang boleh disentuh
     tick_seconds: int = 120
     ingest_hmac_secret: str = "dev-only-change-me"
+    ingest_hmac_secret_prev: str = ""   # rotasi tanpa downtime: secret lama masih diterima selama masa tenggang
     gemini_model: str = "gemini-3.5-flash"
     gemini_model_lite: str = "gemini-3.5-flash-lite"
     gemini_model_second: str = "gemini-3.7-flash"

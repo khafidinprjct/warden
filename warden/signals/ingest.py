@@ -15,7 +15,11 @@ def sign(body: bytes, secret: str | None = None) -> str:
 
 
 def verify(body: bytes, sig: str) -> bool:
-    return hmac.compare_digest(sign(body), sig or "")
+    """Tanda tangan sah bila cocok dengan secret aktif ATAU secret sebelumnya (masa tenggang rotasi, lihat infra/rotate_hmac.py)."""
+    if hmac.compare_digest(sign(body), sig or ""):
+        return True
+    prev = settings.ingest_hmac_secret_prev
+    return bool(prev) and hmac.compare_digest(sign(body, prev), sig or "")
 
 
 def validate_marker(mk: Marker) -> Marker:
