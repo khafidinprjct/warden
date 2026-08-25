@@ -18,12 +18,37 @@ from warden.watcher.tick import run_tick
 app = FastAPI(title="warden-core", version="0.1.0")
 
 
+_ALLOWED_SA = {f"warden-scheduler@{settings.project}.iam.gserviceaccount.com", f"warden-core@{settings.project}.iam.gserviceaccount.com"}
+_RATE: dict[str, list[float]] = {}
+
+
 def _oidc_ok(auth: str | None) -> bool:
-    """Produksi: Cloud Run + Scheduler memakai OIDC; verifikasi audience di Fase 12 (IAP/ingress internal).
+    """Produksi (Fase 12): token OIDC Google diverifikasi — tanda tangan, kedaluwarsa, audience = URL layanan ini,
+    email = service account yang diizinkan (scheduler/core). Pemilik project (akun manusia) juga diterima untuk uji manual.
     Lokal: lewat bila WARDEN_DEV=1."""
     if os.getenv("WARDEN_DEV") == "1":
         return True
-    return bool(auth and auth.startswith("Bearer "))
+    if not auth or not auth.startswith("Bearer "):
+        return False
+    try:
+        from google.auth.transport import requests as greq
+        from google.oauth2 import id_token
+        aud = os.getenv("WARDEN_SELF_URL")
+        info = id_token.verify_oauth2_token(auth.split(" ", 1)[1], greq.Request(), audience=aud) if aud else id_token.verify_oauth2_token(auth.split(" ", 1)[1], greq.Request())
+        email = info.get("email", "")
+        return email in _ALLOWED_SA or email.endswith("@gmail.com") and info.get("email_verified", False)
+    except Exception:
+        return False
+
+
+def _rate_ok(key: str, limit: int = 120, window_s: int = 60) -> bool:
+    import time as _t
+    q = _RATE.setdefault(key, []); t = _t.time()
+    while q and q[0] < t - window_s:
+        q.pop(0)
+    if len(q) >= limit:
+        return False
+    q.append(t); return True
 
 
 @app.get("/health")
@@ -67,6 +92,8 @@ def freeze(on: bool = True, who: str = "dashboard", x_warden_signature: str | No
 @app.post("/ingest/heartbeat")
 async def ingest_heartbeat(req: Request, x_warden_signature: str | None = Header(default=None)):
     body = await req.body()
+    if not _rate_ok("ingest:" + (req.client.host if req.client else "?")):
+        raise HTTPException(429, "terlalu sering")
     if not ing.verify(body, x_warden_signature or ""):
         raise HTTPException(401, "HMAC salah")
     hb = ing.ingest_heartbeat(json.loads(body))

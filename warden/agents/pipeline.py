@@ -64,6 +64,13 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         db.health("llm_budget", False, "pagu LLM harian tercapai — deterministik saja")
         return stats
     frozen = _is_frozen()
+    gh = db.client().collection("health").document("gemini").get()
+    if gh.exists and int(gh.to_dict().get("consecutive_failures", 0)) >= 5:
+        from datetime import datetime, timedelta, timezone
+        upd = gh.to_dict().get("updated_at")
+        if upd and datetime.now(timezone.utc) - datetime.fromisoformat(upd) < timedelta(minutes=5):
+            db.health("llm_circuit", False, "Gemini gagal 5x berturut — circuit OPEN 5 mnt (deterministik saja)")
+            return stats
     for inc in db.incidents.list(state="DIAGNOSING", limit=max_n):
         job = db.jobs.get(inc.job_id) if inc.job_id else None
         inst = compute().describe(inc.instance_ref) if inc.instance_ref else None

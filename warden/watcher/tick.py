@@ -107,6 +107,9 @@ def run_tick(notify=None) -> dict[str, Any]:
                         f"missing:{job.instance_ref}", suggested_action="notify")
             _handle(f, None, job, frozen, stats, notify)
     db.heartbeat_self("watcher", {"tick_ms": int((now() - t).total_seconds() * 1000), "stats": {k: v for k, v in stats.items() if k != "errors"}})
+    import json as _j, sys as _s
+    print(_j.dumps({"event": "warden.heartbeat", "severity": "INFO", "tick_ms": int((now() - t).total_seconds() * 1000),
+                    "instances": stats["instances"], "findings": stats["findings"], "auto": stats["auto"], "approval": stats["approval"]}), file=_s.stdout, flush=True)
     return stats
 
 

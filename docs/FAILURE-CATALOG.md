@@ -1,0 +1,30 @@
+# Katalog 25 mode kegagalan → detektor Warden → uji
+
+Semua pernah terjadi pada kami (harga = yang benar-benar dibayar). Kolom "uji" = skenario di `chaos/run.py` (25/25 lulus) atau tes unit.
+
+| # | Mode | Harga | Detektor / aturan | Tindakan | Uji |
+|---|---|---|---|---|---|
+| 1 | Spot dicabut, tidak ada yang menyalakan | 4 jam diam | `preempted` (TERMINATED 2 tick ∧ tanpa RUN_FIN) | `start_instance` L2 → resume | chaos #1, test_tick |
+| 2 | Spot dicabut + disk terhapus | 75 klip | `unsafe_config` (auto-delete / DELETE) | notify; start/stop ditolak sampai aman | chaos #2 |
+| 3 | Dicabut saat eval | $15 | bukti fase di insiden; `startup.sh` resume sadar fase | resume dari fase terakhir | chaos #3 |
+| 4 | Penjaga mati senyap | 33 jendela | denyut watcher + `warden-deadman` + alarm Monitoring absen 10 mnt | STOP mesin bila Warden mati | chaos #4, deadman /check |
+| 5 | DONE palsu tanpa exit code | prep hilang | `done_without_exit` | ditolak; job tetap RUNNING | chaos #5 |
+| 6 | DONE basi / tanda tangan salah | $0,10 | `marker_invalid` (HMAC, run_id, ts) | ditolak | chaos #6 |
+| 7 | Checkpoint korup ukuran identik | nyaris kehilangan model | verifier: sha ≠ sebelumnya, torch.load | karantina L2 | chaos #7, test_verifier |
+| 8 | Disk penuh → checkpoint 15 % | nyaris resume dari rusak | `disk_low` preventif; size_vs_expect; resume hanya VERIFIED | notify / karantina | chaos #8 |
+| 9 | OOM kasus terburuk | $1,15 | regex OOM + cek silang VRAM | resume batch ↓ (≤2×) | chaos #9 |
+| 10 | Salah diagnosis OOM | GPU terbakar | cek silang: klaim tanpa bukti → confidence 0,4, manusia | minta izin | chaos #10 |
+| 11 | pip gagal senyap, DONE tetap ditulis | $0,15 | `wrun` exit code proses anak → `run_fin_nonzero` → LLM | stop + patch_suggest | chaos #11 |
+| 12 | Image tanpa pip / .so rusak | run gagal | preflight `install.sh` → `PREFLIGHT_FAIL` | tidak meluncurkan | chaos #12 |
+| 13 | Fallback kernel senyap | jam GPU | `slow` (basi ∧ sibuk) + Diagnostician throughput | stop + laporan | chaos #13 |
+| 14 | Instance yatim | $1,3 | `orphan` (tanpa job/denyut ≥10 mnt) | STOP L2 (bukan delete) | chaos #14 |
+| 15 | VM idle | $2 | `orphan`/`idle` dua-syarat ≥15 mnt | STOP L2 | chaos #15 |
+| 16 | Create gagal per-item, stderr dipangkas | jadwal | `OpResult.error` terstruktur, diminta-vs-jadi | ESCALATED | chaos #16 |
+| 17–18 | Kuota global/regional/disk | pengajuan sia-sia | `quota()` GLOBAL: vs regional | laporan sebelum meluncurkan | chaos #17–18 |
+| 19 | Badai preempt | restart budget | batas 3 start/jam, circuit breaker | minta izin setelah ke-3 | chaos #19 |
+| 20 | Proses ganda | risiko OOM | `wrun` flock; `dup_process` (ppid) | kill L1 | chaos #20 |
+| 21 | Artefak tertahan gerbang | run ulang | verifier: artefak tidak tersedia → FINISHED_UNVERIFIED | manusia | chaos #21 |
+| 22 | Smoke lolos palsu | $0,10 | `SMOKE_FIN.members ⊇ expected` | tolak smoke | chaos #22 |
+| 23 | Smoke menimpa juara | nyaris | sha `champion/**` berubah | ESCALATED | chaos #23 |
+| 24 | nohup via ssh gantung | yatim | tidak ada ssh di jalur kritis; mailbox | — | chaos #24 |
+| 25 | Balapan dengan operator | VM dibuat ulang | `operator_active` (sesi ssh) → HELD; `/warden hold`; lease | tahan | chaos #25 |
