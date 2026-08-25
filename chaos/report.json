@@ -1,0 +1,268 @@
+[
+ {
+  "n": 1,
+  "mode": "preempt spot, tidak ada yang menyalakan",
+  "ok": true,
+  "ms": 133,
+  "info": {
+   "aksi": [
+    [
+     "start",
+     "us-central1-a/vm1",
+     true
+    ],
+    [
+     "start",
+     "us-central1-a/vm1",
+     false
+    ]
+   ]
+  },
+  "error": ""
+ },
+ {
+  "n": 2,
+  "mode": "preempt + disk ikut terhapus (konfigurasi tak aman)",
+  "ok": true,
+  "ms": 141,
+  "info": {
+   "catatan": "start ditolak sampai konfigurasi aman"
+  },
+  "error": ""
+ },
+ {
+  "n": 3,
+  "mode": "preempt saat fase eval → resume sadar fase",
+  "ok": true,
+  "ms": 138,
+  "info": {
+   "bukti_fase": "F5-eval"
+  },
+  "error": ""
+ },
+ {
+  "n": 4,
+  "mode": "penjaga mati senyap → denyut Warden + deadman",
+  "ok": true,
+  "ms": 72,
+  "info": {
+   "denyut_watcher": "2026-08-25T06:38:12.988940+00:00"
+  },
+  "error": ""
+ },
+ {
+  "n": 5,
+  "mode": "DONE palsu tanpa exit code",
+  "ok": true,
+  "ms": 108,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 6,
+  "mode": "RUN_FIN dengan tanda tangan salah / basi",
+  "ok": true,
+  "ms": 99,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 7,
+  "mode": "checkpoint korup berukuran identik (sha sama dgn sebelumnya)",
+  "ok": true,
+  "ms": 3,
+  "info": {
+   "alasan": "not_identical_to_previous: identik dengan artefak sebelumnya (salinan basi?)"
+  },
+  "error": ""
+ },
+ {
+  "n": 8,
+  "mode": "disk penuh → checkpoint 15 % ditolak + disk_low",
+  "ok": true,
+  "ms": 114,
+  "info": {
+   "verifier": "size_vs_expect: 150000 di luar [900000,1100000] (15% dari ekspektasi)"
+  },
+  "error": ""
+ },
+ {
+  "n": 9,
+  "mode": "OOM di kasus terburuk (regex + cek silang)",
+  "ok": true,
+  "ms": 4,
+  "info": {
+   "checks": [
+    "evidence_lines_in_range",
+    "quotes_are_substrings",
+    "category_pattern:oom_gpu",
+    "oom_has_culprit_frame"
+   ]
+  },
+  "error": ""
+ },
+ {
+  "n": 10,
+  "mode": "salah diagnosis OOM (klaim tanpa bukti) → ditolak cek silang",
+  "ok": true,
+  "ms": 0,
+  "info": {
+   "adjusted": 0.4
+  },
+  "error": ""
+ },
+ {
+  "n": 11,
+  "mode": "pip gagal senyap → exit code proses anak ≠ 0 → run_fin_nonzero (LLM)",
+  "ok": true,
+  "ms": 89,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 12,
+  "mode": "image tanpa pip → PREFLIGHT_FAIL marker diterima",
+  "ok": true,
+  "ms": 55,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 13,
+  "mode": "fallback kernel senyap → 'slow' (basi tapi sibuk), bukan 'stuck'",
+  "ok": true,
+  "ms": 109,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 14,
+  "mode": "instance yatim → STOP otomatis (bukan delete)",
+  "ok": true,
+  "ms": 32,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 15,
+  "mode": "VM idle (job selesai, mesin diam ≥15 mnt) → STOP",
+  "ok": true,
+  "ms": 107,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 16,
+  "mode": "create gagal per-item → OpResult.error terstruktur, bukan stderr dipangkas",
+  "ok": true,
+  "ms": 119,
+  "info": {
+   "error": "ZONE_RESOURCE_POOL_EXHAUSTED"
+  },
+  "error": ""
+ },
+ {
+  "n": 17,
+  "mode": "kuota global vs regional terbaca terpisah",
+  "ok": true,
+  "ms": 0,
+  "info": {
+   "kuota": {
+    "CPUS": [
+     24,
+     4
+    ],
+    "SSD_TOTAL_GB": [
+     500,
+     100
+    ]
+   }
+  },
+  "error": ""
+ },
+ {
+  "n": 18,
+  "mode": "kuota disk regional (dilaporkan sebelum meluncurkan)",
+  "ok": true,
+  "ms": 0,
+  "info": {
+   "sisa_gb": 400
+  },
+  "error": ""
+ },
+ {
+  "n": 19,
+  "mode": "badai preempt → batas 3 start/jam menahan yang ke-4",
+  "ok": true,
+  "ms": 380,
+  "info": {
+   "start": 3
+  },
+  "error": ""
+ },
+ {
+  "n": 20,
+  "mode": "proses ganda → dup_process",
+  "ok": true,
+  "ms": 95,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 21,
+  "mode": "selesai tapi artefak tidak mendarat → verifikasi menandai hilang",
+  "ok": true,
+  "ms": 107,
+  "info": {
+   "hasil": {
+    "verified": 1,
+    "ok": 0
+   }
+  },
+  "error": ""
+ },
+ {
+  "n": 22,
+  "mode": "smoke lolos palsu → SMOKE_FIN tanpa member yang dideklarasikan",
+  "ok": true,
+  "ms": 50,
+  "info": {
+   "hilang": [
+    "tabicl"
+   ]
+  },
+  "error": ""
+ },
+ {
+  "n": 23,
+  "mode": "smoke menimpa artefak juara → sha berubah terdeteksi",
+  "ok": true,
+  "ms": 0,
+  "info": {},
+  "error": ""
+ },
+ {
+  "n": 24,
+  "mode": "nohup via ssh gantung → tidak ada ssh di jalur kritis (mailbox)",
+  "ok": true,
+  "ms": 58,
+  "info": {
+   "plan": {
+    "items": {
+     "warden-cmd": "resume:r1:"
+    }
+   }
+  },
+  "error": ""
+ },
+ {
+  "n": 25,
+  "mode": "operator sedang di mesin → tindakan ditahan",
+  "ok": true,
+  "ms": 56,
+  "info": {
+   "explain": "TAHAN: operator aktif di mesin (sesi ssh)"
+  },
+  "error": ""
+ }
+]

@@ -43,3 +43,8 @@ Format tiap entri: tanggal · keputusan · alasan+bukti · alternatif ditolak ·
 - Fase 3 (kebijakan+executor+audit+izin), 4 (Diagnostician+cek silang+vonis kedua), 5 (Verifier), 6 (ledger/ETTR/proyeksi/kill-switch/deadman), 7 (Discord: Ed25519, kartu, tombol, slash), 8 (dashboard 7 halaman, FREEZE) — kode + tes (41 hijau) selesai; gerbang HIDUP masing-masing menunggu: preempt nyata di demo VM (F2/F3), artefak demo (F5), bot Discord dari pemilik (F7), audit UI pemilik (F8).
 - KEPUTUSAN: Discord dikonfigurasi lewat Secret Manager + env (`WARDEN_DISCORD_PUBLIC_KEY`, `..._BOT_TOKEN`, `..._CHANNEL_ID`, `WARDEN_APPROVERS`); sebelum ada, kartu jatuh ke koleksi `notifications` (terlihat di dashboard).
 - Biaya hari ini: Cloud Run/Firestore/Scheduler free tier; VM demo ≈ $0,02/jam; Gemini $0,02. Total < $0,10.
+
+## 25 Agu 2026 15:45 WIB — Fase 9 & 10 LULUS gerbang (deterministik)
+- Fase 9: `render_loss_curve` (matplotlib dari denyut) + `read_photo` (Gemini 3.5 Flash multimodal). Uji nyata: kurva sintetis dengan NaN & lonjakan grad_norm → Gemini: "lonjakan grad_norm … gradient explosion" (1.169 token masuk, ≈$0,003). Temuan foto/kurva selalu berlabel `source=photo, confidence ≤ 0,6` → tidak memicu aksi otomatis.
+- Fase 10: `chaos/run.py` — 25 skenario memetakan 25 mode kegagalan ke fake GCE + Firestore emulator; **25/25 lulus dalam 3,7 detik**, laporan `chaos/report.json`. Dua bug uji ditemukan & dibetulkan (operator bytes; isolasi subkoleksi denyut antar-skenario).
+- Belum: uji kekacauan HIDUP di GCP (suntikan preempt/korup/yatim di mesin demo) + 3 latihan demo — menunggu job demo pertama tamat.
