@@ -3,7 +3,7 @@ Pages: / (Overview) · /fleet · /jobs · /incidents · /incidents/{id} · /appr
 
 Style guide (binding): English product vocabulary (Incident, Decision, Autonomy Level, Blast Radius, Heartbeat, Watchdog);
 headings Title Case, field labels UPPERCASE; structured label–value rows instead of concatenated sentences; times as
-"25 Aug 2026, 18:51 WIB" plus a relative age; money "$0.034/h"; no explanatory copy on screen."""
+"25 Aug 2026, 18:51 GMT+7" in the viewer's browser time zone (stored UTC) plus a relative age; money "$0.034/h"; no explanatory copy on screen."""
 from __future__ import annotations
 
 import json
@@ -12,13 +12,28 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from nicegui import ui
+from nicegui import app, ui
+from zoneinfo import ZoneInfo
 
 from warden.signals.ingest import sign
 from warden.store import firestore as db
 
 CORE = os.environ.get("WARDEN_CORE_URL", "http://127.0.0.1:18090")
-WIB = timezone(timedelta(hours=7))
+def tz() -> timezone | ZoneInfo:
+    """Viewer time zone, detected in the browser on first load (see shell); UTC until known."""
+    try:
+        return ZoneInfo(app.storage.user.get("tz") or "UTC")
+    except Exception:  # noqa: BLE001 — unknown zone name or no user storage in this context
+        return timezone.utc
+
+
+def tzlabel(d: datetime | None = None) -> str:
+    off = (d or _now()).astimezone(tz()).utcoffset() or timedelta(0)
+    m = int(off.total_seconds() // 60)
+    if m == 0:
+        return "UTC"
+    sign = "+" if m > 0 else "−"; m = abs(m)
+    return f"GMT{sign}{m // 60}" + (f":{m % 60:02d}" if m % 60 else "")
 STALE_HB_S = 180
 STALE_HEALTH_S = 900
 RELOAD_S = 30
@@ -114,11 +129,11 @@ def rel(x: Any) -> str:
 
 def wib(x: Any, fmt: str = "%H:%M:%S") -> str:
     d = _dt(x)
-    return d.astimezone(WIB).strftime(fmt) if d else "—"
+    return d.astimezone(tz()).strftime(fmt) if d else "—"
 
 
 def when(x: Any) -> str:
-    return f"{wib(x, '%d %b %Y, %H:%M')} WIB ({rel(x)})" if _dt(x) else "—"
+    return f"{wib(x, '%d %b %Y, %H:%M')} {tzlabel(_dt(x))} ({rel(x)})" if _dt(x) else "—"
 
 
 def age_s(x: Any) -> float | None:
@@ -287,6 +302,18 @@ def shell(title: str, path: str, data: dict | None = None):
     frozen = data["frozen"] if data else is_frozen()
     pending = data["pending"] if data else [d for d in db.decisions.list(limit=100) if _s(d.status) == "PENDING" and _s(d.verdict) == "NEED_APPROVAL"]
     health = data["health"] if data else [d.to_dict() | {"src": d.id} for d in db.client().collection("health").stream()]
+    async def _detect_tz():
+        try:
+            z = await ui.run_javascript("Intl.DateTimeFormat().resolvedOptions().timeZone", timeout=3.0)
+        except Exception:  # noqa: BLE001
+            return
+        if z and z != app.storage.user.get("tz"):
+            try:
+                ZoneInfo(z); app.storage.user["tz"] = z; ui.navigate.reload()
+            except Exception:  # noqa: BLE001 — unknown zone: keep UTC
+                pass
+    if not app.storage.user.get("tz"):
+        ui.timer(0.2, _detect_tz, once=True)
     drawer = ui.left_drawer(value=None, bordered=False).props("show-if-above width=216").classes("w-nav")
     with drawer:
         with ui.column().classes("w-full gap-0 p-2 h-full"):
@@ -314,7 +341,7 @@ def shell(title: str, path: str, data: dict | None = None):
             ui.button(icon="menu", on_click=drawer.toggle).props("flat dense round").classes("lt-md")
             with ui.column().classes("gap-0"):
                 ui.label(title).classes("text-lg font-semibold leading-tight")
-                ui.label(f"{wib(_now(), '%d %b %Y, %H:%M:%S')} WIB").classes("text-xs w-muted num")
+                ui.label(f"{wib(_now(), '%d %b %Y, %H:%M:%S')} {tzlabel()}").classes("text-xs w-muted num")
         with ui.row().classes("items-center gap-2 no-wrap"):
             if frozen:
                 tag("Frozen", "crit")
@@ -407,7 +434,7 @@ def incident_row(inc):
         tag(inc.severity, sev_kind(inc.severity))
         with ui.column().classes("gap-0 min-w-0"):
             ui.label(f"{label(RULE_LABEL, inc.rule)} — {inc.job_id or inc.instance_ref}").classes("font-semibold text-sm truncate w-full")
-            ui.label(f"{wib(inc.created_at, '%d %b %H:%M')} WIB ({rel(inc.created_at)})").classes("text-xs w-muted truncate w-full num")
+            ui.label(f"{wib(inc.created_at, '%d %b %H:%M')} {tzlabel(inc.created_at)} ({rel(inc.created_at)})").classes("text-xs w-muted truncate w-full num")
         tag(label(STATE_LABEL, inc.state), state_kind(_s(inc.state)))
 
 
@@ -471,7 +498,7 @@ def overview():
     jobs, insts, incs, pending, hb, proj = data["jobs"], data["insts"], data["incs"], data["pending"], data["hb"], data["proj"]
     running = [i for i in insts if _s(i.status) == "RUNNING"]
     open_incs = [i for i in incs if _s(i.state) not in ("RESOLVED", "CLOSED", "FALSE_POSITIVE")]
-    day_start = _now().astimezone(WIB).replace(hour=0, minute=0, second=0, microsecond=0)
+    day_start = _now().astimezone(tz()).replace(hour=0, minute=0, second=0, microsecond=0)
     resolved_today = [i for i in incs if _s(i.state) in ("RESOLVED", "CLOSED") and i.updated_at >= day_start]
     from warden.steward import ledger
     ettrs = {j.job_id: ledger.ettr(j.job_id, 168) for j in jobs}
@@ -578,7 +605,7 @@ def fleet():
                     rows.append(("HOST", f"phase {h.phase or '—'}, step {h.step if h.step is not None else '—'}, CPU {h.cpu_pct or 0:.0f} %, GPU {f'{h.gpu_util:.0f} %' if h.gpu_util is not None else '—'}, disk {h.disk_avail_gb or 0:.1f} GB free"))
                 rows.append(("LAST SEEN", when(i.last_seen)))
                 if i.operator_active_until and i.operator_active_until > _now():
-                    rows.append(("OPERATOR SESSION", f"until {wib(i.operator_active_until, '%H:%M')} WIB"))
+                    rows.append(("OPERATOR SESSION", f"until {wib(i.operator_active_until, '%H:%M')} {tzlabel(i.operator_active_until)}"))
                 kv(rows)
     auto_reload()
 
@@ -599,7 +626,7 @@ def jobs_page():
                 heartbeat_chart(j.job_id)
                 with ui.element("div").classes("px-3 pb-3"):
                     kv([("RUN ID", j.run_id or "—"), ("SPENT", usd(j.spent_usd, 3)), ("EXPECTATIONS", json.dumps(j.expect)[:160] if j.expect else "—")]
-                       + ([("OPERATOR HOLD", f"until {wib(j.operator_hold_until, '%H:%M')} WIB")] if j.operator_hold_until and j.operator_hold_until > _now() else []))
+                       + ([("OPERATOR HOLD", f"until {wib(j.operator_hold_until, '%H:%M')} {tzlabel(j.operator_hold_until)}")] if j.operator_hold_until and j.operator_hold_until > _now() else []))
     auto_reload()
 
 
