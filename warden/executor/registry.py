@@ -108,6 +108,11 @@ def _relocate(dec: Decision, compute, dry_run: bool) -> OpResult:
     target = _pick_zone(dec, compute)
     if not target:
         return OpResult(False, f"relocate {ref}", error="no candidate zone without a recent stock-out")
+    inst = compute.describe(ref)
+    if inst is not None and str(inst.status) == "RUNNING" and not dry_run:
+        rs = compute.stop(ref)            # relocation moves the disk: the source must be stopped first (the job resumes from its checkpoint on the new machine)
+        if not rs.ok:
+            return OpResult(False, f"relocate {ref}", error=f"stop before relocation failed: {rs.error}")
     r = compute.relocate(ref, target, dry_run=dry_run)
     if r.ok and not dry_run:
         job = db.jobs.get(dec.job_id) if dec.job_id else None

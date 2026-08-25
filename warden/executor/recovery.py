@@ -207,8 +207,9 @@ def check(inc, spec: dict[str, Any]) -> tuple[str, str]:
         return ("fail", "new run did not start advancing before the deadline") if late else ("pending", "waiting for the resumed run to advance")
     if kind in ("clean_disk", "resize_disk"):
         need = float(spec["params"].get("min_free_gb", 5.0)); cur = hbs[-1].disk_avail_gb if hbs and hbs[-1].disk_avail_gb is not None else None
-        if cur is not None and cur >= need and (base.get("disk_avail_gb") is None or cur > float(base["disk_avail_gb"])):
-            return "ok", f"disk free {cur:.1f} GB (was {base.get('disk_avail_gb')})"
+        freed = int(res.get("freed_bytes", 0)) if res else 0
+        if cur is not None and cur >= need and (freed > 0 or base.get("disk_avail_gb") is None or cur > float(base["disk_avail_gb"])):
+            return "ok", f"disk free {cur:.1f} GB (was {base.get('disk_avail_gb')}), freed {freed:,} B"
         if res and res.get("ok") and kind == "clean_disk" and int(res.get("freed_bytes", 0)) == 0:
             return "fail", "nothing eligible to clean (no local checkpoint has a verified copy in Storage)"
         return ("fail", f"disk free {cur} GB still below {need} GB at deadline") if late else ("pending", "waiting for the next heartbeat")
