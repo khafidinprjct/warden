@@ -47,13 +47,13 @@ class Diagnosis(BaseModel):
     evidence_lines: list[int] = Field(description="nomor baris di log_tail yang menjadi bukti (wajib kecuali unknown)")
     evidence_quotes: list[str] = Field(max_length=5, description="kutipan ≤200 karakter, harus substring baris yang ditunjuk")
     root_cause: str = Field(max_length=400)
-    culprit_frame: str | None = Field(default=None, description="untuk OOM: frame yang MENGALOKASIKAN, bukan yang gagal")
+    culprit_frame: str | None = Field(default=None, description="for OOM: the frame that ALLOCATES, not the one that fails")
     recommended_action: Recommended
     action_params: dict = Field(default_factory=dict)
     blast_radius: str = Field(description="none|this_run|this_job|budget|artifacts")
     needs_human: bool
-    human_summary_id: str = Field(max_length=280, description="ringkasan Bahasa Indonesia untuk kartu Discord")
-    falsifiable_check: str = Field(max_length=200, description="kalau diagnosis benar, setelah tindakan X angka Y berubah")
+    human_summary: str = Field(max_length=280, description="one-sentence English summary for the human card")
+    falsifiable_check: str = Field(max_length=200, description="if the diagnosis is right, after action X the number Y changes")
 
 
 PERMANENT = {Category.env_broken, Category.config_error, Category.code_bug, Category.dependency_missing, Category.nan_input, Category.data_error}

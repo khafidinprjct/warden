@@ -31,7 +31,7 @@ def ettr(job_id: str, window_hours: float = 24.0) -> dict[str, Any]:
     Efektif = interval antar-denyut yang step-nya bertambah; dibayar = umur mesin RUNNING dari ledger denyut."""
     hbs = db.recent_heartbeats(job_id, 500)
     if len(hbs) < 2:
-        return {"job_id": job_id, "ettr": None, "note": "denyut < 2"}
+        return {"job_id": job_id, "ettr": None, "note": "heartbeats < 2"}
     t0 = now() - timedelta(hours=window_hours)
     hbs = [h for h in hbs if h.ts >= t0]
     eff = paid = 0.0
@@ -76,20 +76,20 @@ def budget_kill_switch(pct: float, notify=None) -> dict[str, Any]:
     else:
         rt.set({"budget_pct": pct}, merge=True)
     if notify:
-        notify(None, None, f"💸 Budget {pct*100:.0f}% — tindakan: {acted or 'peringatan saja'} | proyeksi: {projection()}")
+        notify(None, None, f"💸 Budget {pct*100:.0f}% — actions: {acted or 'warning only'} | projection: {projection()}")
     return {"pct": pct, "acted": acted}
 
 
 def digest() -> str:
     p = projection(); jobs = db.jobs.list(limit=100)
     lines = [f"📋 Warden digest {now():%Y-%m-%d %H:%M} UTC",
-             f"biaya hari ini ${p['today_usd']:.2f} · bulan berjalan ${p['month_to_date_usd']:.2f} · bakar ${p['burn_usd_per_hour']:.3f}/jam · runway {p['runway_days']} hari"]
+             f"today ${p['today_usd']:.2f} · month-to-date ${p['month_to_date_usd']:.2f} · burn ${p['burn_usd_per_hour']:.3f}/h · runway {p['runway_days']} days"]
     for j in jobs:
         if j.status in (JobStatus.RUNNING, JobStatus.FINISHED_UNVERIFIED):
             e = ettr(j.job_id)
-            lines.append(f"• {j.job_id} {j.status} fase {j.phase} step {j.last_step} ETTR {e.get('ettr')} (efektif {e.get('effective_h')}j / dibayar {e.get('paid_h')}j) ${j.spent_usd:.2f}")
+            lines.append(f"• {j.job_id} {j.status} phase {j.phase} step {j.last_step} ETTR {e.get('ettr')} (effective {e.get('effective_h')}h / paid {e.get('paid_h')}h) ${j.spent_usd:.2f}")
     inc = [i for i in db.incidents.list(limit=200) if i.created_at > now() - timedelta(days=1)]
-    lines.append(f"insiden 24 jam: {len(inc)} (RESOLVED {sum(1 for i in inc if str(i.state)=='RESOLVED')}, menunggu izin {sum(1 for i in inc if str(i.state)=='AWAITING_APPROVAL')})")
+    lines.append(f"incidents 24h: {len(inc)} (RESOLVED {sum(1 for i in inc if str(i.state)=='RESOLVED')}, awaiting approval {sum(1 for i in inc if str(i.state)=='AWAITING_APPROVAL')})")
     return "\n".join(lines)
 
 

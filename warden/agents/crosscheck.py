@@ -32,11 +32,11 @@ def crosscheck(diag: Diagnosis, log_lines: list[str], hb: dict | None) -> dict:
     # 1) evidence_lines harus ada dalam rentang
     n = len(log_lines)
     bad = [i for i in diag.evidence_lines if i < 1 or i > n]
-    add("evidence_lines_in_range", not bad, f"di luar rentang: {bad}" if bad else "")
+    add("evidence_lines_in_range", not bad, f"out of range: {bad}" if bad else "")
     # 2) kutipan harus substring dari baris yang ditunjuk
     pointed = " \n".join(log_lines[i - 1] for i in diag.evidence_lines if 1 <= i <= n)
     bad_q = [q for q in diag.evidence_quotes if q.strip() and q.strip()[:60] not in pointed]
-    add("quotes_are_substrings", not bad_q, f"kutipan tak ditemukan: {bad_q[:2]}" if bad_q else "")
+    add("quotes_are_substrings", not bad_q, f"quotes not found: {bad_q[:2]}" if bad_q else "")
     # 3) kategori harus cocok pola pada baris yang ditunjuk ATAU sinyal heartbeat
     rx = RX.get(diag.category)
     if rx is not None:
@@ -51,9 +51,9 @@ def crosscheck(diag: Diagnosis, log_lines: list[str], hb: dict | None) -> dict:
                 hb_hit = hb["disk_avail_gb"] < 1.0
             if diag.category == Category.kernel_fallback and hb.get("step_per_s") is not None and hb.get("baseline_step_per_s"):
                 hb_hit = hb["step_per_s"] < 0.2 * hb["baseline_step_per_s"] and (hb.get("gpu_util") or 100) < 30
-        add(f"category_pattern:{diag.category}", hit or hb_hit, "" if (hit or hb_hit) else "pola/heartbeat tidak mendukung kategori")
+        add(f"category_pattern:{diag.category}", hit or hb_hit, "" if (hit or hb_hit) else "pattern/heartbeat do not support category")
     elif diag.category == Category.unknown:
-        add("unknown_needs_human", diag.needs_human, "unknown wajib needs_human")
+        add("unknown_needs_human", diag.needs_human, "unknown requires needs_human")
     # 4) transient dilarang untuk kategori permanen
     if diag.category in PERMANENT:
         add("no_transient_for_permanent", diag.transient_or_permanent != Transience.transient)

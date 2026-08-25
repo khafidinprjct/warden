@@ -43,10 +43,10 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     for a in (fin.artifacts if fin else []):
         name = Path(a["path"]).name
         if name.endswith(".corrupt") or ".corrupt." in name:
-            results.append({"name": name, "ok": True, "reason": "sudah dikarantina trainer — tidak dinilai", "checks": {}, "bytes": a.get("bytes", 0), "sha256": a.get("sha256", "")}); continue
+            results.append({"name": name, "ok": True, "reason": "already quarantined by trainer — not evaluated", "checks": {}, "bytes": a.get("bytes", 0), "sha256": a.get("sha256", "")}); continue
         p = _fetch(inc.job_id, name)
         if p is None:
-            missing += 1; results.append({"name": name, "ok": False, "reason": "artefak tidak tersedia untuk diverifikasi"}); all_ok = False; continue
+            missing += 1; results.append({"name": name, "ok": False, "reason": "artifact not available for verification"}); all_ok = False; continue
         exp = expect_map.get(name) or expect_map.get(Path(name).suffix.lstrip(".")) or {}
         r = verify(p, exp, declared_sha256=a.get("sha256", ""), prev_sha256=(job.last_good_ckpt or {}).get("sha256", "") if name.endswith((".pt", ".pth", ".ckpt")) else "")
         results.append({"name": name, "ok": r.ok, "reason": r.corrupt_reason, "checks": r.checks, "bytes": r.bytes, "sha256": r.sha256})
@@ -54,12 +54,12 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     # artefak yang DIHARAPKAN (job.expect) tapi tidak dideklarasikan RUN_FIN = hilang (mode #21)
     declared = {Path(a["path"]).name for a in (fin.artifacts if fin else [])}
     for name in [k for k in expect_map if "." in k and k not in declared]:
-        results.append({"name": name, "ok": False, "reason": "diharapkan tapi tidak ada di RUN_FIN (artefak tidak mendarat)"}); all_ok = False; missing += 1
+        results.append({"name": name, "ok": False, "reason": "expected but not in RUN_FIN (artifact did not land)"}); all_ok = False; missing += 1
     # artefak belum tersedia (agent masih mengunggah) → TUNDA, bukan gagal: masa tenggang 10 mnt sejak RUN_FIN (ukur saat penulis diam)
     if missing and fin and (now() - fin.ts).total_seconds() < 600:
-        inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"{missing} artefak belum tersedia — tunggu unggahan", "actor": "warden"})
+        inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state), "note": f"{missing} artifact(s) not yet available — waiting for upload", "actor": "warden"})
         db.incidents.put(inc); return {"ok": False, "retry": True, "missing": missing}
-    ev = Evidence(incident_id=inc.incident_id, kind="artifact_check", summary=f"{sum(1 for x in results if x['ok'])}/{len(results)} artefak lolos", payload={"results": results})
+    ev = Evidence(incident_id=inc.incident_id, kind="artifact_check", summary=f"{sum(1 for x in results if x['ok'])}/{len(results)} artifacts passed", payload={"results": results})
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
     if all_ok and results:
         db.put_marker(Marker(job_id=inc.job_id, run_id=job.run_id, kind="VERIFIED", valid=True, artifacts=[{"name": x["name"], "sha256": x["sha256"], "bytes": x["bytes"]} for x in results]))
@@ -68,15 +68,15 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
         if ck:
             job.last_good_ckpt = {"path": ck[-1]["name"], "sha256": ck[-1]["sha256"], "step": job.last_step}
         db.jobs.put(job)
-        transition(inc, S.DECIDED, note="artefak terbuka & utuh"); transition(inc, S.RESOLVED, note="VERIFIED ditulis"); db.incidents.put(inc)
-        if notify: notify(inc, None, f"✅ {inc.job_id}: {len(results)} artefak dibuka & utuh → COMPLETE (VERIFIED)")
+        transition(inc, S.DECIDED, note="artifacts opened & intact"); transition(inc, S.RESOLVED, note="VERIFIED written"); db.incidents.put(inc)
+        if notify: notify(inc, None, f"✅ {inc.job_id}: {len(results)} artifacts opened & intact → COMPLETE (VERIFIED)")
         return {"ok": True, "results": results}
     # gagal: job tetap FINISHED_UNVERIFIED; karantina otomatis (L2) artefak yang rusak
     job.status = JobStatus.FINISHED_UNVERIFIED; db.jobs.put(job)
     bad = [x for x in results if not x["ok"]]
-    rusak = [x for x in bad if "tidak tersedia" not in x.get("reason", "") and "tidak ada di RUN_FIN" not in x.get("reason", "")]   # karantina hanya yang ADA tapi rusak
+    rusak = [x for x in bad if "not available" not in x.get("reason", "") and "not in RUN_FIN" not in x.get("reason", "")]   # karantina hanya yang ADA tapi rusak
     inc.rule = "artifact_unverified"; inc.severity = "critical"
-    inc.summary = f"{inc.job_id}: selesai ≠ utuh — {len(bad)}/{len(results)} artefak gagal: " + "; ".join(f"{x['name']}: {x['reason']}" for x in bad)[:300]
+    inc.summary = f"{inc.job_id}: finished ≠ intact — {len(bad)}/{len(results)} artifacts failed: " + "; ".join(f"{x['name']}: {x['reason']}" for x in bad)[:300]
     action = Action.QUARANTINE_ARTIFACT if rusak else Action.NOTIFY
     dec = policy_eval(action, _ctx_for(job, inst, action, _is_frozen()), POLICY)
     dec.incident_id = inc.incident_id; dec.params = {"instance_ref": inc.instance_ref, "path": rusak[0]["name"] if rusak else ""}
@@ -85,7 +85,7 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     if dec.verdict == Verdict.AUTO and inst:
         transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
         r = ex.execute(dec, compute()); dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED
-        transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION); transition(inc, S.ESCALATED, note="artefak dikarantina; butuh manusia untuk rerun/rollback")
+        transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION); transition(inc, S.ESCALATED, note="artifact quarantined; human needed for rerun/rollback")
     else:
         transition(inc, S.AWAITING_APPROVAL if dec.verdict == Verdict.NEED_APPROVAL else S.ESCALATED)
     db.decisions.put(dec); db.incidents.put(inc)

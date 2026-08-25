@@ -181,7 +181,7 @@ def activity(incs, decs, limit: int = 40) -> list[dict]:
                 label = "HUMAN"; kind = "ok"
             elif to == "DIAGNOSING":
                 label = "EVIDENCE"; kind = "det"
-            elif to == "DECIDED" or "NEED_APPROVAL" in note or note.startswith("dinilai ulang"):
+            elif to == "DECIDED" or "NEED_APPROVAL" in note or note.startswith("re-evaluated"):
                 label = "POLICY"; kind = "det"
             elif to == "EXECUTING":
                 label = "EXECUTOR"; kind = "det"
@@ -584,7 +584,7 @@ def incident_detail(incident_id: str):
                         tag("GEMINI", "llm"); ui.label("Diagnosis + cross-check")
                     ui.label(f"cost {usd(inc.llm_cost_usd, 3)}").classes("text-xs w-muted font-normal")
                 with ui.column().classes("p-3 gap-2"):
-                    ui.label(d.get("human_summary_en") or d.get("human_summary_id") or "").classes("text-sm")
+                    ui.label(d.get("human_summary") or d.get("human_summary_id") or "").classes("text-sm")
                     ui.label(f"{d.get('category')} · {d.get('transient_or_permanent')} · confidence {cc.get('adjusted_confidence', d.get('confidence'))} · proposes {d.get('recommended_action')} · needs human: {d.get('needs_human')}").classes("text-sm w-muted")
                     tag("CROSS-CHECK PASSED" if cc.get("passed") else "CROSS-CHECK FAILED", "ok" if cc.get("passed") else "crit")
                     for c in cc.get("checks", []):

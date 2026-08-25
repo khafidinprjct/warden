@@ -61,7 +61,7 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
     stats = {"processed": 0, "auto": 0, "approval": 0, "escalated": 0, "llm_usd": 0.0}
     today = db.cost_today()
     if float(today.get("llm_usd", 0.0)) >= settings.llm_daily_cap_usd:
-        db.health("llm_budget", False, "pagu LLM harian tercapai — deterministik saja")
+        db.health("llm_budget", False, "daily LLM cap reached — deterministic only")
         return stats
     frozen = _is_frozen()
     gh = db.client().collection("health").document("gemini").get()
@@ -69,7 +69,7 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         from datetime import datetime, timedelta, timezone
         upd = gh.to_dict().get("updated_at")
         if upd and datetime.now(timezone.utc) - datetime.fromisoformat(upd) < timedelta(minutes=5):
-            db.health("llm_circuit", False, "Gemini gagal 5x berturut — circuit OPEN 5 mnt (deterministik saja)")
+            db.health("llm_circuit", False, "Gemini failed 5x in a row — circuit OPEN 5 min (deterministic only)")
             return stats
     for inc in db.incidents.list(state="DIAGNOSING", limit=max_n):
         job = db.jobs.get(inc.job_id) if inc.job_id else None
@@ -78,11 +78,11 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         findings = [{"rule": inc.rule, "summary": inc.summary}] + [db.evidence.get(e).payload for e in inc.evidence_ids if db.evidence.get(e)]
         hbsum = _hb_summary(inc.job_id)
         try:
-            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log tidak tersedia)"])
+            diag, usage = diagnose(_job_card(inc, job, inst), findings, hbsum, lines or ["(log not available)"])
         except Exception as e:
             db.health("gemini", False, str(e)[:200])
-            transition(inc, S.ESCALATED, note=f"Gemini gagal: {e}"[:200]); db.incidents.put(inc)
-            if notify: notify(inc, None, f"⚠️ {inc.summary} — diagnosis LLM gagal: {str(e)[:120]}")
+            transition(inc, S.ESCALATED, note=f"Gemini failed: {e}"[:200]); db.incidents.put(inc)
+            if notify: notify(inc, None, f"⚠️ {inc.summary} — LLM diagnosis failed: {str(e)[:120]}")
             continue
         db.health("gemini", True)
         cc = crosscheck(diag, lines, hbsum.get("last") | {"baseline_step_per_s": hbsum.get("baseline_step_per_s")} if hbsum.get("last") else None)
@@ -101,9 +101,9 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
                 cc["checks"].append({"check": "second_opinion", "ok": False, "note": str(e)[:100]})
         inc.diagnosis = diag.model_dump(mode="json"); inc.crosscheck = cc; inc.llm_cost_usd += usage["cost_usd"]
         stats["llm_usd"] += usage["cost_usd"]; db.cost_add(now().strftime("%Y-%m-%d"), "llm_usd", usage["cost_usd"], inc.job_id)
-        ev = Evidence(incident_id=inc.incident_id, kind="log_window", summary=f"{len(lines)} baris log", payload={"lines": diag.evidence_lines, "quotes": diag.evidence_quotes})
+        ev = Evidence(incident_id=inc.incident_id, kind="log_window", summary=f"{len(lines)} log lines", payload={"lines": diag.evidence_lines, "quotes": diag.evidence_quotes})
         db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
-        transition(inc, S.DIAGNOSED, note=f"{diag.category} conf={conf:.2f} cc={'ok' if cc['passed'] else 'GAGAL'}")
+        transition(inc, S.DIAGNOSED, note=f"{diag.category} conf={conf:.2f} cc={'ok' if cc['passed'] else 'FAILED'}")
         action = REC2ACT.get(diag.recommended_action, Action.NOTIFY)
         if cc["needs_human"] and action != Action.NOTIFY:
             forced_l1 = True
@@ -113,7 +113,7 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
         from warden.policy.engine import evaluate as policy_eval
         dec = policy_eval(action, ctx, POLICY)
         if forced_l1 and dec.verdict == Verdict.AUTO:
-            dec.verdict = Verdict.NEED_APPROVAL; dec.explain.append("cek silang/vonis kedua meminta manusia → L1")
+            dec.verdict = Verdict.NEED_APPROVAL; dec.explain.append("crosscheck/second opinion requires human → L1")
             from datetime import timedelta
             dec.expires_at = now() + timedelta(minutes=POLICY["global"]["approval_ttl_minutes"])
         dec.incident_id = inc.incident_id
@@ -122,19 +122,19 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
             dec.dry_run_plan = ex.dry_run(dec, compute())
         db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
         transition(inc, S.DECIDED, note=f"{action}: {dec.verdict}")
-        text = f"🧠 {diag.human_summary_id} | {diag.category} conf {conf:.2f} → {action} ({dec.verdict})"
+        text = f"🧠 {diag.human_summary} | {diag.category} conf {conf:.2f} → {action} ({dec.verdict})"
         if dec.verdict == Verdict.AUTO:
             transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
             r = ex.execute(dec, compute()); dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED
             transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
-            transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="diminta-vs-jadi" if r.ok else r.error)
+            transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="requested vs observed match" if r.ok else r.error)
             stats["auto"] += 1; text += f" → {'✅ ' + r.observed if r.ok else '❌ ' + r.error}"
         elif dec.verdict == Verdict.NEED_APPROVAL:
             transition(inc, S.AWAITING_APPROVAL); stats["approval"] += 1
         elif dec.verdict == Verdict.HELD:
             transition(inc, S.HELD)
         else:
-            transition(inc, S.ESCALATED, note="ditolak kebijakan"); stats["escalated"] += 1
+            transition(inc, S.ESCALATED, note="denied by policy"); stats["escalated"] += 1
         db.decisions.put(dec); db.incidents.put(inc); stats["processed"] += 1
         if notify: notify(inc, dec, text)
     return stats

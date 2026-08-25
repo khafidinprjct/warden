@@ -35,5 +35,5 @@ def check():
         if inst.managed and inst.status == InstanceStatus.RUNNING and not inst.boot_disk_auto_delete:
             r = compute().stop(inst.ref); acted.append({"ref": inst.ref, "ok": r.ok, "observed": r.observed, "error": r.error})
     db.client().collection("notifications").document(f"deadman:{t.strftime('%Y%m%dT%H%M%S')}").set(
-        {"text": f"🛑 DEADMAN: watcher tidak berdenyut sejak {last} → STOP {len(acted)} mesin", "ts": t.isoformat(), "acted": acted})
+        {"text": f"🛑 DEADMAN: watcher heartbeat stale since {last} → STOP {len(acted)} instance(s)", "ts": t.isoformat(), "acted": acted})
     return {"stale": True, "watcher_last_ok": last, "acted": acted}

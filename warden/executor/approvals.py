@@ -11,21 +11,21 @@ from warden.store import firestore as db
 def approve(decision_id: str, who: str) -> dict:
     dec = db.decisions.get(decision_id)
     if dec is None:
-        return {"ok": False, "error": "keputusan tidak ada"}
+        return {"ok": False, "error": "decision not found"}
     if dec.status != DecisionStatus.PENDING or dec.verdict != Verdict.NEED_APPROVAL:
-        return {"ok": False, "error": f"status {dec.status} / {dec.verdict} — tidak menunggu izin"}
+        return {"ok": False, "error": f"status {dec.status} / {dec.verdict} — not awaiting approval"}
     if dec.expires_at and dec.expires_at < now():
         dec.status = DecisionStatus.EXPIRED; db.decisions.put(dec)
-        return {"ok": False, "error": "kedaluwarsa"}
+        return {"ok": False, "error": "expired"}
     inc = db.incidents.get(dec.incident_id)
     dec.status, dec.approved_by = DecisionStatus.EXECUTING, who; db.decisions.put(dec)
     if inc and inc.state == S.AWAITING_APPROVAL:
-        transition(inc, S.EXECUTING, note=f"disetujui {who}", actor=f"human:{who}")
+        transition(inc, S.EXECUTING, note=f"approved by {who}", actor=f"human:{who}")
     r = ex.execute(dec, compute(), actor=f"human:{who}")
     dec.status = DecisionStatus.DONE if r.ok else DecisionStatus.FAILED; db.decisions.put(dec)
     if inc:
         transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
-        transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="diminta-vs-jadi" if r.ok else r.error)
+        transition(inc, S.RESOLVED if r.ok else S.ESCALATED, note="requested vs observed match" if r.ok else r.error)
         db.incidents.put(inc)
     return {"ok": r.ok, "observed": r.observed, "error": r.error, "decision_id": decision_id}
 
@@ -33,11 +33,11 @@ def approve(decision_id: str, who: str) -> dict:
 def deny(decision_id: str, who: str, reason: str = "") -> dict:
     dec = db.decisions.get(decision_id)
     if dec is None or dec.status != DecisionStatus.PENDING:
-        return {"ok": False, "error": "tidak menunggu izin"}
+        return {"ok": False, "error": "not awaiting approval"}
     dec.status, dec.approved_by = DecisionStatus.REJECTED, who; db.decisions.put(dec)
     inc = db.incidents.get(dec.incident_id)
     if inc and inc.state == S.AWAITING_APPROVAL:
-        transition(inc, S.CLOSED, note=f"ditolak {who}: {reason}", actor=f"human:{who}"); db.incidents.put(inc)
+        transition(inc, S.CLOSED, note=f"denied by {who}: {reason}", actor=f"human:{who}"); db.incidents.put(inc)
     return {"ok": True, "decision_id": decision_id}
 
 
@@ -54,7 +54,7 @@ def expire_stale() -> int:
             dec.status = DecisionStatus.EXPIRED; db.decisions.put(dec); n += 1
             inc = db.incidents.get(dec.incident_id)
             if inc and inc.state == S.AWAITING_APPROVAL:
-                transition(inc, S.ESCALATED, note="izin kedaluwarsa"); db.incidents.put(inc)
+                transition(inc, S.ESCALATED, note="approval expired"); db.incidents.put(inc)
     return n
 
 
@@ -62,7 +62,7 @@ def always(decision_id: str, who: str, hours: int = 24) -> dict:
     """Setujui + naikkan tindakan ini ke L2 selama N jam untuk job yang sama (override kedaluwarsa otomatis)."""
     dec = db.decisions.get(decision_id)
     if dec is None:
-        return {"ok": False, "error": "keputusan tidak ada"}
+        return {"ok": False, "error": "decision not found"}
     r = approve(decision_id, who)
     if r.get("ok"):
         db.client().collection("policy_overrides").document(f"{dec.job_id}:{dec.action.value}").set(
@@ -78,10 +78,10 @@ def reevaluate(decision_id: str, who: str) -> dict:
     from warden.watcher.tick import _ctx_for, _is_frozen
     dec = db.decisions.get(decision_id)
     if dec is None:
-        return {"ok": False, "error": "keputusan tidak ada"}
+        return {"ok": False, "error": "decision not found"}
     if dec.status not in (DecisionStatus.EXPIRED, DecisionStatus.REJECTED, DecisionStatus.FAILED) and not (
             dec.status == DecisionStatus.PENDING and dec.expires_at and dec.expires_at < now()):
-        return {"ok": False, "error": f"status {dec.status} — hanya EXPIRED/REJECTED/FAILED yang bisa dinilai ulang"}
+        return {"ok": False, "error": f"status {dec.status} — only EXPIRED/REJECTED/FAILED can be re-evaluated"}
     inc = db.incidents.get(dec.incident_id)
     job = db.jobs.get(dec.job_id) if dec.job_id else None
     inst = None
@@ -95,13 +95,13 @@ def reevaluate(decision_id: str, who: str) -> dict:
         dec.status = DecisionStatus.EXPIRED; db.decisions.put(dec)
     new = policy_eval(dec.action, _ctx_for(job, inst, dec.action, _is_frozen()), load_policy())
     new.incident_id, new.job_id, new.params = dec.incident_id, dec.job_id, dict(dec.params)
-    new.explain = [f"dinilai ulang oleh {who} dari {dec.decision_id}"] + list(new.explain)
+    new.explain = [f"re-evaluated by {who} from {dec.decision_id}"] + list(new.explain)
     new.dry_run_plan = ex.dry_run(new, compute())
     db.decisions.put(new)
     if inc:
         inc.decision_ids.append(new.decision_id)
         inc.timeline.append({"ts": now().isoformat(), "from": str(inc.state), "to": str(inc.state),
-                             "note": f"dinilai ulang → {new.action}: {new.verdict} ({new.autonomy})", "actor": f"human:{who}"})
+                             "note": f"re-evaluated → {new.action}: {new.verdict} ({new.autonomy})", "actor": f"human:{who}"})
     if new.verdict == Verdict.AUTO:
         new.status = DecisionStatus.EXECUTING; db.decisions.put(new)
         if inc:

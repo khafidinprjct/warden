@@ -103,7 +103,7 @@ def run_tick(notify=None) -> dict[str, Any]:
     # job RUNNING yang mesinnya tak terlihat (mesin hilang/dihapus dari luar)
     for job in jobs.values():
         if job.status == JobStatus.RUNNING and job.job_id not in seen_jobs and job.instance_ref:
-            f = Finding("instance_missing", "critical", f"job {job.job_id}: mesin {job.instance_ref} tidak ada di daftar instance",
+            f = Finding("instance_missing", "critical", f"job {job.job_id}: instance {job.instance_ref} not in instance list",
                         f"missing:{job.instance_ref}", suggested_action="notify")
             _handle(f, None, job, frozen, stats, notify)
     db.heartbeat_self("watcher", {"tick_ms": int((now() - t).total_seconds() * 1000), "stats": {k: v for k, v in stats.items() if k != "errors"}})
@@ -121,16 +121,16 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
                    cost_burning_usd_per_hour=(inst.hourly_price_usd if inst and inst.status == InstanceStatus.RUNNING else 0.0))
     ev = Evidence(incident_id=inc.incident_id, kind="rule", summary=f.summary, payload=f.evidence)
     db.evidence.put(ev); inc.evidence_ids.append(ev.evidence_id)
-    transition(inc, S.TRIAGED, note=f"aturan {f.rule}")
+    transition(inc, S.TRIAGED, note=f"rule {f.rule}")
     stats["incidents_new"] += 1
     if f.suggested_action == "verify":
         db.incidents.put(inc); stats["incidents_new"] += 0
         return
     if f.needs_llm:
         # diserahkan ke pipeline LLM (Fase 4): tandai DIAGNOSING, pipeline yang melanjutkan
-        transition(inc, S.DIAGNOSING, note="butuh diagnosis LLM"); db.incidents.put(inc)
+        transition(inc, S.DIAGNOSING, note="LLM diagnosis required"); db.incidents.put(inc)
         if notify:
-            notify(inc, None, f"🔎 {f.summary} — sedang didiagnosis")
+            notify(inc, None, f"🔎 {f.summary} — diagnosing")
         return
     action = SUGGEST.get(f.suggested_action, Action.NOTIFY)
     dec = policy_eval(action, _ctx_for(job, inst, action, frozen), POLICY)
@@ -149,7 +149,7 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
             db.cost_add(now().strftime("%Y-%m-%d"), "auto_spend_usd", dec.cost_usd, inst.ref if inst else "")
         transition(inc, S.VERIFYING if r.ok else S.FAILED_ACTION, note=r.observed or r.error)
         if r.ok:
-            transition(inc, S.RESOLVED if action == Action.NOTIFY else S.VERIFYING if False else S.RESOLVED, note="diminta-vs-jadi cocok")
+            transition(inc, S.RESOLVED if action == Action.NOTIFY else S.VERIFYING if False else S.RESOLVED, note="requested vs observed match")
         else:
             transition(inc, S.ESCALATED, note=r.error)
         if notify:
@@ -158,15 +158,15 @@ def _handle(f: Finding, inst, job, frozen: bool, stats: dict, notify) -> None:
         stats["approval"] += 1
         transition(inc, S.AWAITING_APPROVAL)
         if notify:
-            notify(inc, dec, f"🟡 {f.summary} → usul {action}; butuh izin (kedaluwarsa {dec.expires_at:%H:%M} UTC)")
+            notify(inc, dec, f"🟡 {f.summary} → proposed {action}; approval required (expires {dec.expires_at:%H:%M} UTC)")
     elif dec.verdict == Verdict.HELD:
         stats["held"] += 1
         transition(inc, S.HELD)
         if notify:
-            notify(inc, dec, f"⏸ {f.summary} → ditahan: {dec.explain[-1]}")
+            notify(inc, dec, f"⏸ {f.summary} → held: {dec.explain[-1]}")
     else:
         stats["denied"] += 1
-        transition(inc, S.ESCALATED, note="ditolak kebijakan")
+        transition(inc, S.ESCALATED, note="denied by policy")
         if notify:
-            notify(inc, dec, f"⛔ {f.summary} → {action} ditolak: {dec.explain[-1]}")
+            notify(inc, dec, f"⛔ {f.summary} → {action} denied: {dec.explain[-1]}")
     db.decisions.put(dec); db.incidents.put(inc)

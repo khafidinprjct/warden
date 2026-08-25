@@ -9,7 +9,7 @@ from warden.store import firestore as db
 
 
 def _notify(dec: Decision, compute, dry_run: bool) -> OpResult:
-    return OpResult(True, "notify", observed="dikirim" if not dry_run else "", dry_run=dry_run, plan={"channel": "discord"})
+    return OpResult(True, "notify", observed="sent" if not dry_run else "", dry_run=dry_run, plan={"channel": "discord"})
 
 
 def _start(dec: Decision, compute, dry_run: bool) -> OpResult:
@@ -39,7 +39,7 @@ def _rollback(dec: Decision, compute, dry_run: bool) -> OpResult:
 
 
 def _unsupported(dec: Decision, compute, dry_run: bool) -> OpResult:
-    return OpResult(False, dec.action.value, error="belum diimplementasikan (Fase 12)")
+    return OpResult(False, dec.action.value, error="not implemented (Phase 12)")
 
 
 HANDLERS: dict[Action, Callable[[Decision, Any, bool], OpResult]] = {
@@ -60,7 +60,7 @@ def execute(dec: Decision, compute, actor: str = "warden") -> OpResult:
     """Eksekusi dengan lease per job + audit niat/hasil. Pemanggil sudah memastikan verdict AUTO/APPROVED."""
     holder = f"exec:{dec.decision_id}"
     if dec.job_id and not db.acquire_lease(dec.job_id, holder, ttl_s=300):
-        return OpResult(False, dec.action.value, error="lease job dipegang pihak lain (anti balapan)")
+        return OpResult(False, dec.action.value, error="job lease held by another party (race guard)")
     target = dec.params.get("instance_ref", dec.job_id)
     db.audit(AuditEntry(actor=actor, phase="intent", action=dec.action.value, target=target, decision_id=dec.decision_id,
                         before={"params": dec.params, "explain": dec.explain, "blast_radius": dec.blast_radius}))

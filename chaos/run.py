@@ -112,7 +112,7 @@ def s9():
     from warden.agents.schemas import Diagnosis
     lines = ["step 100 loss 0.5", "RuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB", "  File train.py line 40 in forward"]
     d = Diagnosis(category="oom_gpu", confidence=0.9, transient_or_permanent="transient", evidence_lines=[2], evidence_quotes=["CUDA out of memory"], root_cause="batch terlalu besar",
-                  culprit_frame="forward", recommended_action="resume_smaller_batch", action_params={"batch": 8}, blast_radius="this_run", needs_human=False, human_summary_id="OOM", falsifiable_check="angka Tried to allocate turun")
+                  culprit_frame="forward", recommended_action="resume_smaller_batch", action_params={"batch": 8}, blast_radius="this_run", needs_human=False, human_summary="OOM", falsifiable_check="angka Tried to allocate turun")
     cc = crosscheck(d, lines, None); return cc["passed"], {"checks": [c["check"] for c in cc["checks"]]}
 
 @scenario(10, "salah diagnosis OOM (klaim tanpa bukti) → ditolak cek silang")
@@ -121,7 +121,7 @@ def s10():
     from warden.agents.schemas import Diagnosis
     lines = ["step 100 loss 0.5", "ValueError: Input X contains NaN."]
     d = Diagnosis(category="oom_gpu", confidence=0.95, transient_or_permanent="transient", evidence_lines=[2], evidence_quotes=["Input X contains NaN"], root_cause="?",
-                  culprit_frame="x", recommended_action="resume_smaller_batch", blast_radius="this_run", needs_human=False, human_summary_id="x", falsifiable_check="x")
+                  culprit_frame="x", recommended_action="resume_smaller_batch", blast_radius="this_run", needs_human=False, human_summary="x", falsifiable_check="x")
     cc = crosscheck(d, lines, None); return (not cc["passed"]) and cc["needs_human"], {"adjusted": cc["adjusted_confidence"]}
 
 @scenario(11, "pip gagal senyap → exit code proses anak ≠ 0 → run_fin_nonzero (LLM)")

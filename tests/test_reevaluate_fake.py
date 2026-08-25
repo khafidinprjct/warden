@@ -30,7 +30,7 @@ def test_expired_decision_can_be_reevaluated_and_then_approved():
     assert approvals.approve(dec.decision_id, "khaf")["ok"] is False           # kedaluwarsa → ditolak
     r = approvals.reevaluate(dec.decision_id, "khaf"); assert r["ok"], r
     assert db.decisions.get(dec.decision_id).status == DecisionStatus.EXPIRED
-    new = db.decisions.get(r["decision_id"]); assert new.status == DecisionStatus.PENDING and new.explain[0].startswith("dinilai ulang")
+    new = db.decisions.get(r["decision_id"]); assert new.status == DecisionStatus.PENDING and new.explain[0].startswith("re-evaluated")
     inc = db.incidents.get(dec.incident_id); assert inc.state == IncidentState.AWAITING_APPROVAL and new.decision_id in inc.decision_ids
     assert approvals.approve(new.decision_id, "khaf")["ok"]
     assert fake.describe(inst.ref).status == "STOPPED"

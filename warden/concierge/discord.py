@@ -39,27 +39,27 @@ def build_card(inc: Incident | None, dec: Decision | None, text: str) -> dict[st
     """Embed: judul kelas·mesin, bukti ≤8 baris, diagnosis, usulan+risiko+biaya, kedaluwarsa; tombol bila menunggu izin."""
     if inc is None:
         return {"content": text[:1900]}
-    fields = [{"name": "job / mesin", "value": f"{inc.job_id or '-'} · {inc.instance_ref or '-'}", "inline": True},
-              {"name": "biaya terbakar", "value": f"${inc.cost_burning_usd_per_hour:.3f}/jam", "inline": True},
+    fields = [{"name": "job / instance", "value": f"{inc.job_id or '-'} · {inc.instance_ref or '-'}", "inline": True},
+              {"name": "burn rate", "value": f"${inc.cost_burning_usd_per_hour:.3f}/h", "inline": True},
               {"name": "status", "value": str(inc.state), "inline": True}]
     if inc.diagnosis:
         d = inc.diagnosis
         cc = inc.crosscheck or {}
         fields.append({"name": "diagnosis", "value": f"{d.get('category')} · conf {cc.get('adjusted_confidence', d.get('confidence', 0)):.2f} · "
-                                                     f"{d.get('transient_or_permanent')} · cek silang {'✅' if cc.get('passed') else '❌'}"[:1000]})
+                                                     f"{d.get('transient_or_permanent')} · crosscheck {'✅' if cc.get('passed') else '❌'}"[:1000]})
         if d.get("evidence_quotes"):
-            fields.append({"name": "bukti", "value": "```\n" + "\n".join(q[:150] for q in d["evidence_quotes"][:8])[:900] + "\n```"})
+            fields.append({"name": "evidence", "value": "```\n" + "\n".join(q[:150] for q in d["evidence_quotes"][:8])[:900] + "\n```"})
         if d.get("falsifiable_check"):
-            fields.append({"name": "cara membantah", "value": d["falsifiable_check"][:300]})
+            fields.append({"name": "how to falsify", "value": d["falsifiable_check"][:300]})
     if dec:
-        fields.append({"name": "usulan", "value": f"**{dec.action}** · {dec.autonomy} · {dec.verdict} · blast radius {dec.blast_radius} · biaya ${dec.cost_usd:.2f}"})
+        fields.append({"name": "proposal", "value": f"**{dec.action}** · {dec.autonomy} · {dec.verdict} · blast radius {dec.blast_radius} · cost ${dec.cost_usd:.2f}"})
         if dec.dry_run_plan.get("plan"):
-            fields.append({"name": "rencana (dry-run)", "value": "```json\n" + json.dumps(dec.dry_run_plan["plan"], ensure_ascii=False)[:800] + "\n```"})
+            fields.append({"name": "plan (dry-run)", "value": "```json\n" + json.dumps(dec.dry_run_plan["plan"], ensure_ascii=False)[:800] + "\n```"})
         if dec.explain:
-            fields.append({"name": "aturan", "value": "\n".join(f"• {e}" for e in dec.explain[-5:])[:1000]})
+            fields.append({"name": "policy", "value": "\n".join(f"• {e}" for e in dec.explain[-5:])[:1000]})
     embed = {"title": f"WARDEN · {inc.rule} · {inc.instance_ref or inc.job_id}"[:250], "description": text[:2000],
              "color": _color(inc.severity), "fields": fields,
-             "footer": {"text": f"{inc.incident_id} · {now():%d %b %H:%M} UTC" + (f" · kedaluwarsa {dec.expires_at:%H:%M} UTC" if dec and dec.expires_at else "")}}
+             "footer": {"text": f"{inc.incident_id} · {now():%d %b %H:%M} UTC" + (f" · expires {dec.expires_at:%H:%M} UTC" if dec and dec.expires_at else "")}}
     payload: dict[str, Any] = {"embeds": [embed]}
     if dec and dec.verdict == "NEED_APPROVAL" and dec.status == "PENDING":
         payload["components"] = [{"type": 1, "components": [
@@ -106,13 +106,13 @@ def handle_interaction(body: dict[str, Any]) -> dict[str, Any]:
     uid, uname = str(user.get("id", "")), user.get("username", "?")
     approvers = [a.strip() for a in settings.approvers.split(",") if a.strip()]
     if approvers and uid not in approvers:
-        return {"type": 4, "data": {"content": f"⛔ {uname} tidak terdaftar sebagai approver.", "flags": 64}}
+        return {"type": 4, "data": {"content": f"⛔ {uname} is not a registered approver.", "flags": 64}}
     if t == 3:
         cid = body.get("data", {}).get("custom_id", "")
         try:
             _, verb, decision_id = cid.split(":", 2)
         except ValueError:
-            return {"type": 4, "data": {"content": "custom_id tidak dikenal", "flags": 64}}
+            return {"type": 4, "data": {"content": "unknown custom_id", "flags": 64}}
         if verb == "approve":
             r = approvals.approve(decision_id, f"discord:{uname}")
         elif verb == "deny":
@@ -127,34 +127,34 @@ def handle_interaction(body: dict[str, Any]) -> dict[str, Any]:
                     db.client().collection("policy_overrides").document(f"{dec.job_id}:{dec.action.value}").set({"level": "L2", "until": (now().timestamp() + 86400), "by": uname})
         else:
             r = {"ok": False, "error": "verb"}
-        status = "✅ disetujui & dijalankan" if r.get("ok") and verb != "deny" else ("🚫 ditolak" if verb == "deny" else f"❌ {r.get('error')}")
+        status = "✅ approved & executed" if r.get("ok") and verb != "deny" else ("🚫 denied" if verb == "deny" else f"❌ {r.get('error')}")
         # tipe 7 = UPDATE_MESSAGE: kartu asli diperbarui, tombol dinonaktifkan (klik ganda idempoten)
-        return {"type": 7, "data": {"content": f"{status} oleh {uname} · {r.get('observed', '')}"[:1900], "components": []}}
+        return {"type": 7, "data": {"content": f"{status} by {uname} · {r.get('observed', '')}"[:1900], "components": []}}
     if t == 2:
         name = body.get("data", {}).get("name"); opts = {o["name"]: o.get("value") for o in body.get("data", {}).get("options", [])}
         sub = opts.get("perintah", "") or (body.get("data", {}).get("options") or [{}])[0].get("name", "")
         return {"type": 4, "data": {"content": slash(sub or name, opts, uname)[:1900]}}
-    return {"type": 4, "data": {"content": "tipe interaksi tidak didukung", "flags": 64}}
+    return {"type": 4, "data": {"content": "unsupported interaction type", "flags": 64}}
 
 
 def slash(cmd: str, opts: dict[str, Any], who: str) -> str:
     from warden.steward import ledger
     if cmd in ("freeze", "thaw"):
-        approvals.freeze(f"discord:{who}", cmd == "freeze"); return f"{'🧊 DIBEKUKAN' if cmd == 'freeze' else '🔥 dilepas'} oleh {who}"
+        approvals.freeze(f"discord:{who}", cmd == "freeze"); return f"{'🧊 FROZEN' if cmd == 'freeze' else '🔥 thawed'} by {who}"
     if cmd == "hold":
         job = db.jobs.get(str(opts.get("job", "")))
         if not job:
-            return "job tidak ada"
+            return "job not found"
         from datetime import timedelta
-        job.operator_hold_until = now() + timedelta(hours=float(opts.get("jam", 2))); db.jobs.put(job)
-        return f"⏸ {job.job_id} ditahan sampai {job.operator_hold_until:%H:%M} UTC"
+        job.operator_hold_until = now() + timedelta(hours=float(opts.get("hours", 2))); db.jobs.put(job)
+        return f"⏸ {job.job_id} held until {job.operator_hold_until:%H:%M} UTC"
     if cmd == "status":
         return ledger.digest()
     if cmd == "why":
         incs = [i for i in db.incidents.list(job_id=str(opts.get("job", "")), limit=50)]
         if not incs:
-            return "tidak ada insiden"
+            return "no incidents"
         i = sorted(incs, key=lambda x: x.created_at)[-1]
         d = i.diagnosis or {}
-        return f"{i.rule} · {i.state}\n{d.get('human_summary_id') or i.summary}\nbukti: {d.get('evidence_quotes', [])[:3]}"
-    return f"perintah: freeze | thaw | hold job jam | status | why job"
+        return f"{i.rule} · {i.state}\n{d.get('human_summary') or d.get('human_summary_id') or i.summary}\nevidence: {d.get('evidence_quotes', [])[:3]}"
+    return f"commands: freeze | thaw | hold <job> <hours> | status | why <job>"

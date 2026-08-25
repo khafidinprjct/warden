@@ -55,5 +55,5 @@ def test_fin_ok_but_corrupt_is_rejected(tmp_path, monkeypatch):
     assert r["ok"] == 0
     assert db.jobs.get("jc").status == JobStatus.FINISHED_UNVERIFIED
     inc = [i for i in db.incidents.list(job_id="jc") if i.rule == "artifact_unverified"][0]
-    assert "selesai ≠ utuh" in inc.summary and inc.state in (IncidentState.ESCALATED, IncidentState.AWAITING_APPROVAL)
+    assert "finished ≠ intact" in inc.summary and inc.state in (IncidentState.ESCALATED, IncidentState.AWAITING_APPROVAL)
     assert any(c[0] == "set_metadata" and "quarantine" in str(c[3]) for c in fake.calls)   # karantina otomatis (L2)

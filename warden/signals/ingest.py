@@ -22,17 +22,17 @@ def validate_marker(mk: Marker) -> Marker:
     """Marker sah = RUN_FIN dengan exit_code, run_id, tanda tangan benar (mode #5/#6/#11)."""
     if mk.kind == "RUN_FIN":
         if mk.exit_code is None:
-            mk.valid, mk.invalid_reason = False, "tanpa exit_code"
+            mk.valid, mk.invalid_reason = False, "missing exit_code"
         elif not mk.run_id:
-            mk.valid, mk.invalid_reason = False, "tanpa run_id"
+            mk.valid, mk.invalid_reason = False, "missing run_id"
         else:
             expect = sign(f"{mk.job_id}|{mk.run_id}|{mk.exit_code}|{mk.ts.isoformat()}".encode())
             if not hmac.compare_digest(expect, mk.signature or ""):
-                mk.valid, mk.invalid_reason = False, "tanda tangan tidak cocok"
+                mk.valid, mk.invalid_reason = False, "signature mismatch"
             else:
                 mk.valid = True
     elif mk.kind == "RUN_START":
-        mk.valid = bool(mk.run_id); mk.invalid_reason = "" if mk.run_id else "tanpa run_id"
+        mk.valid = bool(mk.run_id); mk.invalid_reason = "" if mk.run_id else "missing run_id"
     else:
         mk.valid = True
     return mk
