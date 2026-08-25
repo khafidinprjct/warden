@@ -72,11 +72,12 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     # gagal: job tetap FINISHED_UNVERIFIED; karantina otomatis (L2) artefak yang rusak
     job.status = JobStatus.FINISHED_UNVERIFIED; db.jobs.put(job)
     bad = [x for x in results if not x["ok"]]
+    rusak = [x for x in bad if "tidak tersedia" not in x.get("reason", "") and "tidak ada di RUN_FIN" not in x.get("reason", "")]   # karantina hanya yang ADA tapi rusak
     inc.rule = "artifact_unverified"; inc.severity = "critical"
     inc.summary = f"{inc.job_id}: selesai ≠ utuh — {len(bad)}/{len(results)} artefak gagal: " + "; ".join(f"{x['name']}: {x['reason']}" for x in bad)[:300]
-    action = Action.QUARANTINE_ARTIFACT
+    action = Action.QUARANTINE_ARTIFACT if rusak else Action.NOTIFY
     dec = policy_eval(action, _ctx_for(job, inst, action, _is_frozen()), POLICY)
-    dec.incident_id = inc.incident_id; dec.params = {"instance_ref": inc.instance_ref, "path": bad[0]["name"] if bad else ""}
+    dec.incident_id = inc.incident_id; dec.params = {"instance_ref": inc.instance_ref, "path": rusak[0]["name"] if rusak else ""}
     dec.dry_run_plan = ex.dry_run(dec, compute()); db.decisions.put(dec); inc.decision_ids.append(dec.decision_id)
     transition(inc, S.DECIDED, note=f"quarantine: {dec.verdict}")
     if dec.verdict == Verdict.AUTO and inst:
