@@ -11,7 +11,7 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 5 Verifier | CSV terpotong/NaN + exit 0 → DITOLAK; artefak asli VERIFIED | ✅ | pred.csv 1030 baris sha 810a76ac… VERIFIED; chaos s21 (tenggang 10 mnt → FINISHED_UNVERIFIED) |
 | 6 Steward/deadman/kill-switch | yatim → STOP; core mati → deadman STOP ≤20 mnt; budget → reaksi | ✅ | endpoint `/steward` `/budget` diuji; warden-deadman SA sendiri |
 | 7 Concierge Discord | kartu <5 s, Approve → tindakan → kartu diperbarui | ⏳ **butuh user** | kode + tes Ed25519 lulus; menunggu public key/bot token/channel id → Secret Manager, lalu `infra/discord_register.py` |
-| 8 Dashboard NiceGUI | audit user lulus; websocket ≥10 mnt; cold start <8 s | ◐ ui-00005 live 25 Agu 19:30: bahasa produk standar, layout label–nilai, tanpa komentar, data lama dimigrasi (0 residu); uji fungsional ✓; **menunggu audit ulang pemilik di HP** |
+| 8 Dashboard | audit user lulus; websocket ≥10 mnt; cold start <8 s | ◐ **UI v2 (Jinja2 + CSS sistem desain) live ui-00007 25 Agu 21:00**; paritas piksel vs mockup 0,40 %; diverifikasi pada data prod; HP ✓; menunggu audit pemilik |
 | 9 Multimodal | 5/6 gambar benar, ≤$0,005/gambar | ✅ | kurva loss dibaca Gemini (`concierge/images.py`) |
 | 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
