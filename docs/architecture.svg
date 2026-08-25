@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 820" width="1400" height="820" font-family="IBM Plex Sans, Segoe UI, system-ui, sans-serif" font-size="13" role="img" aria-label="Warden architecture: managed instances report to warden-core; core decides through rules, Gemini and a policy engine, acts on Compute Engine, records everything in Firestore; the dashboard reads Firestore; an independent watchdog stops the fleet if core goes silent.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 780" width="1440" height="780" font-family="IBM Plex Sans, Segoe UI, system-ui, sans-serif" font-size="13" role="img" aria-label="Warden architecture with four trust boundaries: managed instance, warden-core, warden-ui, warden-deadman; Google Cloud services on the right; Firestore as the source of truth at the bottom.">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3d4757"/></marker>
     <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f5fd6"/></marker>
   </defs>
-  <rect width="1400" height="820" fill="#ffffff"/>
+  <rect width="1440" height="780" fill="#ffffff"/>
   <style>
     .tb { fill: #f6f7f9; stroke: #9aa3b1; stroke-width: 1.2; stroke-dasharray: 6 4; }
     .tbl { fill: #6b7686; font-size: 11px; letter-spacing: .06em; }
@@ -17,95 +17,79 @@
     .l { fill: #3d4757; font-size: 11px; }
   </style>
 
-  <!-- warden-ui -->
-  <rect class="tb" x="430" y="20" width="560" height="70" rx="8"/>
-  <text class="tbl" x="444" y="40">CLOUD RUN · WARDEN-UI</text>
-  <text class="id" x="444" y="56">reads Firestore · forwards operator actions to core, HMAC-signed</text>
-  <rect class="box" x="800" y="38" width="160" height="36" rx="6"/><text class="t" x="880" y="61" text-anchor="middle" font-weight="600">Dashboard</text>
+  <!-- ===== column 1 ===== -->
+  <rect class="tb" x="40" y="150" width="280" height="230" rx="8"/>
+  <text class="tbl" x="54" y="170">MANAGED INSTANCE · COMPUTE ENGINE</text>
+  <text class="id" x="54" y="186">identity: SA warden-vm — writes only gs://…/jobs/{job}</text>
+  <rect class="box" x="60" y="205" width="240" height="150" rx="6"/>
+  <text class="t" x="180" y="232" text-anchor="middle" font-weight="600">Harness</text>
+  <text class="s" x="180" y="254" text-anchor="middle">wrun — signed RUN_START / RUN_FIN</text>
+  <text class="s" x="180" y="272" text-anchor="middle">warden-agent — heartbeat 30 s, mailbox</text>
+  <text class="s" x="180" y="290" text-anchor="middle">warden.beat() — step, loss, grad_norm</text>
+  <text class="s" x="180" y="308" text-anchor="middle">preempt notice → emergency checkpoint</text>
+  <text class="s" x="180" y="326" text-anchor="middle">resume from last intact checkpoint</text>
 
-  <!-- warden-core -->
-  <rect class="tb" x="430" y="130" width="560" height="440" rx="8"/>
-  <text class="tbl" x="444" y="150">CLOUD RUN · WARDEN-CORE</text>
-  <text class="id" x="444" y="166">identity: SA warden-core — custom role: instances.start / stop / setMetadata · no delete</text>
-  <rect class="core" x="460" y="190" width="150" height="56" rx="6"/><text class="t" x="535" y="214" text-anchor="middle" font-weight="600">Watcher</text><text class="s" x="535" y="232" text-anchor="middle">rules, every minute</text>
-  <rect class="core" x="650" y="190" width="170" height="56" rx="6"/><text class="t" x="735" y="214" text-anchor="middle" font-weight="600">Incident pipeline</text><text class="s" x="735" y="232" text-anchor="middle">evidence → Gemini → cross-check</text>
-  <rect class="core" x="650" y="280" width="170" height="56" rx="6"/><text class="t" x="735" y="304" text-anchor="middle" font-weight="600">Policy engine</text><text class="s" x="735" y="322" text-anchor="middle">pure · L0–L3 · breaker · dry-run</text>
-  <rect class="core" x="650" y="370" width="170" height="56" rx="6"/><text class="t" x="735" y="394" text-anchor="middle" font-weight="600">Executor</text><text class="s" x="735" y="412" text-anchor="middle">lease · audit intent / result</text>
-  <rect class="core" x="460" y="280" width="150" height="56" rx="6"/><text class="t" x="535" y="304" text-anchor="middle" font-weight="600">Artifact verifier</text><text class="s" x="535" y="322" text-anchor="middle">opens every file</text>
-  <rect class="core" x="460" y="370" width="150" height="56" rx="6"/><text class="t" x="535" y="394" text-anchor="middle" font-weight="600">Steward</text><text class="s" x="535" y="412" text-anchor="middle">ledger · ETTR · kill-switch</text>
-  <rect class="core" x="460" y="470" width="360" height="56" rx="6"/><text class="t" x="640" y="494" text-anchor="middle" font-weight="600">Ingest</text><text class="s" x="640" y="512" text-anchor="middle">HMAC-verified heartbeats and markers · stores, never decides</text>
-  <rect class="core" x="850" y="370" width="120" height="156" rx="6"/><text class="t" x="910" y="396" text-anchor="middle" font-weight="600">Concierge</text><text class="s" x="910" y="416" text-anchor="middle">Discord cards</text><text class="s" x="910" y="432" text-anchor="middle">Approve · Deny</text><text class="s" x="910" y="448" text-anchor="middle">Always · freeze</text><text class="s" x="910" y="476" text-anchor="middle">Ed25519-verified</text><text class="s" x="910" y="492" text-anchor="middle">interactions</text>
-  <path class="eb" d="M610 218 H650"/><path class="eb" d="M735 246 V280"/><path class="eb" d="M735 336 V370"/><path class="eb" d="M610 308 H650"/><path class="eb" d="M820 398 H850"/>
+  <path class="ext" d="M70 470 v70 a10 10 0 0 0 10 10 h200 a10 10 0 0 0 10 -10 v-70" fill="#fff"/>
+  <ellipse class="ext" cx="180" cy="470" rx="110" ry="10" fill="#fff"/>
+  <text class="t" x="180" y="506" text-anchor="middle" font-weight="600">Cloud Storage</text>
+  <text class="s" x="180" y="524" text-anchor="middle">logs · artifacts · RUN_FIN · harness</text>
 
-  <!-- managed instance -->
-  <rect class="tb" x="30" y="250" width="320" height="200" rx="8"/>
-  <text class="tbl" x="44" y="270">MANAGED INSTANCE · COMPUTE ENGINE</text>
-  <text class="id" x="44" y="286">identity: SA warden-vm — writes only gs://…/jobs/{job}</text>
-  <rect class="box" x="60" y="310" width="260" height="110" rx="6"/>
-  <text class="t" x="190" y="338" text-anchor="middle" font-weight="600">Harness</text>
-  <text class="s" x="190" y="358" text-anchor="middle">wrun · signed RUN_START / RUN_FIN</text>
-  <text class="s" x="190" y="376" text-anchor="middle">warden-agent · heartbeat 30 s · mailbox</text>
-  <text class="s" x="190" y="394" text-anchor="middle">warden.beat() · step, loss, grad_norm</text>
+  <rect class="tb" x="40" y="620" width="280" height="110" rx="8"/>
+  <text class="tbl" x="54" y="640">CLOUD RUN · WARDEN-UI</text>
+  <text class="id" x="54" y="656">reads Firestore · actions signed to core</text>
+  <rect class="box" x="60" y="672" width="240" height="44" rx="6"/><text class="t" x="180" y="699" text-anchor="middle" font-weight="600">Dashboard</text>
 
-  <!-- deadman -->
-  <rect class="tb" x="1030" y="640" width="340" height="110" rx="8"/>
-  <text class="tbl" x="1044" y="660">CLOUD RUN · WARDEN-DEADMAN</text>
-  <text class="id" x="1044" y="676">identity: SA warden-deadman — independent of core</text>
-  <rect class="box" x="1060" y="690" width="280" height="44" rx="6"/><text class="t" x="1200" y="710" text-anchor="middle" font-weight="600">Watchdog</text><text class="s" x="1200" y="726" text-anchor="middle">core heartbeat absent 15 min → STOP fleet</text>
+  <!-- ===== core ===== -->
+  <rect class="tb" x="400" y="130" width="580" height="480" rx="8"/>
+  <text class="tbl" x="414" y="150">CLOUD RUN · WARDEN-CORE</text>
+  <text class="id" x="414" y="166">identity: SA warden-core — custom role: instances.start / stop / setMetadata · no delete</text>
+  <rect class="core" x="430" y="180" width="240" height="46" rx="6"/><text class="t" x="550" y="199" text-anchor="middle" font-weight="600">Ingest</text><text class="s" x="550" y="216" text-anchor="middle">verifies HMAC · stores · never decides</text>
+  <rect class="core" x="430" y="250" width="240" height="46" rx="6"/><text class="t" x="550" y="269" text-anchor="middle" font-weight="600">Watcher</text><text class="s" x="550" y="286" text-anchor="middle">deterministic rules · every minute</text>
+  <rect class="core" x="430" y="320" width="240" height="46" rx="6"/><text class="t" x="550" y="339" text-anchor="middle" font-weight="600">Incident pipeline</text><text class="s" x="550" y="356" text-anchor="middle">evidence → Gemini → cross-check</text>
+  <rect class="core" x="430" y="390" width="240" height="46" rx="6"/><text class="t" x="550" y="409" text-anchor="middle" font-weight="600">Policy engine</text><text class="s" x="550" y="426" text-anchor="middle">pure · L0–L3 · circuit breaker · dry-run</text>
+  <rect class="core" x="430" y="460" width="240" height="46" rx="6"/><text class="t" x="550" y="479" text-anchor="middle" font-weight="600">Executor</text><text class="s" x="550" y="496" text-anchor="middle">lease · audit intent / result</text>
+  <rect class="core" x="430" y="540" width="240" height="46" rx="6"/><text class="t" x="550" y="559" text-anchor="middle" font-weight="600">Artifact verifier</text><text class="s" x="550" y="576" text-anchor="middle">opens every declared file</text>
+  <rect class="core" x="720" y="540" width="230" height="46" rx="6"/><text class="t" x="835" y="559" text-anchor="middle" font-weight="600">Steward</text><text class="s" x="835" y="576" text-anchor="middle">ledger · ETTR · budget kill-switch</text>
+  <path class="eb" d="M550 226 V250"/><path class="eb" d="M550 296 V320"/><path class="eb" d="M550 366 V390"/><path class="eb" d="M550 436 V460"/>
+  <text class="s" x="740" y="248">read models and write-backs</text>
+  <text class="s" x="740" y="265">go through Firestore only;</text>
+  <text class="s" x="740" y="282">an LLM session never</text>
+  <text class="s" x="740" y="299">outlives one incident step.</text>
 
-  <!-- externals, right column -->
-  <rect class="ext" x="1090" y="120" width="220" height="60" rx="6"/><text class="t" x="1200" y="143" text-anchor="middle" font-weight="600">Billing Budget → Pub/Sub</text><text class="s" x="1200" y="161" text-anchor="middle">push with OIDC · dead-letter topic</text>
-  <rect class="ext" x="1090" y="220" width="220" height="50" rx="6"/><text class="t" x="1200" y="242" text-anchor="middle" font-weight="600">Vertex AI · Gemini</text><text class="s" x="1200" y="260" text-anchor="middle">3.5 Flash · 3.7 Flash (location global)</text>
-  <rect class="ext" x="1090" y="360" width="220" height="50" rx="6"/><text class="t" x="1200" y="382" text-anchor="middle" font-weight="600">Compute Engine API</text><text class="s" x="1200" y="400" text-anchor="middle">start · stop · setMetadata</text>
-  <rect class="ext" x="1090" y="470" width="220" height="44" rx="6"/><text class="t" x="1200" y="497" text-anchor="middle" font-weight="600">Discord</text>
+  <!-- ===== column 3 ===== -->
+  <rect class="ext" x="1020" y="40" width="360" height="56" rx="6"/><text class="t" x="1200" y="62" text-anchor="middle" font-weight="600">Cloud Scheduler</text><text class="s" x="1200" y="80" text-anchor="middle">SA warden-scheduler · OIDC tokens</text>
+  <rect class="ext" x="1020" y="180" width="360" height="46" rx="6"/><text class="t" x="1200" y="199" text-anchor="middle" font-weight="600">Billing Budget → Pub/Sub</text><text class="s" x="1200" y="216" text-anchor="middle">thresholds 25 / 50 / 80 / 100 % · OIDC push · dead-letter</text>
+  <rect class="ext" x="1020" y="320" width="360" height="46" rx="6"/><text class="t" x="1200" y="339" text-anchor="middle" font-weight="600">Vertex AI · Gemini</text><text class="s" x="1200" y="356" text-anchor="middle">3.5 Flash diagnosis · 3.7 Flash second opinion</text>
+  <rect class="ext" x="1020" y="390" width="360" height="46" rx="6"/><text class="t" x="1200" y="409" text-anchor="middle" font-weight="600">Discord</text><text class="s" x="1200" y="426" text-anchor="middle">cards with evidence · Approve / Deny / Always · /warden freeze</text>
+  <rect class="ext" x="1020" y="460" width="360" height="46" rx="6"/><text class="t" x="1200" y="479" text-anchor="middle" font-weight="600">Compute Engine API</text><text class="s" x="1200" y="496" text-anchor="middle">start · stop · setMetadata</text>
 
-  <!-- data stores, bottom -->
-  <path class="ext" d="M560 630 v56 a10 10 0 0 0 10 10 h260 a10 10 0 0 0 10 -10 v-56" fill="#fff"/>
-  <ellipse class="ext" cx="700" cy="630" rx="140" ry="10" fill="#fff"/>
-  <text class="t" x="700" y="662" text-anchor="middle" font-weight="600">Firestore — source of truth</text>
-  <text class="s" x="700" y="680" text-anchor="middle">fleet · jobs · incidents · decisions · evidence · audit · costs · health · leases</text>
-  <path class="ext" d="M90 630 v56 a10 10 0 0 0 10 10 h180 a10 10 0 0 0 10 -10 v-56" fill="#fff"/>
-  <ellipse class="ext" cx="190" cy="630" rx="100" ry="10" fill="#fff"/>
-  <text class="t" x="190" y="662" text-anchor="middle" font-weight="600">Cloud Storage</text>
-  <text class="s" x="190" y="680" text-anchor="middle">logs · artifacts · RUN_FIN · harness</text>
-  <rect class="ext" x="60" y="740" width="260" height="50" rx="6"/><text class="t" x="190" y="762" text-anchor="middle" font-weight="600">Cloud Scheduler</text><text class="s" x="190" y="780" text-anchor="middle">SA warden-scheduler · OIDC tokens</text>
+  <rect class="tb" x="1020" y="620" width="360" height="110" rx="8"/>
+  <text class="tbl" x="1034" y="640">CLOUD RUN · WARDEN-DEADMAN</text>
+  <text class="id" x="1034" y="656">identity: SA warden-deadman — independent of core</text>
+  <rect class="box" x="1040" y="672" width="320" height="44" rx="6"/><text class="t" x="1200" y="691" text-anchor="middle" font-weight="600">Watchdog</text><text class="s" x="1200" y="707" text-anchor="middle">core heartbeat absent 15 min → STOP fleet</text>
 
-  <!-- harness → core -->
-  <path class="e" d="M320 340 C 400 340, 400 498, 460 498"/>
-  <text class="l" x="330" y="330">POST /ingest · heartbeat + marker (HMAC)</text>
-  <path class="e" d="M650 412 C 420 412, 420 400, 320 400"/>
-  <text class="l" x="330" y="440">GET /cmd · mailbox (HMAC)</text>
-  <path class="e" d="M190 420 V620"/>
-  <text class="l" x="198" y="520">logs · artifacts · RUN_FIN</text>
-  <path class="e" d="M460 300 H 380 V 600 L 300 640" stroke-dasharray="4 3"/>
-  <text class="l" x="388" y="560">fetch + open artifacts</text>
-  <!-- scheduler -->
-  <path class="e" d="M320 765 C 400 765, 440 600, 448 570"/>
-  <text class="l" x="330" y="720">/tick 1 min · /steward 10 min · /digest daily</text>
-  <path class="e" d="M320 780 C 700 810, 950 780, 1060 712"/>
-  <text class="l" x="660" y="806">/check 5 min</text>
-  <!-- core ↔ firestore -->
-  <path class="e" d="M700 570 V620" marker-start="url(#a)"/>
-  <text class="l" x="710" y="600">read / write · transactional leases</text>
-  <!-- dashboard -->
-  <path class="e" d="M880 74 V130"/>
-  <text class="l" x="890" y="108">approve · deny · freeze</text>
-  <path class="e" d="M960 56 H 1010 V 600 L 840 630" stroke-dasharray="4 3"/>
-  <text class="l" x="1018" y="590">reads</text>
-  <!-- core → externals -->
-  <path class="e" d="M820 205 H 1000 C 1040 205, 1050 245, 1090 245"/>
-  <text class="l" x="880" y="196">diagnosis · JSON schema</text>
-  <path class="e" d="M1090 150 H 1040 V 300 L 990 300"/>
-  <text class="l" x="1000" y="292" text-anchor="end">budget thresholds → /budget → kill-switch</text>
-  <path class="e" d="M820 380 H 1090"/>
-  <text class="l" x="990" y="372">requested vs observed</text>
-  <path class="e" d="M970 492 H 1090"/>
-  <text class="l" x="990" y="484">cards + buttons</text>
-  <!-- deadman -->
-  <path class="e" d="M1340 712 H 1360 V 385 L 1310 385"/>
-  <text class="l" x="1230" y="600">STOP all managed instances</text>
-  <path class="e" d="M1060 700 C 960 700, 900 660, 840 640" stroke-dasharray="4 3"/>
-  <text class="l" x="880" y="720">reads core heartbeat</text>
+  <!-- ===== firestore ===== -->
+  <path class="ext" d="M420 660 v56 a10 10 0 0 0 10 10 h520 a10 10 0 0 0 10 -10 v-56" fill="#fff"/>
+  <ellipse class="ext" cx="690" cy="660" rx="270" ry="10" fill="#fff"/>
+  <text class="t" x="690" y="694" text-anchor="middle" font-weight="600">Firestore — source of truth</text>
+  <text class="s" x="690" y="712" text-anchor="middle">fleet · jobs · incidents (state machine) · decisions · evidence · audit (append-only) · costs · health · leases</text>
 
-  <text class="s" x="1370" y="808" text-anchor="end">Dashed = read-only · Solid = state-changing · Every boundary uses its own service account</text>
+  <!-- ===== edges ===== -->
+  <path class="e" d="M300 203 H430"/><text class="l" x="365" y="218" text-anchor="middle">heartbeat · markers</text>
+  <path class="e" d="M430 483 H360 V300 H300"/><text class="l" x="365" y="470" text-anchor="middle">mailbox</text>
+  <path class="e" d="M180 355 V460"/><text class="l" x="188" y="412">logs · artifacts · RUN_FIN</text>
+  <path class="e" d="M290 563 H430" stroke-dasharray="4 3"/><text class="l" x="365" y="556" text-anchor="middle">fetch + open</text>
+  <path class="e" d="M300 694 H420" stroke-dasharray="4 3"/><text class="l" x="360" y="687" text-anchor="middle">reads</text>
+  <path class="e" d="M340 672 V590 H400"/><text class="l" x="346" y="640">approve · deny</text><text class="l" x="346" y="654">freeze (HMAC)</text>
+  <path class="e" d="M690 610 V650" marker-start="url(#a)"/><text class="l" x="700" y="636">read / write · leases</text>
+  <path class="e" d="M1020 68 H960 V130"/><text class="l" x="968" y="118" text-anchor="end">/tick 1 min · /steward 10 min · /digest</text>
+  <path class="e" d="M1380 68 H1410 V694 H1360"/><text class="l" x="1404" y="380" text-anchor="end">/check 5 min</text>
+  <path class="e" d="M1020 203 H980"/><text class="l" x="1000" y="196" text-anchor="middle">/budget</text>
+  <path class="e" d="M670 343 H1020"/><text class="l" x="845" y="336" text-anchor="middle">diagnosis as JSON schema · cited evidence lines</text>
+  <path class="e" d="M670 413 H1020" marker-start="url(#a)"/><text class="l" x="845" y="406" text-anchor="middle">proposal · Ed25519-verified decision</text>
+  <path class="e" d="M670 483 H1020"/><text class="l" x="845" y="476" text-anchor="middle">operation · requested vs observed</text>
+  <path class="e" d="M950 694 H1040" stroke-dasharray="4 3"/><text class="l" x="995" y="687" text-anchor="middle">heartbeat</text>
+  <path class="e" d="M1200 672 V506"/><text class="l" x="1208" y="600">STOP all managed instances</text>
+
+  <text class="s" x="40" y="766">Solid = state-changing · Dashed = read-only · HMAC = harness and dashboard traffic · OIDC = Google-signed identity tokens · Ed25519 = Discord interactions</text>
 </svg>
