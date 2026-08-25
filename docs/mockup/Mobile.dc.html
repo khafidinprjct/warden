@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #0e1217; color: #e3e9f0; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.4; }
+    a { color: #7cc4ff; } a:hover { color: #a8d8ff; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+<div style="width: 390px; min-height: 1500px; display: flex; flex-direction: column; gap: 12px; padding: 16px 14px 28px; box-sizing: border-box; background: #0e1217;">
+
+  <header style="display: flex; align-items: center; gap: 10px;">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7cc4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+    <div style="display: flex; flex-direction: column;">
+      <div style="font-weight: 700; letter-spacing: 0.04em;">WARDEN</div>
+      <div class="num" style="font-size: 11px; color: #8797ab;">17:45 WIB · data 12 dtk lalu</div>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 8px; background: #b62324; color: #ffffff; font-weight: 700;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+      FREEZE
+    </div>
+  </header>
+
+  <!-- Approval first: this is what a phone is for -->
+  <section style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid #d29922; border-radius: 10px; background: #12130f;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; letter-spacing: 0.1em; color: #d29922;">MENUNGGU IZIN · L1</div>
+      <div class="num" style="font-size: 12px; color: #d29922;">kedaluwarsa 12:41</div>
+    </div>
+    <div style="font-weight: 600; font-size: 17px;">rollback_ckpt · toy-train</div>
+    <div style="font-size: 12px; color: #8797ab;">demo-train-2 · us-central1-a</div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="padding: 2px 7px; border-radius: 4px; background: #6b46c1; color: #f1eaff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;">GEMINI</span><span>checkpoint_corrupt · confidence 0,91 · $0,012</span></div>
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="padding: 2px 7px; border-radius: 4px; background: #2f3f52; color: #cfdbe8; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;">CEK SILANG</span><span>EOFError cocok baris 418 ✓</span></div>
+    </div>
+    <div class="mono" style="font-size: 12px; color: #aab6c4; background: #0e1217; padding: 10px; border-radius: 8px;">ckpt_001742.npz  0 B<br>ckpt_001600.npz  EOFError<br>ckpt_001400.npz  912 B = expect ✓</div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <div style="font-size: 11px; letter-spacing: 0.1em; color: #5f6f83;">DRY-RUN</div>
+      <div style="font-size: 13px; color: #aab6c4;">resume dari ckpt_001400 · karantina 2 file · blast radius <span class="mono">this_run</span> · biaya ≈ $0,001 · tanpa API Compute · tanpa delete</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+      <div style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 8px; background: #238636; color: #ffffff; font-weight: 700; font-size: 15px;">Setujui</div>
+      <div style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 8px; background: #1b222c; border: 1px solid #263040; color: #e3e9f0; font-weight: 600; font-size: 15px;">Tolak</div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 8px; border: 1px solid #263040; color: #aab6c4; font-weight: 600;">Selalu 24 jam untuk aksi ini</div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">JOB</div><div class="num" style="font-size: 20px; font-weight: 600;">2</div><div style="font-size: 10px; color: #5f6f83;">1 berjalan</div></div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">MESIN</div><div class="num" style="font-size: 20px; font-weight: 600;">1<span style="font-size: 12px; color: #5f6f83;">/2</span></div><div style="font-size: 10px; color: #5f6f83;">hidup</div></div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">BIAYA</div><div class="num" style="font-size: 20px; font-weight: 600;">$0,05</div><div style="font-size: 10px; color: #5f6f83;">pagu $150</div></div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">INSIDEN</div><div class="num" style="font-size: 20px; font-weight: 600; color: #d29922;">1</div><div style="font-size: 10px; color: #5f6f83;">terbuka</div></div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">ETTR 7 h</div><div class="num" style="font-size: 20px; font-weight: 600;">0,46</div><div style="font-size: 10px; color: #5f6f83;">dari ledger</div></div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid #1f2733; border-radius: 8px; background: #10161d;"><div style="font-size: 10px; color: #8797ab;">LLM</div><div class="num" style="font-size: 20px; font-weight: 600;">$0,02</div><div style="font-size: 10px; color: #5f6f83;">pagu $2/hari</div></div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; border: 1px solid #1f2733; border-radius: 10px; background: #10161d;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #1f2733;"><div style="font-weight: 600;">Aktivitas</div><div style="display: flex; gap: 8px; font-size: 10px; color: #8797ab;"><span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #2f3f52;"></span>deterministik</span><span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #6b46c1;"></span>Gemini</span></div></div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border-bottom: 1px solid #161d26;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span class="num" style="font-size: 11px; color: #8797ab;">17:44:19 · <span style="color: #5f6f83;">1 mnt lalu</span></span><span style="padding: 2px 6px; border-radius: 4px; background: #2f3f52; color: #cfdbe8; font-size: 10px; font-weight: 700;">KEBIJAKAN</span></div>
+      <div style="font-weight: 600; color: #d29922;">rollback_ckpt → L1: minta izin</div>
+      <div style="font-size: 12px; color: #aab6c4;">tingkat awal L1 (2/hari) · kartu ke Discord</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border-bottom: 1px solid #161d26;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span class="num" style="font-size: 11px; color: #8797ab;">17:44:17 · <span style="color: #5f6f83;">1 mnt lalu</span></span><span style="padding: 2px 6px; border-radius: 4px; background: #6b46c1; color: #f1eaff; font-size: 10px; font-weight: 700;">GEMINI 3.5</span></div>
+      <div style="font-weight: 600;">checkpoint_corrupt · confidence 0,91 · $0,012</div>
+      <div style="font-size: 12px; color: #aab6c4;">uji-bantah: <span class="mono">np.load(ckpt_001742) → EOFError</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border-bottom: 1px solid #161d26;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span class="num" style="font-size: 11px; color: #8797ab;">17:44:06 · <span style="color: #5f6f83;">1 mnt lalu</span></span><span style="padding: 2px 6px; border-radius: 4px; background: #2f3f52; color: #cfdbe8; font-size: 10px; font-weight: 700;">DETERMINISTIK</span></div>
+      <div style="font-weight: 600;">run_fin_nonzero · toy-train</div>
+      <div class="mono" style="font-size: 11px; color: #aab6c4;">RUN_FIN exit=1 · HMAC sah</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 14px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span class="num" style="font-size: 11px; color: #8797ab;">14:16:03 · <span style="color: #5f6f83;">3 j lalu</span></span><span style="padding: 2px 6px; border-radius: 4px; background: #2f3f52; color: #cfdbe8; font-size: 10px; font-weight: 700;">EKSEKUTOR</span></div>
+      <div style="font-weight: 600;">start_instance · L2 · mesin yang sama</div>
+      <div style="font-size: 12px; color: #aab6c4;">hasil = niat: RUNNING 14:21 · rugi 348 dtk</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; border: 1px solid #1f2733; border-radius: 10px; background: #10161d;">
+    <div style="padding: 12px 14px; border-bottom: 1px solid #1f2733; font-weight: 600;">Job</div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-bottom: 1px solid #161d26;">
+      <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-weight: 600;">toy-train</span><span style="padding: 2px 7px; border-radius: 4px; background: #0f1f17; color: #3fb950; font-size: 10px; font-weight: 700;">RUNNING</span></div>
+      <div style="height: 6px; border-radius: 3px; background: #1b222c; overflow: hidden;"><div style="width: 36%; height: 100%; background: #7cc4ff;"></div></div>
+      <div class="num" style="display: flex; justify-content: space-between; font-size: 12px; color: #8797ab;"><span>step 2.150 / 6.000</span><span style="color: #3fb950;">denyut 28 dtk</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 14px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-weight: 600;">climate-demo</span><span style="padding: 2px 7px; border-radius: 4px; background: #17212d; color: #aab6c4; font-size: 10px; font-weight: 700;">COMPLETE</span></div>
+      <div style="height: 6px; border-radius: 3px; background: #1b222c; overflow: hidden;"><div style="width: 100%; height: 100%; background: #3fb950;"></div></div>
+      <div class="num" style="display: flex; justify-content: space-between; font-size: 12px; color: #8797ab;"><span>VERIFIED 14:46</span><span style="color: #d29922;">denyut 3 j · BASI</span></div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; border: 1px solid #1f2733; border-radius: 10px; background: #10161d;">
+    <div style="padding: 12px 14px; border-bottom: 1px solid #1f2733; font-weight: 600;">Kesehatan sinyal</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));">
+      <div style="display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid #161d26;"><span>watcher</span><span class="num" style="color: #3fb950;">12 dtk</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid #161d26; border-left: 1px solid #161d26;"><span>deadman</span><span class="num" style="color: #3fb950;">2 mnt</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 14px;"><span>gemini</span><span class="num" style="color: #3fb950;">210 ms</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 14px; border-left: 1px solid #161d26;"><span>warden-ui</span><span class="num" style="color: #d29922;">BASI</span></div>
+    </div>
+  </section>
+  <div style="font-size: 11px; color: #5f6f83; text-align: center;">semua waktu WIB · STOP bukan DELETE</div>
+</div>
+</x-dc>
+</body>
+</html>

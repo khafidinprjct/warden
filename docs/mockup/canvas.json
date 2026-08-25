@@ -1,0 +1,10 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1120, "title": "Ikhtisar · desktop 1440" },
+    { "file": "Mobile.dc.html", "x": 1560, "y": 0, "w": 390, "h": 1520, "title": "Ikhtisar · HP 390" }
+  ],
+  "annotations": [
+    { "id": "koreksi", "x": 0, "y": -260, "w": 620, "text": "5 koreksi terhadap mockup referensi:\n1. Preempt = DETERMINISTIK (tanpa Gemini); label ungu hanya untuk baris Gemini, lengkap dengan confidence, biaya, dan uji-bantah.\n2. START mesin yang sama (STOP bukan DELETE) — bukan 'replacement VM'.\n3. Tanpa kalimat pemasaran; tiap angka menyebut sumbernya (ledger, tick, marker).\n4. Tidak ada tombol chaos di UI produksi.\n5. Ditambah: baris bukti log, audit niat vs hasil, penanda BASI, waktu WIB + relatif, biaya LLM, versi HP 390 (kartu izin di atas)." }
+  ],
+  "launch": { "view": "canvas" }
+}
