@@ -42,6 +42,8 @@ def verify_incident(inc, notify=None) -> dict[str, Any]:
     expect_map = (job.expect if job else {}) or {}
     for a in (fin.artifacts if fin else []):
         name = Path(a["path"]).name
+        if name.endswith(".corrupt") or ".corrupt." in name:
+            results.append({"name": name, "ok": True, "reason": "sudah dikarantina trainer — tidak dinilai", "checks": {}, "bytes": a.get("bytes", 0), "sha256": a.get("sha256", "")}); continue
         p = _fetch(inc.job_id, name)
         if p is None:
             missing += 1; results.append({"name": name, "ok": False, "reason": "artefak tidak tersedia untuk diverifikasi"}); all_ok = False; continue

@@ -29,7 +29,10 @@ for c in reversed(ck):
     try:
         z = np.load(c); w, step = z["w"], int(z["step"]); print(f"=== [resume] dari {os.path.basename(c)} step {step} ===", flush=True); resumed = True; break
     except Exception as e:  # noqa: BLE001 — checkpoint rusak/terpotong
-        os.replace(c, c + ".corrupt"); print(f"=== [resume] {os.path.basename(c)} RUSAK ({type(e).__name__}) → dikarantina, mundur ===", flush=True)
+        os.replace(c, c + ".corrupt")
+        for side in (".meta.json", ".sha256", ".meta.json.sha256"):
+            if os.path.exists(c + side): os.replace(c + side, c + ".corrupt" + side)
+        print(f"=== [resume] {os.path.basename(c)} RUSAK ({type(e).__name__}) → dikarantina, mundur ===", flush=True)
 if not resumed:
     print("=== [train] mulai dari nol ===", flush=True)
 

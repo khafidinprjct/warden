@@ -32,6 +32,9 @@ python3 - "$DIR" "$JOB" "$RUN" "$PHASE" "$EXIT" "$START" "$END" "$BOOT" <<'PY'
 import hashlib, json, os, sys, glob, hmac
 d, job, run, phase, ex, start, end, boot = sys.argv[1:9]
 paths = sorted(set(glob.glob(os.path.join(d, "artifacts", "**", "*"), recursive=True) + os.environ.get("WARDEN_ARTIFACTS", "").split()))
+# file karantina (.corrupt), sementara (.tmp), dan sidecar milik checkpoint yang dikarantina BUKAN artefak (insiden 25 Agu: 3/83 gagal karena .corrupt ikut dideklarasikan)
+_karantina = {q[:-len(".corrupt")] for q in paths if q.endswith(".corrupt")}
+paths = [q for q in paths if not q.endswith((".corrupt", ".tmp")) and not any(q.startswith(k + ".") for k in _karantina)]
 arts = []
 for p in paths:
     if os.path.isfile(p):
