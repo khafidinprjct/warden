@@ -13,6 +13,7 @@ G = "/home/ubuntu/google-cloud-sdk/bin/gcloud"
 P = (ROOT / ".gcp_project").read_text().strip()
 B = f"{P}-warden"
 CORE = subprocess.run([G, "run", "services", "describe", "warden-core", "--region", "us-central1", "--project", P, "--format", "value(status.url)"], capture_output=True, text=True).stdout.strip()
+LATEST = subprocess.run([G, "run", "services", "describe", "warden-core", "--region", "us-central1", "--project", P, "--format", "value(status.latestReadyRevisionName)"], capture_output=True, text=True).stdout.strip()
 SECRET = subprocess.run([G, "secrets", "versions", "access", "latest", "--secret", "warden-ingest-hmac", "--project", P], capture_output=True, text=True).stdout.strip()
 os.environ.update({"WARDEN_PROJECT": P, "WARDEN_PROVIDER": "gce", "WARDEN_BUCKET": B})
 from google.cloud import firestore  # noqa: E402
@@ -87,7 +88,7 @@ def stop_all(job_ids: list[str]) -> None:
 
 def spec(job_id: str, steps: int, sleep: float, extra: str = "") -> dict:
     cmd = f"bash -c 'gcloud storage cp gs://{B}/demo/toy_bootstrap.sh /opt/toy_bootstrap.sh -q && TOY_STEPS={steps} TOY_SLEEP={sleep} TOY_ARGS=\"{extra}\" bash /opt/toy_bootstrap.sh'"
-    return {"job_id": job_id, "command": cmd, "machine_type": "e2-medium", "zones": ["us-central1-a", "us-central1-b", "us-central1-c"], "spot": True, "disk_gb": 20,
+    return {"job_id": job_id, "command": cmd, "machine_type": "e2-medium", "zones": ["us-central1-b", "us-central1-c", "us-central1-a"], "spot": True, "disk_gb": 20,
             "expect": {"pred.csv": {"rows": 2000}, "steps": steps}, "budget_cap_usd": 0.5, "entry": "toy_train.py", "labels": {"warden-role": "live-test"}}
 
 
@@ -160,6 +161,16 @@ def phase2() -> str:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--skip-phase1", action="store_true"); ap.add_argument("--skip-phase2", action="store_true"); ns = ap.parse_args()
     jobs: list[str] = []
+    import urllib.request
+    for _ in range(40):   # drill #2 (26 Aug) was served by the previous revision two minutes after "deployed": wait for the new one
+        try:
+            rev = json.loads(urllib.request.urlopen(CORE + "/healthz", timeout=20).read()).get("revision", "")
+        except Exception:  # noqa: BLE001
+            rev = ""
+        if rev in ("", "local") or rev == LATEST:
+            break
+        log(f"core still serving {rev}, waiting for {LATEST}"); time.sleep(15)
+    log("core", url=CORE, latest=LATEST)
     try:
         if not ns.skip_phase1:
             jobs.append(phase1())

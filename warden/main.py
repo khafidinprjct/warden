@@ -60,7 +60,8 @@ def _rate_ok(key: str, limit: int = 120, window_s: int = 60) -> bool:
 @app.get("/health")
 @app.get("/healthz")
 def healthz():
-    return {"ok": True, "ts": now().isoformat(), "provider": settings.provider, "project": settings.project}
+    return {"ok": True, "ts": now().isoformat(), "provider": settings.provider, "project": settings.project,
+            "revision": os.getenv("K_REVISION", "local")}   # Cloud Run keeps serving the previous revision for a while after "deployed" — callers can wait on this
 
 
 @app.post("/tick")
