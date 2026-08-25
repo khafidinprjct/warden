@@ -1,0 +1,16 @@
+[project]
+name = "warden"
+version = "0.1.0"
+description = "Warden — penjaga pekerjaan komputasi panjang di cloud: mesin hidup != training benar; selesai != utuh"
+requires-python = ">=3.12"
+dependencies = [
+  "google-adk~=2.7", "google-genai", "google-cloud-compute", "google-cloud-storage",
+  "google-cloud-firestore", "google-cloud-pubsub", "google-cloud-secret-manager",
+  "google-cloud-logging", "google-cloud-monitoring", "fastapi", "uvicorn", "nicegui",
+  "pydantic-settings", "PyNaCl", "matplotlib", "numpy", "pyarrow", "python-ulid", "pyyaml", "httpx",
+]
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "freezegun"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

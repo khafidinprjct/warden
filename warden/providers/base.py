@@ -1,0 +1,30 @@
+"""Kontrak lapisan compute (GCP saja). fake_gce meniru antarmuka yang sama untuk tes/latihan."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Protocol
+
+from warden.core.models import Instance
+
+
+@dataclass
+class OpResult:
+    ok: bool
+    requested: str                     # apa yang diminta (mis. "start zone/name")
+    observed: str = ""                 # apa yang terjadi menurut API setelah menunggu
+    op_id: str = ""
+    error: str = ""
+    dry_run: bool = False
+    plan: dict = field(default_factory=dict)
+
+
+class Compute(Protocol):
+    def list_instances(self) -> list[Instance]: ...
+    def describe(self, ref: str) -> Instance | None: ...
+    def start(self, ref: str, dry_run: bool = False) -> OpResult: ...
+    def stop(self, ref: str, dry_run: bool = False) -> OpResult: ...
+    def set_metadata(self, ref: str, items: dict[str, str], dry_run: bool = False) -> OpResult: ...
+    def stock_check(self, machine_type: str, zones: list[str]) -> dict[str, bool]: ...
+    def quota(self, region: str) -> dict[str, tuple[float, float]]: ...
+    def price(self, inst: Instance) -> float: ...
+    def preempt_events(self, ref: str) -> list[dict]: ...

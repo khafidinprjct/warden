@@ -1,0 +1,35 @@
+# Kebijakan bawaan Warden (rencana §5.2). Dimuat ke Firestore policies/default saat setup; bisa di-override per job.
+autonomy:                # tingkat awal per tindakan
+  notify: L3
+  start_instance: L2
+  resume_job: L2
+  stop_instance: L2
+  quarantine_artifact: L2
+  rollback_last_good: L1
+  relocate_zone: L1
+  resize_disk: L1
+  kill_process: L1
+  change_machine_type: L1
+limits:
+  start_instance:   {per_hour: 3, per_day: 8, max_cost_usd: 2.0}   # ≤ 1 jam tarif (dibanding tarif instance saat evaluasi)
+  resume_job:       {per_hour: 3, per_day: 12}
+  stop_instance:    {per_hour: 1}
+  rollback_last_good: {per_day: 2}
+  relocate_zone:    {per_day: 1}
+  resize_disk:      {per_day: 1, max_cost_usd: 2.0}
+  change_machine_type: {max_price_increase_pct: 50}
+global:
+  auto_spend_daily_cap_usd: 10.0
+  llm_daily_cap_usd: 2.0
+  approval_ttl_minutes: 30
+  idle_grace_minutes: 15
+  orphan_grace_minutes: 10
+  boot_grace_minutes: 10
+circuit_breaker:
+  max_auto_actions_per_hour: 3
+  max_failed_verifications_in_row: 2
+  open_minutes: 60
+hard_deny:            # tidak pernah, oleh siapa pun, lewat Warden
+  - delete_instance
+  - delete_disk
+approvers: []         # id Discord yang boleh menyetujui (diisi dari WARDEN_APPROVERS)
