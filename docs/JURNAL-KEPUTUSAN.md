@@ -137,3 +137,4 @@ Koreksi pemilik ("kenapa pakai WIB?"): aturan WIB hanya untuk komunikasi ke pemi
 **Temuan lain:** `data-refresh="0"` memicu reload tanpa henti (string "0" truthy) — diperbaiki; daftar 135 artefak dirangkum menjadi "N of M passed" + yang gagal.
 **Belum:** deploy (menunggu izin; Procfile.ui masih menunjuk NiceGUI).
 - 21:00 — **Deploy `warden-ui` 00007-wtj = UI v2 (Jinja2)**; verifikasi prod dari viewport HP: Overview v2 tampil, GMT+7, tanpa hscroll. NiceGUI (`warden/ui/dashboard.py`) tidak lagi dipakai layanan; dihapus pada pembersihan berikutnya.
+- 21:10 — Keputusan pemilik: **tidak ada Slack** (kanal = Discord + dashboard); adapter `concierge/slack.py` tidak dipakai, Fase 13 dipersempit ke Monitoring + SLO. Fase 8 berstatus "sedang audit pemilik".

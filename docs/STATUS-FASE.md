@@ -11,12 +11,12 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 5 Verifier | CSV terpotong/NaN + exit 0 → DITOLAK; artefak asli VERIFIED | ✅ | pred.csv 1030 baris sha 810a76ac… VERIFIED; chaos s21 (tenggang 10 mnt → FINISHED_UNVERIFIED) |
 | 6 Steward/deadman/kill-switch | yatim → STOP; core mati → deadman STOP ≤20 mnt; budget → reaksi | ✅ | endpoint `/steward` `/budget` diuji; warden-deadman SA sendiri |
 | 7 Concierge Discord | kartu <5 s, Approve → tindakan → kartu diperbarui | ⏳ **butuh user** | kode + tes Ed25519 lulus; menunggu public key/bot token/channel id → Secret Manager, lalu `infra/discord_register.py` |
-| 8 Dashboard | audit user lulus; websocket ≥10 mnt; cold start <8 s | ◐ **UI v2 (Jinja2 + CSS sistem desain) live ui-00007 25 Agu 21:00**; paritas piksel vs mockup 0,40 %; diverifikasi pada data prod; HP ✓; menunggu audit pemilik |
+| 8 Dashboard | audit user lulus; websocket ≥10 mnt; cold start <8 s | ◐ **sedang berjalan**: UI v2 (Jinja2 + CSS sistem desain) live ui-00007, paritas piksel 0,40 %, data prod ✓, HP ✓ — dalam audit pemilik |
 | 9 Multimodal | 5/6 gambar benar, ≤$0,005/gambar | ✅ | kurva loss dibaca Gemini (`concierge/images.py`) |
 | 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
 | 12 Pengerasan | rate limit, circuit breaker Gemini/provider, IAM | ◐ | rate limit ingest + circuit breaker Gemini ada; IAP/OAuth dashboard belum |
-| 13 Observability | metrik+alert core basi; adapter Slack | ◐ | metrik `warden_heartbeat` + alert absence → email; adapter Slack ada, belum end-to-end |
+| 13 Observability | metrik+alert core basi; SLO 7 hari | ◐ metrik `warden_heartbeat` + alert per-layanan ✓ (terbukti tanpa alarm palsu); dashboard Monitoring + SLO belum; **Slack dicoret (keputusan pemilik 25 Agu)** |
 | 14 Operasi berkelanjutan | 2 job berbeda dipantau 7 hari | ◐ | 2 job (climate-demo, toy-train) dipantau sejak 25 Agu; 7 hari belum genap |
 
 **Uji preempt jujur toy-train:** ✅ lulus 25 Agu 18:1x — lihat jurnal 18:30 (rantai bukti) — setelah START disetujui pemilik.

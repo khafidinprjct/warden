@@ -248,9 +248,9 @@ README (masalah → diagram → spin-up 30 mnt → kontrak harness → kebijakan
 IAM condition diperketat; dashboard di balik IAP/OAuth; rate limit; circuit breaker untuk Gemini/provider (5× gagal → buka 5 mnt, model cadangan); retry/backoff; Pub/Sub dead-letter; rotasi secret; `bandit` + `pip-audit` di CI; kekacauan infra (Gemini 500, Firestore lambat, Discord mati).
 **Gerbang:** semua kekacauan berdegradasi terkendali; tinjauan keamanan bersih.
 
-### Fase 13 — Observability Warden + kanal kedua (~8 jam)
-Dashboard Monitoring (latensi tick, insiden/jam, biaya/insiden, error Gemini), SLO (deteksi < 60 detik, keputusan < 30 detik), alarm core basi; adapter Slack dengan kontrak yang sama.
-**Gerbang:** alarm palsu terkirim; SLO terukur 7 hari; Slack end-to-end.
+### Fase 13 — Observability Warden (~6 jam)
+Dashboard Monitoring (latensi tick, insiden/jam, biaya/insiden, error Gemini), SLO (deteksi < 60 detik, keputusan < 30 detik), alarm core basi. Kanal manusia tetap Discord + dashboard (keputusan pemilik 25 Agu: tidak ada Slack).
+**Gerbang:** alarm palsu terkirim; SLO terukur 7 hari.
 
 ### Fase 14 — Operasi berkelanjutan
 Registry multi-job (Chimera TTS dengan checkpoint torch asli sebagai job kedua, di Compute Engine), kebijakan per job, memori insiden lintas job, promosi otonomi dari rekam jejak, runbook, retro mingguan biaya vs ledger, regresi evaluasi mingguan.
