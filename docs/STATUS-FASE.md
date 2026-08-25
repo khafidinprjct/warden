@@ -11,7 +11,7 @@ Sumber bukti: `docs/JURNAL-KEPUTUSAN.md`, log `chaos/live_report.json`, `data/li
 | 5 Verifier | CSV terpotong/NaN + exit 0 → DITOLAK; artefak asli VERIFIED | ✅ | pred.csv 1030 baris sha 810a76ac… VERIFIED; chaos s21 (tenggang 10 mnt → FINISHED_UNVERIFIED) |
 | 6 Steward/deadman/kill-switch | yatim → STOP; core mati → deadman STOP ≤20 mnt; budget → reaksi | ✅ | endpoint `/steward` `/budget` diuji; warden-deadman SA sendiri |
 | 7 Concierge Discord | kartu <5 s, Approve → tindakan → kartu diperbarui | ⏳ **butuh user** | kode + tes Ed25519 lulus; menunggu public key/bot token/channel id → Secret Manager, lalu `infra/discord_register.py` |
-| 8 Dashboard NiceGUI | audit user lulus; websocket ≥10 mnt; cold start <8 s | ⏳ **butuh user** | UI hidup; tangkapan layar `docs/screenshots/`; temuan-1 (sparkline legacy datar) diperbaiki di kode 25 Agu 17:05, bukti `desktop_incident_sparkline_fix.png`, LIVE di ui-00002 17:40 |
+| 8 Dashboard NiceGUI | audit user lulus; websocket ≥10 mnt; cold start <8 s | ◐ **diimplementasikan 25 Agu 19:10** (English, timeline berlabel, kartu izin + Re-evaluate, STALE, HP 390); uji fungsional `chaos/ui_live.py` ✓; live ui-00004 / core-00011; **menunggu audit pemilik di HP** |
 | 9 Multimodal | 5/6 gambar benar, ≤$0,005/gambar | ✅ | kurva loss dibaca Gemini (`concierge/images.py`) |
 | 10 Chaos & latihan | 25/25 deterministik; suntikan nyata | ✅ | `chaos/run.py` 25/25; chaos.live 4/4 (climate-demo); toy-train preempt jujur → ckpt terpotong → pulih → COMPLETE+VERIFIED 18:1x (3 cacat nyata ditemukan & ditutup, katalog #26–#28) |
 | 11 Dokumen/video/submisi | mesin bersih ≤30 mnt; video; Devpost | ◐ | mesin bersih **34 s** (tes+chaos); diagram PNG; **video butuh user** (atau headless) |
