@@ -1,0 +1,377 @@
+{
+ "rules_on_the_board": [
+  "budget_80",
+  "budget_exhausted",
+  "complete_running",
+  "disk_low",
+  "disk_trend",
+  "done_without_exit",
+  "dup_process",
+  "fin_ok_pending_verify",
+  "grad_spike",
+  "idle",
+  "marker_invalid",
+  "nan_loss",
+  "orphan",
+  "plateau",
+  "preempt_storm",
+  "preempted",
+  "preflight_fail",
+  "run_fin_nonzero",
+  "smoke_invalid",
+  "stuck",
+  "throughput_drop",
+  "unsafe_config",
+  "vram_creep"
+ ],
+ "controls": [
+  {
+   "control": "page loads",
+   "page": "desktop: overview",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "shows a decision waiting",
+   "page": "desktop: overview",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "Freeze",
+   "page": "desktop: overview",
+   "ok": true,
+   "detail": "policies/runtime.frozen = True"
+  },
+  {
+   "control": "Thaw",
+   "page": "desktop: overview",
+   "ok": true,
+   "detail": "policies/runtime.frozen = False"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "lists several distinct rules",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": "preempted,stuck,disk,budget,orphan,dup,nan,smoke,preflight"
+  },
+  {
+   "control": "tab summary",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=timeline",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=decisions",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=evidence",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "Approve",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "decision \u2192 DONE"
+  },
+  {
+   "control": "Deny",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "decision \u2192 REJECTED"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: approvals",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: jobs",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: job detail",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "Hold",
+   "page": "desktop: job detail",
+   "ok": true,
+   "detail": "hold until 2026-08-27 23:21:00.827182+00:00"
+  },
+  {
+   "control": "Request an action",
+   "page": "desktop: job detail",
+   "ok": true,
+   "detail": "submitted through /jobs/{id}/propose"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: launch",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "Launch a job",
+   "page": "desktop: launch",
+   "ok": true,
+   "detail": "job created"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: fleet",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: budget",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: policies",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: audit",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: system",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "desktop: ask",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "shows a decision waiting",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "menu opens",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "Freeze",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": "policies/runtime.frozen = True"
+  },
+  {
+   "control": "Thaw",
+   "page": "phone: overview",
+   "ok": true,
+   "detail": "policies/runtime.frozen = False"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "lists several distinct rules",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": "preempted,stuck,disk,budget,orphan,dup,nan,smoke,preflight"
+  },
+  {
+   "control": "tab summary",
+   "page": "phone: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=timeline",
+   "page": "phone: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=decisions",
+   "page": "phone: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "tab ?tab=evidence",
+   "page": "phone: incident",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: approvals",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: jobs",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: job detail",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "Hold",
+   "page": "phone: job detail",
+   "ok": false,
+   "detail": "hold until None"
+  },
+  {
+   "control": "Request an action",
+   "page": "phone: job detail",
+   "ok": true,
+   "detail": "submitted through /jobs/{id}/propose"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: launch",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "Launch a job",
+   "page": "phone: launch",
+   "ok": true,
+   "detail": "job created"
+  },
+  {
+   "control": "page loads",
+   "page": "phone: fleet",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: fleet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "page loads",
+   "page": "phone: budget",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: budget",
+   "ok": false,
+   "detail": ""
+  },
+  {
+   "control": "page loads",
+   "page": "phone: policies",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: policies",
+   "ok": false,
+   "detail": ""
+  },
+  {
+   "control": "page loads",
+   "page": "phone: audit",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: audit",
+   "ok": false,
+   "detail": ""
+  },
+  {
+   "control": "page loads",
+   "page": "phone: system",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: system",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "page loads",
+   "page": "phone: ask",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: ask",
+   "ok": false,
+   "detail": ""
+  },
+  {
+   "control": "no JavaScript errors",
+   "page": "both",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "passed": 52,
+ "failed": 5,
+ "videos": [
+  "/home/ubuntu/warden/docs/video/tour/warden-desktop.webm",
+  "/home/ubuntu/warden/docs/video/tour/warden-phone.webm"
+ ]
+}

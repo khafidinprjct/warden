@@ -15,7 +15,7 @@
     {% if labels %}<text x="40" y="130" fill="#6b7686" font-size="10">{{ labels[0] }}</text><text x="596" y="130" fill="#6b7686" font-size="10">{{ labels[-1] }}</text>{% endif %}
   </svg>
 </section>
-<section class="card"><div class="card-head"><div class="h">Effective training time by job · 7 days</div></div>
+<section class="card table scroll"><div class="card-head"><div class="h">Effective training time by job · 7 days</div></div>
   <div class="th cols-ettr"><div>Job</div><div>ETTR</div><div>Effective</div><div>Paid</div><div>Spent</div></div>
   {% for j in jobs %}<div class="tr cols-ettr num"><div>{{ j.job_id }}</div><div class="strong">{% if j.ettr is not none %}{{ (j.ettr * 100)|round|int }}%{% else %}—{% endif %}</div><div class="muted">{% if j.ettr is not none %}{{ j.eff_h }} h{% else %}—{% endif %}</div><div class="muted">{% if j.ettr is not none %}{{ j.paid_h }} h{% else %}—{% endif %}</div><div class="muted">{{ j.spent }}</div></div>{% endfor %}
 </section>

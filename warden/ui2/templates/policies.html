@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <header class="page-head"><div><div class="title">Policies</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
-<section class="card"><div class="card-head"><div class="h">Autonomy by action</div></div>
+<section class="card table scroll"><div class="card-head"><div class="h">Autonomy by action</div></div>
   <div class="th cols-policy"><div>Action</div><div>Level</div><div>Limits</div></div>
   {% for r in rows %}<div class="tr cols-policy"><div>{{ r.action }}</div><div class="{{ r.cls }}">{{ r.level }}</div><div class="muted num">{{ r.limits }}</div></div>{% endfor %}
 </section>
