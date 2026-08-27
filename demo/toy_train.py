@@ -91,7 +91,7 @@ with open(os.path.join(a.out, "eval.jsonl"), "w") as f:
         j = rng.integers(0, 2000, 200); pk = 1 / (1 + np.exp(-X[j] @ w)); acc = float(np.mean((pk > 0.5) == y[j]))
         f.write(json.dumps({"fold": k, "acc": acc}) + "\n"); f.flush()
         print(f"eval fold {k+1}/10 acc {acc:.3f}", flush=True)     # a partial eval.jsonl is how we see where a preemption cut the phase
-        beat(phase="eval", step=step, loss=last_loss)
+        beat(phase="eval", step=step, loss=last_loss, epoch=k + 1)   # epoch = fold number: lets a drill know how much of the phase is left
         time.sleep(a.eval_sleep)
 print("=== [export] ===", flush=True); beat(phase="export", step=step, loss=last_loss)
 pk = 1 / (1 + np.exp(-X @ w))

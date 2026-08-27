@@ -29,7 +29,9 @@ from chaos.live_lifecycle import (B, CORE, FS, G, LATEST, P, REPORT, STAMP, inci
                                   last_hb, log, post, wait)
 
 STEPS = 400
-EVAL_SLEEP = 15          # 10 folds × 15 s = a 150 s window to be preempted inside the eval phase
+EVAL_SLEEP = 45          # 10 folds = a 450 s phase. The first attempt used 150 s and lost the race: the "phase = eval"
+                         # heartbeat only reached Firestore at fold 9 of 10, so the preemption landed 36 s AFTER the run
+                         # had already finished. A heartbeat is a lagging signal; the phase has to outlast that lag.
 JOB_ID = f"live-{STAMP}-phase"
 
 
@@ -61,6 +63,19 @@ def preempt_operations(ref: str) -> list[dict]:
     return [o for o in ops if str(o.get("targetLink", "")).endswith("/" + name)]
 
 
+def _ts(v) -> float:
+    """Firestore timestamps come back as datetime or ISO string depending on the path."""
+    if hasattr(v, "timestamp"):
+        return v.timestamp()
+    from datetime import datetime
+    return datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+
+
+def run_finished(run_id: str) -> bool:
+    """A RUN_FIN for this run means the job ended on its own — a preemption after that interrupts nothing."""
+    return FS.collection("markers").document(f"{JOB_ID}:{run_id}:RUN_FIN").get().exists
+
+
 def artifact_rows(name: str) -> int | None:
     r = gcloud("storage", "cat", f"gs://{B}/jobs/{JOB_ID}/artifacts/{name}")
     return None if r.returncode else len([l for l in r.stdout.splitlines() if l.strip()])
@@ -77,22 +92,33 @@ def run() -> dict:
     ref = job(JOB_ID)["instance_ref"]
 
     # 1. training must finish and the job must actually be inside the eval phase
-    hb = wait("phase = eval with training finished (step == steps)",
-              lambda: (lambda h: h if h.get("phase") == "eval" and (h.get("step") or 0) >= STEPS else None)(last_hb(JOB_ID)), 900, 10)
-    assert hb, "job never reached the eval phase"
+    def _fresh_eval():
+        h = last_hb(JOB_ID)
+        if h.get("phase") != "eval" or (h.get("step") or 0) < STEPS:
+            return None
+        age = time.time() - _ts(h.get("ts"))
+        return h if age <= 90 else log("eval heartbeat is stale — waiting for a fresh one", age_s=round(age)) or None
+    hb = wait("phase = eval, training finished, heartbeat FRESH (≤90 s old, so the phase has time left)", _fresh_eval, 900, 10)
+    assert hb, "job never reached the eval phase with a fresh heartbeat"
     step_before, run_before = hb.get("step"), hb.get("run_id")
     verdict["checks"]["reached_eval"] = {"step": step_before, "run_id": run_before}
 
     # 2. a REAL preemption, inside that phase
     zone, name = ref.split("/", 1)
-    log("triggering a real Spot preemption inside the eval phase", instance=ref)
+    assert not run_finished(run_before), "the run finished before the preemption could be triggered — lengthen the eval phase"
+    fold = hb.get("epoch") or 1                       # the trainer reports the eval fold number as `epoch`
+    left = (10 - fold) * EVAL_SLEEP - (time.time() - _ts(hb.get("ts")))
+    log("triggering a real Spot preemption inside the eval phase", instance=ref, at_eval_fold=f"{fold}/10", phase_seconds_left=round(left))
+    assert left > 60, f"only ~{left:.0f}s of the eval phase left — too tight to prove anything"
     pr = gcloud("compute", "instances", "simulate-maintenance-event", name, "--zone", zone)
     log("simulate-maintenance-event", rc=pr.returncode, err=pr.stderr.strip()[:200])
     assert pr.returncode == 0, pr.stderr
     ops = wait("GCE recorded a real preemption operation for this VM", lambda: preempt_operations(ref) or None, 420, 15)
-    still_eval = last_hb(JOB_ID).get("phase")
-    verdict["checks"]["real_preemption"] = {"operations": len(ops or []), "phase_at_preempt": still_eval}
+    verdict["checks"]["real_preemption"] = {"operations": len(ops or []), "at_eval_fold": f"{fold}/10", "phase_seconds_left": round(left)}
     assert ops, "no preemption operation — the drill did not test what it claims"
+    # The whole gate is void if the run had already finished: that is what happened on the first attempt (RUN_FIN exit 0 at
+    # 15:28:11, preemption at 15:28:47) and Warden was right to open no incident at all.
+    assert not run_finished(run_before), "RUN_FIN exists: the run completed before the preemption — nothing was interrupted, the gate proves nothing"
 
     # 3. Warden reacts on its own
     inc = wait("incident `preempted` opened", lambda: next((i for i in incidents(JOB_ID) if i["rule"] == "preempted"), None), 600, 15)
