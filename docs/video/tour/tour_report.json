@@ -249,7 +249,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN",
+   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -261,9 +261,9 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=timeline",
-   "ok": false,
-   "detail": "scrollWidth 551"
+   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=timeline",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "tab ?tab=timeline",
@@ -273,7 +273,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=decisions",
+   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=decisions",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -285,7 +285,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=evidence",
+   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=evidence",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -298,8 +298,8 @@
   {
    "control": "no horizontal scroll",
    "page": "phone: /approvals",
-   "ok": false,
-   "detail": "scrollWidth 740"
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -440,8 +440,8 @@
    "detail": ""
   }
  ],
- "passed": 67,
- "failed": 2,
+ "passed": 69,
+ "failed": 0,
  "videos": [
   "/home/ubuntu/warden/docs/video/tour/warden-desktop.webm",
   "/home/ubuntu/warden/docs/video/tour/warden-phone.webm"
