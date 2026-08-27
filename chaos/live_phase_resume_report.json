@@ -1,0 +1,101 @@
+{
+ "job": "live-1522-phase",
+ "pass": false,
+ "error": "AssertionError: no preempted incident; rules saw: ['fin_ok_pending_verify']",
+ "events": [
+  {
+   "t": 1,
+   "msg": "health rows RED before the drill (catalogue #33: a red row invalidates the drill)",
+   "red": "none"
+  },
+  {
+   "t": 1,
+   "msg": "A4 GATE: preemption inside the eval phase \u2014 job live-1522-phase, 400 steps, 15s per eval fold"
+  },
+  {
+   "t": 14,
+   "msg": "launched",
+   "zone": null,
+   "instance": "us-central1-b/warden-live-1522-phase"
+  },
+  {
+   "t": 117,
+   "msg": "\u2714 job RUNNING on first heartbeat",
+   "value": true
+  },
+  {
+   "t": 313,
+   "msg": "\u2714 phase = eval with training finished (step == steps)",
+   "value": {
+    "log_mtime": "2026-08-27T15:27:41Z",
+    "gpu_util": null,
+    "step_per_s": 0.0,
+    "loss": 0.18935516635754726,
+    "preempt_notice": false,
+    "step": 400,
+    "operator_active": false,
+    "lr": null,
+    "ts": "2026-08-27T15:27:49Z",
+    "boot_id": "48657787-def1-489c-bf69-bdf3b37d3969",
+    "cpu_pct": 3.5,
+    "disk_avail_gb": 17.35,
+    "vram_total_mb": null,
+    "run_id": "r20260827T152440",
+    "synthetic": false,
+    "grad_norm": null,
+    "open_writers": [],
+    "job_id": "live-1522-phase",
+    "vram_used_mb": null,
+    "procs": [
+     {
+      "cmd": "bash /usr/local/bin/wrun --job live-1522-phase --phase train -- python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 15",
+      "ppid": 1311,
+      "pid": 1639
+     },
+     {
+      "cmd": "python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 15",
+      "ppid": 1639,
+      "pid": 1651
+     }
+    ],
+    "epoch": null,
+    "phase": "eval"
+   }
+  },
+  {
+   "t": 313,
+   "msg": "triggering a real Spot preemption inside the eval phase",
+   "instance": "us-central1-b/warden-live-1522-phase"
+  },
+  {
+   "t": 320,
+   "msg": "simulate-maintenance-event",
+   "rc": 0,
+   "err": "Simulating maintenance on instance(s) [https://compute.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1522-phase]...\n...........done."
+  },
+  {
+   "t": 372,
+   "msg": "\u2714 GCE recorded a real preemption operation for this VM",
+   "value": [
+    {
+     "insertTime": "2026-08-27T08:28:47.035-07:00",
+     "operationType": "compute.instances.preempted",
+     "status": "DONE",
+     "targetLink": "https://www.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1522-phase"
+    }
+   ]
+  },
+  {
+   "t": 984,
+   "msg": "\u2718 TIMEOUT incident `preempted` opened after 600s"
+  },
+  {
+   "t": 984,
+   "msg": "A4 GATE FAILED: AssertionError: no preempted incident; rules saw: ['fin_ok_pending_verify']"
+  },
+  {
+   "t": 990,
+   "msg": "machine STOPPED"
+  }
+ ]
+}
