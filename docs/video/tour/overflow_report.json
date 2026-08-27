@@ -22,7 +22,7 @@
     "clientW": 560,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "Relocate zone \u00b7 warden-storm-42Job storm-42 \u00b7 Auto"
+    "text": "Kill process \u00b7 warden-dup-2Job dup-2 \u00b7 Autonomy L1"
    },
    {
     "tag": "div",
@@ -33,7 +33,7 @@
     "clientW": 200,
     "overflowX": "visible",
     "parent": "div.tr cols-stale",
-    "text": "28 Aug 2026, 04:20 GMT+7"
+    "text": "28 Aug 2026, 04:45 GMT+7"
    },
    {
     "tag": "div",
@@ -56,10 +56,130 @@
     "overflowX": "visible",
     "parent": "div.",
     "text": "Re-evaluate"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-stale",
+    "w": 560,
+    "right": 575,
+    "scrollW": 560,
+    "clientW": 560,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "Kill process \u00b7 warden-dup-0Job dup-0 \u00b7 Autonomy L1"
+   },
+   {
+    "tag": "div",
+    "cls": "num muted",
+    "w": 200,
+    "right": 411,
+    "scrollW": 200,
+    "clientW": 200,
+    "overflowX": "visible",
+    "parent": "div.tr cols-stale",
+    "text": "28 Aug 2026, 04:45 GMT+7"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 130,
+    "right": 557,
+    "scrollW": 130,
+    "clientW": 130,
+    "overflowX": "visible",
+    "parent": "div.tr cols-stale",
+    "text": "Re-evaluate"
+   },
+   {
+    "tag": "button",
+    "cls": "btn btn-secondary",
+    "w": 103,
+    "right": 557,
+    "scrollW": 101,
+    "clientW": 101,
+    "overflowX": "visible",
+    "parent": "div.",
+    "text": "Re-evaluate"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-override",
+    "w": 640,
+    "right": 655,
+    "scrollW": 725,
+    "clientW": 640,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "dup-1kill_processL2dashboardUntil 29 Aug 2026, 04:"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 200,
+    "right": 409,
+    "scrollW": 200,
+    "clientW": 200,
+    "overflowX": "visible",
+    "parent": "div.tr cols-override",
+    "text": "kill_process"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 80,
+    "right": 505,
+    "scrollW": 80,
+    "clientW": 80,
+    "overflowX": "visible",
+    "parent": "div.tr cols-override",
+    "text": "L2"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 160,
+    "right": 681,
+    "scrollW": 160,
+    "clientW": 160,
+    "overflowX": "visible",
+    "parent": "div.tr cols-override",
+    "text": "dashboard"
+   },
+   {
+    "tag": "div",
+    "cls": "num muted",
+    "w": 0,
+    "right": 697,
+    "scrollW": 43,
+    "clientW": 0,
+    "overflowX": "visible",
+    "parent": "div.tr cols-override",
+    "text": "Until 29 Aug 2026, 04:45 GMT+7"
+   },
+   {
+    "tag": "time",
+    "cls": "",
+    "w": 43,
+    "right": 740,
+    "scrollW": 0,
+    "clientW": 0,
+    "overflowX": "visible",
+    "parent": "div.num muted",
+    "text": "29 Aug 2026, 04:45 GMT+7"
    }
   ]
  },
  "/jobs": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": []
+ },
+ "/jobs/vision-7b": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": []
+ },
+ "/jobs/launch": {
   "doc_scroll_width": 390,
   "inner_width": 390,
   "elements": []
@@ -182,6 +302,105 @@
     "overflowX": "visible",
     "parent": "section.card table scroll",
     "text": "diffusion-lora100%0.87 h0.87 h$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 120,
+    "right": 441,
+    "scrollW": 120,
+    "clientW": 120,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "0.87 h"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 100,
+    "right": 557,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-ettr num",
+    "w": 560,
+    "right": 575,
+    "scrollW": 560,
+    "clientW": 560,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "dup-0100%0.87 h0.87 h$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 120,
+    "right": 441,
+    "scrollW": 120,
+    "clientW": 120,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "0.87 h"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 100,
+    "right": 557,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-ettr num",
+    "w": 560,
+    "right": 575,
+    "scrollW": 560,
+    "clientW": 560,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "dup-1100%0.87 h0.87 h$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 120,
+    "right": 441,
+    "scrollW": 120,
+    "clientW": 120,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "0.87 h"
+   },
+   {
+    "tag": "div",
+    "cls": "muted",
+    "w": 100,
+    "right": 557,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.tr cols-ettr num",
+    "text": "$0.000"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-ettr num",
+    "w": 560,
+    "right": 575,
+    "scrollW": 560,
+    "clientW": 560,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "dup-2100%0.87 h0.87 h$0.000"
    },
    {
     "tag": "div",
@@ -1293,7 +1512,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:22:25 GMT+7OperatorResultLaunch jobus-central1-"
+    "text": "04:47:39 GMT+7OperatorResultLaunch jobus-central1-"
    },
    {
     "tag": "div",
@@ -1337,7 +1556,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:22:25 GMT+7OperatorIntentLaunch jobus-central1-"
+    "text": "04:47:39 GMT+7OperatorIntentLaunch jobus-central1-"
    },
    {
     "tag": "div",
@@ -1381,95 +1600,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:22:19 GMT+7OperatorResultResume jobus-central1-"
-   },
-   {
-    "tag": "div",
-    "cls": "",
-    "w": 170,
-    "right": 561,
-    "scrollW": 170,
-    "clientW": 170,
-    "overflowX": "visible",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "Resume job"
-   },
-   {
-    "tag": "div",
-    "cls": "muted mono",
-    "w": 82,
-    "right": 659,
-    "scrollW": 210,
-    "clientW": 82,
-    "overflowX": "hidden",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "us-central1-b/warden-vision-7b"
-   },
-   {
-    "tag": "div",
-    "cls": "ok",
-    "w": 82,
-    "right": 757,
-    "scrollW": 318,
-    "clientW": 82,
-    "overflowX": "hidden",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "queued nonce=cmd_01M12HMBX2RJDXWXJ2BMZ7DWJ0"
-   },
-   {
-    "tag": "div",
-    "cls": "tr cols-audit s12 num",
-    "w": 760,
-    "right": 775,
-    "scrollW": 760,
-    "clientW": 760,
-    "overflowX": "visible",
-    "parent": "section.card table scroll",
-    "text": "04:22:19 GMT+7OperatorIntentResume jobus-central1-"
-   },
-   {
-    "tag": "div",
-    "cls": "",
-    "w": 170,
-    "right": 561,
-    "scrollW": 170,
-    "clientW": 170,
-    "overflowX": "visible",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "Resume job"
-   },
-   {
-    "tag": "div",
-    "cls": "muted mono",
-    "w": 82,
-    "right": 659,
-    "scrollW": 210,
-    "clientW": 82,
-    "overflowX": "hidden",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "us-central1-b/warden-vision-7b"
-   },
-   {
-    "tag": "div",
-    "cls": "",
-    "w": 82,
-    "right": 757,
-    "scrollW": 82,
-    "clientW": 82,
-    "overflowX": "hidden",
-    "parent": "div.tr cols-audit s12 num",
-    "text": "\u2014"
-   },
-   {
-    "tag": "div",
-    "cls": "tr cols-audit s12 num",
-    "w": 760,
-    "right": 775,
-    "scrollW": 760,
-    "clientW": 760,
-    "overflowX": "visible",
-    "parent": "section.card table scroll",
-    "text": "04:22:16 GMT+7OperatorResultHold jobvision-7bDone"
+    "text": "04:47:30 GMT+7OperatorResultHold jobrec-sysDone"
    },
    {
     "tag": "div",
@@ -1491,7 +1622,7 @@
     "clientW": 82,
     "overflowX": "hidden",
     "parent": "div.tr cols-audit s12 num",
-    "text": "vision-7b"
+    "text": "rec-sys"
    },
    {
     "tag": "div",
@@ -1513,7 +1644,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:21:10 GMT+7OperatorResultLaunch jobus-central1-"
+    "text": "04:46:23 GMT+7OperatorResultLaunch jobus-central1-"
    },
    {
     "tag": "div",
@@ -1557,7 +1688,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:21:10 GMT+7OperatorIntentLaunch jobus-central1-"
+    "text": "04:46:23 GMT+7OperatorIntentLaunch jobus-central1-"
    },
    {
     "tag": "div",
@@ -1601,7 +1732,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:21:00 GMT+7OperatorResultHold jobvision-7bDone"
+    "text": "04:46:14 GMT+7OperatorResultHold jobvision-7bDone"
    },
    {
     "tag": "div",
@@ -1645,7 +1776,183 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:43 GMT+7OperatorResultKill processus-central"
+    "text": "04:46:04 GMT+7OperatorResultRelocate zoneus-centra"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 170,
+    "right": 561,
+    "scrollW": 170,
+    "clientW": 170,
+    "overflowX": "visible",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "Relocate zone"
+   },
+   {
+    "tag": "div",
+    "cls": "muted mono",
+    "w": 82,
+    "right": 659,
+    "scrollW": 203,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "us-central1-a/warden-storm-42"
+   },
+   {
+    "tag": "div",
+    "cls": "ok",
+    "w": 82,
+    "right": 757,
+    "scrollW": 186,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "us-central1-b/warden-storm-42-b"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-audit s12 num",
+    "w": 760,
+    "right": 775,
+    "scrollW": 760,
+    "clientW": 760,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:46:04 GMT+7OperatorIntentRelocate zoneus-centra"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 170,
+    "right": 561,
+    "scrollW": 170,
+    "clientW": 170,
+    "overflowX": "visible",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "Relocate zone"
+   },
+   {
+    "tag": "div",
+    "cls": "muted mono",
+    "w": 82,
+    "right": 659,
+    "scrollW": 203,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "us-central1-a/warden-storm-42"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 82,
+    "right": 757,
+    "scrollW": 82,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "\u2014"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-audit s12 num",
+    "w": 760,
+    "right": 775,
+    "scrollW": 760,
+    "clientW": 760,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:45:55 GMT+7OperatorResultKill processus-central"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 170,
+    "right": 561,
+    "scrollW": 170,
+    "clientW": 170,
+    "overflowX": "visible",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "Kill process"
+   },
+   {
+    "tag": "div",
+    "cls": "muted mono",
+    "w": 82,
+    "right": 659,
+    "scrollW": 182,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "us-central1-b/warden-dup-1"
+   },
+   {
+    "tag": "div",
+    "cls": "ok",
+    "w": 82,
+    "right": 757,
+    "scrollW": 310,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "queued nonce=cmd_01M12JZKFYW705R2D1YA6E3RBR"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-audit s12 num",
+    "w": 760,
+    "right": 775,
+    "scrollW": 760,
+    "clientW": 760,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:45:55 GMT+7OperatorIntentKill processus-central"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 170,
+    "right": 561,
+    "scrollW": 170,
+    "clientW": 170,
+    "overflowX": "visible",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "Kill process"
+   },
+   {
+    "tag": "div",
+    "cls": "muted mono",
+    "w": 82,
+    "right": 659,
+    "scrollW": 182,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "us-central1-b/warden-dup-1"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 82,
+    "right": 757,
+    "scrollW": 82,
+    "clientW": 82,
+    "overflowX": "hidden",
+    "parent": "div.tr cols-audit s12 num",
+    "text": "\u2014"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-audit s12 num",
+    "w": 760,
+    "right": 775,
+    "scrollW": 760,
+    "clientW": 760,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:45:45 GMT+7OperatorResultKill processus-central"
    },
    {
     "tag": "div",
@@ -1674,11 +1981,11 @@
     "cls": "ok",
     "w": 82,
     "right": 757,
-    "scrollW": 307,
+    "scrollW": 317,
     "clientW": 82,
     "overflowX": "hidden",
     "parent": "div.tr cols-audit s12 num",
-    "text": "queued nonce=cmd_01M12HHE54V5A19JFTKXABA3SE"
+    "text": "queued nonce=cmd_01M12JZ98H928K1GBQMV6QWNRP"
    },
    {
     "tag": "div",
@@ -1689,7 +1996,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:43 GMT+7OperatorIntentKill processus-central"
+    "text": "04:45:45 GMT+7OperatorIntentKill processus-central"
    },
    {
     "tag": "div",
@@ -1733,7 +2040,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:09 GMT+7WardenResultStart instanceus-central"
+    "text": "04:45:11 GMT+7WardenResultStart instanceus-central"
    },
    {
     "tag": "div",
@@ -1777,7 +2084,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:09 GMT+7WardenIntentStart instanceus-central"
+    "text": "04:45:11 GMT+7WardenIntentStart instanceus-central"
    },
    {
     "tag": "div",
@@ -1821,7 +2128,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:11 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -1865,7 +2172,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:11 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -1909,7 +2216,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultClean disk (checkpoints "
+    "text": "04:45:11 GMT+7WardenResultClean disk (checkpoints "
    },
    {
     "tag": "div",
@@ -1938,11 +2245,11 @@
     "cls": "ok",
     "w": 82,
     "right": 757,
-    "scrollW": 312,
+    "scrollW": 308,
     "clientW": 82,
     "overflowX": "hidden",
     "parent": "div.tr cols-audit s12 num",
-    "text": "queued nonce=cmd_01M12HGCQC87YS61QZS1WV5VR2"
+    "text": "queued nonce=cmd_01M12JY7MKXY8PZVM24EX5CKV2"
    },
    {
     "tag": "div",
@@ -1953,7 +2260,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentClean disk (checkpoints "
+    "text": "04:45:11 GMT+7WardenIntentClean disk (checkpoints "
    },
    {
     "tag": "div",
@@ -1997,7 +2304,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:11 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2041,7 +2348,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:11 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2085,7 +2392,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2129,7 +2436,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2173,7 +2480,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2217,7 +2524,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2261,7 +2568,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2305,7 +2612,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2349,7 +2656,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2393,7 +2700,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2437,7 +2744,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2481,7 +2788,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2525,7 +2832,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2569,7 +2876,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2613,7 +2920,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultClean disk (checkpoints "
+    "text": "04:45:10 GMT+7WardenResultClean disk (checkpoints "
    },
    {
     "tag": "div",
@@ -2642,11 +2949,11 @@
     "cls": "ok",
     "w": 82,
     "right": 757,
-    "scrollW": 305,
+    "scrollW": 320,
     "clientW": 82,
     "overflowX": "hidden",
     "parent": "div.tr cols-audit s12 num",
-    "text": "queued nonce=cmd_01M12HGCB69FZ9XS9H0TZEJYR7"
+    "text": "queued nonce=cmd_01M12JY77QKYWQFGVYYM6WDKSD"
    },
    {
     "tag": "div",
@@ -2657,7 +2964,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentClean disk (checkpoints "
+    "text": "04:45:10 GMT+7WardenIntentClean disk (checkpoints "
    },
    {
     "tag": "div",
@@ -2701,7 +3008,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2745,7 +3052,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -2789,7 +3096,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2833,7 +3140,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2877,7 +3184,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2921,7 +3228,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -2965,7 +3272,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -3009,7 +3316,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -3053,7 +3360,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenResultStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -3097,7 +3404,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentStop instanceus-central1"
+    "text": "04:45:10 GMT+7WardenIntentStop instanceus-central1"
    },
    {
     "tag": "div",
@@ -3141,7 +3448,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenResultNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenResultNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -3185,7 +3492,7 @@
     "clientW": 760,
     "overflowX": "visible",
     "parent": "section.card table scroll",
-    "text": "04:20:08 GMT+7WardenIntentNotifyus-central1-b/ward"
+    "text": "04:45:10 GMT+7WardenIntentNotifyus-central1-b/ward"
    },
    {
     "tag": "div",
@@ -3228,6 +3535,181 @@
   "elements": []
  },
  "/ask": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": []
+ },
+ "/incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": []
+ },
+ "/incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=timeline": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": [
+   {
+    "tag": "div",
+    "cls": "th cols-timeline",
+    "w": 600,
+    "right": 615,
+    "scrollW": 600,
+    "clientW": 600,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "TimeTransitionNoteActor"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 220,
+    "right": 419,
+    "scrollW": 220,
+    "clientW": 220,
+    "overflowX": "visible",
+    "parent": "div.th cols-timeline",
+    "text": "Transition"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 46,
+    "right": 481,
+    "scrollW": 46,
+    "clientW": 46,
+    "overflowX": "visible",
+    "parent": "div.th cols-timeline",
+    "text": "Note"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 100,
+    "right": 597,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.th cols-timeline",
+    "text": "Actor"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-timeline",
+    "w": 600,
+    "right": 615,
+    "scrollW": 600,
+    "clientW": 600,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:45:10 GMT+7Detected \u2192 Triagedrule run_fin_nonze"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 220,
+    "right": 419,
+    "scrollW": 220,
+    "clientW": 220,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "Detected \u2192 Triaged"
+   },
+   {
+    "tag": "div",
+    "cls": "text-2",
+    "w": 46,
+    "right": 481,
+    "scrollW": 93,
+    "clientW": 46,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "rule run_fin_nonzero"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 100,
+    "right": 597,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "Warden"
+   },
+   {
+    "tag": "span",
+    "cls": "actor actor-warden",
+    "w": 53,
+    "right": 550,
+    "scrollW": 53,
+    "clientW": 53,
+    "overflowX": "visible",
+    "parent": "div.",
+    "text": "Warden"
+   },
+   {
+    "tag": "div",
+    "cls": "tr cols-timeline",
+    "w": 600,
+    "right": 615,
+    "scrollW": 600,
+    "clientW": 600,
+    "overflowX": "visible",
+    "parent": "section.card table scroll",
+    "text": "04:45:10 GMT+7Triaged \u2192 DiagnosingLLM diagnosis re"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 220,
+    "right": 419,
+    "scrollW": 220,
+    "clientW": 220,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "Triaged \u2192 Diagnosing"
+   },
+   {
+    "tag": "div",
+    "cls": "text-2",
+    "w": 46,
+    "right": 481,
+    "scrollW": 54,
+    "clientW": 46,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "LLM diagnosis required"
+   },
+   {
+    "tag": "div",
+    "cls": "",
+    "w": 100,
+    "right": 597,
+    "scrollW": 100,
+    "clientW": 100,
+    "overflowX": "visible",
+    "parent": "div.tr cols-timeline",
+    "text": "Warden"
+   },
+   {
+    "tag": "span",
+    "cls": "actor actor-warden",
+    "w": 53,
+    "right": 550,
+    "scrollW": 53,
+    "clientW": 53,
+    "overflowX": "visible",
+    "parent": "div.",
+    "text": "Warden"
+   }
+  ]
+ },
+ "/incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=decisions": {
+  "doc_scroll_width": 390,
+  "inner_width": 390,
+  "elements": []
+ },
+ "/incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=evidence": {
   "doc_scroll_width": 390,
   "inner_width": 390,
   "elements": []

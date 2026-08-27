@@ -3,7 +3,7 @@
 <div class="crumb"><a href="/jobs">Jobs</a> / {{ job.job_id }}</div>
 <header class="page-head top">
   <div style="display:flex;flex-direction:column;gap:8px">
-    <div style="display:flex;align-items:center;gap:10px"><div class="title">{{ job.job_id }}</div><span class="pill pill-{{ status_cls }}">{{ status }}{% if job.phase %} · {{ job.phase }}{% endif %}</span>{% if hold_until %}<span class="pill pill-grey">On hold until <time data-utc="{{ hold_until }}" data-fmt="clock"></time></span>{% endif %}</div>
+    <div class="title-row"><div class="title">{{ job.job_id }}</div><span class="pill pill-{{ status_cls }}">{{ status }}{% if job.phase %} · {{ job.phase }}{% endif %}</span>{% if hold_until %}<span class="pill pill-grey">On hold until <time data-utc="{{ hold_until }}" data-fmt="clock"></time></span>{% endif %}</div>
     <div class="meta num"><span>Instance <b>{{ job.instance_ref or '—' }}</b></span><span>Run <b class="mono">{{ job.run_id or '—' }}</b></span><span>Heartbeat <b class="{{ hb_cls }}">{{ hb_text }}</b>{% if hb_iso %} · <time data-utc="{{ hb_iso }}" data-fmt="rel"></time>{% endif %}</span><span>Spent <b>{{ spent }}</b> of {{ cap }}</span></div>
   </div>
   <div class="actions">{% include "_freeze.html" %}</div>

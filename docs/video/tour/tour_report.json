@@ -98,10 +98,22 @@
    "detail": "decision \u2192 REJECTED"
   },
   {
+   "control": "Always for 24 h",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": "1 override(s)"
+  },
+  {
    "control": "page loads",
    "page": "desktop: approvals",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "Approve from queue",
+   "page": "desktop: approvals",
+   "ok": true,
+   "detail": "1 \u2192 0 pending"
   },
   {
    "control": "page loads",
@@ -116,10 +128,10 @@
    "detail": "HTTP 200"
   },
   {
-   "control": "Hold",
+   "control": "Hold / Release hold",
    "page": "desktop: job detail",
    "ok": true,
-   "detail": "hold until 2026-08-27 23:21:00.827182+00:00"
+   "detail": "set (was unset)"
   },
   {
    "control": "Request an action",
@@ -176,6 +188,12 @@
    "detail": "HTTP 200"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "page loads",
    "page": "phone: overview",
    "ok": true,
@@ -212,6 +230,12 @@
    "detail": "policies/runtime.frozen = False"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "page loads",
    "page": "phone: incidents",
    "ok": true,
@@ -224,10 +248,22 @@
    "detail": "preempted,stuck,disk,budget,orphan,dup,nan,smoke,preflight"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "tab summary",
    "page": "phone: incident",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=timeline",
+   "ok": false,
+   "detail": "scrollWidth 551"
   },
   {
    "control": "tab ?tab=timeline",
@@ -236,10 +272,22 @@
    "detail": "HTTP 200"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=decisions",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "tab ?tab=decisions",
    "page": "phone: incident",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M12JY6TBTEVXCER1XXVV93ZN?tab=evidence",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "tab ?tab=evidence",
@@ -248,10 +296,22 @@
    "detail": "HTTP 200"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /approvals",
+   "ok": false,
+   "detail": "scrollWidth 740"
+  },
+  {
    "control": "page loads",
    "page": "phone: approvals",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /jobs",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -260,22 +320,34 @@
    "detail": "HTTP 200"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /jobs/rec-sys",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "page loads",
    "page": "phone: job detail",
    "ok": true,
    "detail": "HTTP 200"
   },
   {
-   "control": "Hold",
+   "control": "Hold / Release hold",
    "page": "phone: job detail",
-   "ok": false,
-   "detail": "hold until None"
+   "ok": true,
+   "detail": "set (was unset)"
   },
   {
    "control": "Request an action",
    "page": "phone: job detail",
    "ok": true,
    "detail": "submitted through /jobs/{id}/propose"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /jobs/launch",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -290,6 +362,12 @@
    "detail": "job created"
   },
   {
+   "control": "no horizontal scroll",
+   "page": "phone: /fleet",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
    "control": "page loads",
    "page": "phone: fleet",
    "ok": true,
@@ -297,9 +375,9 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: fleet",
+   "page": "phone: /budget",
    "ok": true,
-   "detail": ""
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -309,9 +387,9 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: budget",
-   "ok": false,
-   "detail": ""
+   "page": "phone: /policies",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -321,9 +399,9 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: policies",
-   "ok": false,
-   "detail": ""
+   "page": "phone: /audit",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -333,9 +411,9 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: audit",
-   "ok": false,
-   "detail": ""
+   "page": "phone: /system",
+   "ok": true,
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
@@ -345,21 +423,15 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: system",
+   "page": "phone: /ask",
    "ok": true,
-   "detail": ""
+   "detail": "scrollWidth 390"
   },
   {
    "control": "page loads",
    "page": "phone: ask",
    "ok": true,
    "detail": "HTTP 200"
-  },
-  {
-   "control": "no horizontal scroll",
-   "page": "phone: ask",
-   "ok": false,
-   "detail": ""
   },
   {
    "control": "no JavaScript errors",
@@ -368,8 +440,8 @@
    "detail": ""
   }
  ],
- "passed": 52,
- "failed": 5,
+ "passed": 67,
+ "failed": 2,
  "videos": [
   "/home/ubuntu/warden/docs/video/tour/warden-desktop.webm",
   "/home/ubuntu/warden/docs/video/tour/warden-phone.webm"

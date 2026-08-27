@@ -28,6 +28,7 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .nav-foot .row { display: flex; align-items: center; justify-content: space-between; color: var(--text-2); }
 .eyebrow { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .main { display: flex; flex-direction: column; gap: 24px; padding: 24px 32px 40px; max-width: 1184px; width: 100%; min-width: 0; }
+.main > *, .page-head > *, .stack > *, .two > *, .split > * { min-width: 0; }
 .main.incident { gap: 20px; }
 .page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .page-head.top { align-items: flex-start; gap: 24px; }
@@ -73,6 +74,9 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .cols-policy { grid-template-columns: 200px 220px minmax(0, 1fr); }
 .cols-ettr { grid-template-columns: minmax(0, 1fr) 80px 120px 120px 100px; }
 .cols-stale { grid-template-columns: minmax(0, 1fr) 140px 200px 130px; }
+.cols-timeline { grid-template-columns: 150px 220px minmax(0, 1fr) 100px; }
+.cols-override { grid-template-columns: 160px 200px 80px 160px minmax(0, 1fr); }
+.title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ask-form { display: grid; grid-template-columns: minmax(0, 1fr) 220px 140px; gap: 10px; align-items: end; }
 .cell-2 { min-width: 0; } .cell-2 .sub { color: var(--muted); } .gap4 { display: flex; flex-direction: column; gap: 4px; }
 
@@ -116,7 +120,7 @@ select { width: 100%; }
   .cols-incidents { grid-template-columns: 90px minmax(0, 1fr); } .cols-incidents > :nth-child(n+3) { display: none; }
   .cols-decision { grid-template-columns: 1fr; gap: 10px; } .card.decision { position: static; }
   .table { overflow-x: auto; }
-  .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; }
+  .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; } .cols-timeline { min-width: 600px; } .cols-override { min-width: 640px; }
   .ask-form { grid-template-columns: 1fr; }
   .props { grid-template-columns: 110px minmax(0, 1fr); }
 }

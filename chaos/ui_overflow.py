@@ -25,7 +25,15 @@ os.environ.update({
 })
 UI = f"http://127.0.0.1:{UI_PORT}"
 
-PAGES = ["/", "/incidents", "/approvals", "/jobs", "/fleet", "/budget", "/policies", "/audit", "/system", "/ask"]
+PAGES = ["/", "/incidents", "/approvals", "/jobs", "/jobs/vision-7b", "/jobs/launch", "/fleet", "/budget",
+         "/policies", "/audit", "/system", "/ask"]
+
+
+def incident_paths() -> list[str]:
+    """The incident page has four tabs and only one of them was ever measured."""
+    from warden.store import firestore as db
+    inc = next((i for i in db.incidents.list(limit=400) if i.diagnosis), db.incidents.list(limit=1)[0])
+    return [f"/incidents/{inc.incident_id}{t}" for t in ("", "?tab=timeline", "?tab=decisions", "?tab=evidence")]
 
 FIND = """(vw) => {
   const out = [];
@@ -69,7 +77,7 @@ def main() -> int:
             b = p.chromium.launch()
             ctx = b.new_context(viewport={"width": 390, "height": 844}, timezone_id="Asia/Jakarta")
             pg = ctx.new_page()
-            for path in PAGES:
+            for path in PAGES + incident_paths():
                 pg.goto(UI + path, wait_until="load", timeout=60000)
                 pg.wait_for_timeout(500)
                 doc = pg.evaluate("[document.documentElement.scrollWidth, window.innerWidth]")
