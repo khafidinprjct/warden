@@ -1,0 +1,15 @@
+=== wrun tts-ft r20260826T010203 phase=train start=2026-08-26T01:02:03+00:00 ===
+step 1150 loss 2.4123 grad_norm 1.8102
+step 1200 loss 2.3981 grad_norm 1.7720
+checkpoint ckpt_001200.pt
+step 1250 loss 2.3877 grad_norm 1.9012
+Traceback (most recent call last):
+  File "/opt/job/train.py", line 214, in <module>
+    loss = model(batch["input_ids"], labels=batch["labels"]).loss
+  File "/opt/job/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/opt/job/model/attention.py", line 88, in forward
+    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.94 GiB. GPU 0 has a total capacity of 39.38 GiB of which 2.11 GiB is free. Including non-PyTorch memory, this process has 37.20 GiB memory in use. Of the allocated memory 35.02 GiB is allocated by PyTorch, and 1.40 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.
+=== wrun selesai exit=1 artefak=3 RUN_FIN ditulis ===
+EXIT=1

@@ -1,0 +1,120 @@
+== [1/5] ekstrak data
+== [2/5] snapshot bobot base (pakai cache volume user bila ada)
+
+[1AFetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]
+[1AFetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 132.52it/s]
+snapshot: /models/huggingface/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3
+== [3/5] prepare_data (tokenisasi audio 12Hz)
+
+********
+Warning: flash-attn is not installed. Will only run the manual PyTorch version. Please install flash-attn for faster inference.
+********
+ 
+== [4/5] SFT 1.7B (LR 2e-6, 2 epoch, bs 2 ga 4)
+/usr/local/lib/python3.11/site-packages/accelerate/accelerator.py:529: UserWarning: `log_with=tensorboard` was passed but no supported trackers are currently installed.
+  warnings.warn(f"`log_with={log_with}` was passed but no supported trackers are currently installed.")
+Detected kernel version 4.19.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+********
+Warning: flash-attn is not installed. Will only run the manual PyTorch version. Please install flash-attn for faster inference.
+********
+ 
+[PATCH] suara slot 3000 dibekukan dari /work/ref_ab.wav
+Traceback (most recent call last):
+  File "/root/qwen_ft/sft_12hz.py", line 176, in <module>
+    train()
+  File "/root/qwen_ft/sft_12hz.py", line 85, in train
+    for step, batch in enumerate(train_dataloader):
+  File "/usr/local/lib/python3.11/site-packages/accelerate/data_loader.py", line 567, in __iter__
+    current_batch = next(dataloader_iter)
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 708, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 764, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 55, in fetch
+    return self.collate_fn(data)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/qwen_ft/dataset.py", line 207, in collate_fn
+    ref_mels = torch.cat(ref_mels,dim=0)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Sizes of tensors must match except in dimension 0. Expected size 566 but got size 1777 for tensor number 1 in the list.
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 894, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 187, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 215, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_smoketest.py", line 88, in smoketest
+    subprocess.run(
+  File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['python', '/root/qwen_ft/sft_12hz.py', '--init_model_path', '/models/huggingface/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3', '--output_model_path', '/vol/smoketest_out', '--train_jsonl', '/work/train_codes.jsonl', '--batch_size', '2', '--lr', '2e-6', '--num_epochs', '2', '--speaker_name', 'chimera_smoke', '--ref_wav', '/work/ref_ab.wav']' returned non-zero exit status 1.
+Stopping app - uncaught exception raised locally: CalledProcessError(1, ['python', '/root/qwen_ft/sft_12hz.py', '--init_model_path', '/models/huggingface/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3', '--output_model_path', '/vol/smoketest_out', '--train_jsonl', '/work/train_codes.jsonl', '--batch_size', '2', '--lr', '2e-6', '--num_epochs', '2', '--speaker_name', 'chimera_smoke', '--ref_wav', '/work/ref_ab.wav']).
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /home/ubuntu/chimera-project/scripts/modal_smoketest.py:136 in main          │
+│                                                                              │
+│   135 def main():                                                            │
+│ ❱ 136 │   print(smoketest.remote())                                          │
+│   137                                                                        │
+│                                                                              │
+│ /home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/modal/_object │
+│ .py:46 in wrapped                                                            │
+│                                                                              │
+│    45 │   │   await self.hydrate()                                           │
+│ ❱  46 │   │   return await method(self, *args, **kwargs)                     │
+│    47                                                                        │
+│                                                                              │
+│ /home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/modal/_functi │
+│ ons.py:1789 in remote                                                        │
+│                                                                              │
+│   1788 │   │                                                                 │
+│ ❱ 1789 │   │   return await self._call_function(args, kwargs)                │
+│   1790                                                                       │
+│                                                                              │
+│ /home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/modal/_functi │
+│ ons.py:1727 in _call_function                                                │
+│                                                                              │
+│   1726 │   │                                                                 │
+│ ❱ 1727 │   │   return await invocation.run_function()                        │
+│   1728                                                                       │
+│                                                                              │
+│ /home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/modal/_functi │
+│ ons.py:498 in run_function                                                   │
+│                                                                              │
+│    497 │   │   │   # No more retries left.                                   │
+│ ❱  498 │   │   │   return await _process_result(                             │
+│    499 │   │   │   │   await_response.output.result, await_response.output.d │
+│                                                                              │
+│ /home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/modal/_utils/ │
+│ function_utils.py:548 in _process_result                                     │
+│                                                                              │
+│   547 │   │   │                                                              │
+│ ❱ 548 │   │   │   raise exc_with_hints(exc)                                  │
+│   549                                                                        │
+│                                                                              │
+│     ...Remote call to Modal Function (ta-01KYRVJMS4WKZJCF61VQTTN5JR)...      │
+│                                                                              │
+│ /root/modal_smoketest.py:88 in smoketest                                     │
+│                                                                              │
+│ ❱ 88 subprocess.run(                                                         │
+│                                                                              │
+│                                                                              │
+│ /usr/local/lib/python3.11/subprocess.py:571 in run                           │
+│                                                                              │
+│ ❱ 571 raise CalledProcessError(retcode, process.args,                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+CalledProcessError: Command '['python', '/root/qwen_ft/sft_12hz.py', 
+'--init_model_path', 
+'/models/huggingface/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389
+122332181a7c3db7f27e918eec64e3', '--output_model_path', '/vol/smoketest_out', 
+'--train_jsonl', '/work/train_codes.jsonl', '--batch_size', '2', '--lr', '2e-6',
+'--num_epochs', '2', '--speaker_name', 'chimera_smoke', '--ref_wav', 
+'/work/ref_ab.wav']' returned non-zero exit status 1.

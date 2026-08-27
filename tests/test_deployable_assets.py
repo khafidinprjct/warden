@@ -5,11 +5,15 @@ The nightly gold evaluation (/eval) runs inside the Cloud Run image. The gold se
 `*.log` rule — the evaluation failed twice for the same reason at two different layers. These tests evaluate every runtime
 asset against the ignore file the way gcloud does (last matching pattern wins, `!` re-includes).
 
+`.gitignore` drops the same files for a different reason: the gold logs were never committed at all, so a clean clone
+could not run the evaluation (catalogue #37, found by the N2 clean-clone gate). Both ignore files are checked here.
+
 The authoritative check is `gcloud meta list-files-for-upload .`; this is its offline equivalent, so the failure shows up in
 pytest rather than in production at 02:00.
 """
 from __future__ import annotations
 
+import subprocess
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -74,3 +78,16 @@ def test_gold_cases_yaml_is_the_one_the_package_ships():
     from warden.eval import gold
     d = yaml.safe_load((gold.FIX / "cases.yaml").read_text())
     assert {c["file"] for c in d["cases"]} <= {p.name for p in gold.FIX.iterdir()}
+
+
+def test_every_gold_case_file_is_committed():
+    """A file that exists only in one working tree is not reproducible: a clean clone must be able to run the evaluation."""
+    from warden.eval import gold
+    tracked = subprocess.run(["git", "ls-files", "-z", str(gold.FIX.relative_to(ROOT))],
+                             cwd=ROOT, capture_output=True, text=True)
+    if tracked.returncode != 0:
+        return                                     # not a git checkout (e.g. inside the deployed image) — nothing to assert
+    committed = {Path(p).name for p in tracked.stdout.split("\0") if p}
+    _, cases = gold.load_cases()
+    missing = {"cases.yaml", *(c["file"] for c in cases)} - committed
+    assert not missing, f"gold files present on disk but not committed: {sorted(missing)} — a clean clone cannot run /eval"

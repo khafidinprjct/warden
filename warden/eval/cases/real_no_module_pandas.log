@@ -1,0 +1,74 @@
++ BKT=gs://dat-lomba-gen-lang-client-0688817395
++ HB=1030
++ PY=
++ true
++ gsutil -q cp /var/log/dat_train.log gs://dat-lomba-gen-lang-client-0688817395/train.log
+++ ls '/opt/conda/envs/*/bin/python'
+++ ls '/opt/*/bin/python'
++ for p in python3 /opt/conda/bin/python $(ls /opt/conda/envs/*/bin/python 2>/dev/null) $(ls /opt/*/bin/python 2>/dev/null) /usr/bin/python3
++ python3 -c 'import torch'
++ sleep 45
++ PY=python3
++ break
++ echo PY-TERPILIH=python3
+PY-TERPILIH=python3
++ '[' -z python3 ']'
++ python3 -m pip install -q timm
++ tail -3
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
++ cd /root
++ gsutil cp gs://dat-lomba-gen-lang-client-0688817395/dat_paket.tgz .
+Copying gs://dat-lomba-gen-lang-client-0688817395/dat_paket.tgz...
+/ [0 files][    0.0 B/146.4 MiB]                                                -- [1 files][146.4 MiB/146.4 MiB]                                                \
+Operation completed over 1 objects/146.4 MiB.                                    
++ mkdir -p /home/ubuntu/dat-parkinson
++ tar xzf dat_paket.tgz -C /home/ubuntu/dat-parkinson
++ cd /home/ubuntu/dat-parkinson
++ mkdir -p train/out
++ python3 -c 'import torch;print('\''CUDA-OK'\'',torch.cuda.is_available(),torch.cuda.get_device_name(0) if torch.cuda.is_available() else '\''NO-GPU'\'')'
+CUDA-OK True NVIDIA L4
++ for BB in efficientnet_b0 convnext_nano resnet50
++ echo '=== MULAI efficientnet_b0 ==='
+=== MULAI efficientnet_b0 ===
++ timeout 3600 python3 train/train_cnn.py --backbone efficientnet_b0 --tag efficientnet_b0 --img 96 --epochs 40 --bs 64 --workers 6
+Traceback (most recent call last):
+  File "/home/ubuntu/dat-parkinson/train/train_cnn.py", line 15, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'
++ echo 'GAGAL efficientnet_b0'
+GAGAL efficientnet_b0
++ gsutil -m -q cp -r 'train/out/*' gs://dat-lomba-gen-lang-client-0688817395/out/
++ echo '=== SINKRON efficientnet_b0 ==='
+=== SINKRON efficientnet_b0 ===
++ for BB in efficientnet_b0 convnext_nano resnet50
++ echo '=== MULAI convnext_nano ==='
+=== MULAI convnext_nano ===
++ timeout 3600 python3 train/train_cnn.py --backbone convnext_nano --tag convnext_nano --img 96 --epochs 40 --bs 64 --workers 6
+Traceback (most recent call last):
+  File "/home/ubuntu/dat-parkinson/train/train_cnn.py", line 15, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'
++ echo 'GAGAL convnext_nano'
+GAGAL convnext_nano
++ gsutil -m -q cp -r 'train/out/*' gs://dat-lomba-gen-lang-client-0688817395/out/
++ echo '=== SINKRON convnext_nano ==='
+=== SINKRON convnext_nano ===
++ for BB in efficientnet_b0 convnext_nano resnet50
++ echo '=== MULAI resnet50 ==='
+=== MULAI resnet50 ===
++ timeout 3600 python3 train/train_cnn.py --backbone resnet50 --tag resnet50 --img 96 --epochs 40 --bs 64 --workers 6
+Traceback (most recent call last):
+  File "/home/ubuntu/dat-parkinson/train/train_cnn.py", line 15, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'
++ echo 'GAGAL resnet50'
+GAGAL resnet50
++ gsutil -m -q cp -r 'train/out/*' gs://dat-lomba-gen-lang-client-0688817395/out/
++ echo '=== SINKRON resnet50 ==='
+=== SINKRON resnet50 ===
++ echo ALL-DONE
++ gsutil cp - gs://dat-lomba-gen-lang-client-0688817395/DONE
+Copying from <STDIN>...
+/ [0 files][    0.0 B/    0.0 B]                                                / [1 files][    0.0 B/    0.0 B]                                                
+Operation completed over 1 objects.                                              
++ gsutil -q cp /var/log/dat_train.log gs://dat-lomba-gen-lang-client-0688817395/train.log

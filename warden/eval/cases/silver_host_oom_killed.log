@@ -1,0 +1,9 @@
+=== wrun prep-features r20260826T020000 phase=F2 start=2026-08-26T02:00:00+00:00 ===
+=== [F2] membangun fitur H3 untuk 1.2M baris ===
+[F2] chunk 1/8 selesai (14.2 s)
+[F2] chunk 2/8 selesai (14.9 s)
+[F2] chunk 3/8 selesai (15.3 s)
+[F2] chunk 4/8 ... 
+Killed
+=== wrun selesai exit=137 artefak=0 RUN_FIN ditulis ===
+EXIT=137

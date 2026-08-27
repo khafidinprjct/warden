@@ -1,0 +1,12 @@
+=== wrun asr-eval r20260826T040000 phase=eval start=2026-08-26T04:00:00+00:00 ===
+Downloading shards:  40%|████      | 2/5 [00:41<01:02, 20.8s/it]
+Traceback (most recent call last):
+  File "/opt/job/eval.py", line 55, in <module>
+    model = AutoModel.from_pretrained(name)
+  File "/opt/job/venv/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1512, in http_get
+    for chunk in r.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
+  File "/opt/job/venv/lib/python3.12/site-packages/urllib3/response.py", line 1073, in stream
+    raise ProtocolError(f"Connection broken: {e!r}", e) from e
+requests.exceptions.ChunkedEncodingError: ('Connection broken: ConnectionResetError(104, \'Connection reset by peer\')', ConnectionResetError(104, 'Connection reset by peer'))
+=== wrun selesai exit=1 artefak=0 RUN_FIN ditulis ===
+EXIT=1

@@ -1,0 +1,13 @@
+=== wrun tts-ft r20260826T030000 phase=train start=2026-08-26T03:00:00+00:00 ===
+step 4950 loss 1.9021 grad_norm 0.9911
+step 5000 loss 1.8997 grad_norm 1.0020
+Traceback (most recent call last):
+  File "/opt/job/train.py", line 260, in <module>
+    save_checkpoint(model, optimizer, step, path)
+  File "/opt/job/utils/ckpt.py", line 41, in save_checkpoint
+    torch.save(state, tmp)
+  File "/opt/job/venv/lib/python3.12/site-packages/torch/serialization.py", line 943, in save
+    _save(obj, opened_zipfile, pickle_module, pickle_protocol, _disable_byteorder_record)
+OSError: [Errno 28] No space left on device
+=== wrun selesai exit=1 artefak=9 RUN_FIN ditulis ===
+EXIT=1

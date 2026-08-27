@@ -1,0 +1,48 @@
+AWAL (pembukaan tape) = 35.0% dari 20 game
+  [    85s] BARU 92.5% (saring 90%, konf 95%) [[["BUY_ANIMAL", "COW", 3], ["BUY_ANIMAL", "SHEEP", 1], ["BUY_SEED", "MELON", 7], ["BUY_SEED", "WHEAT", 10], ["BUY_PRODUCT", "WHEAT", 17], ["HIRE"], ["HIRE"], ["BUY_ANIMAL", "SHEEP", 4]], [["HIRE"]]]
+Loading environment open_spiel_env failed: No module named 'pyspiel'
+Loading environment open_spiel_env failed: No module named 'pyspiel'
+Loading environment open_spiel_env failed: No module named 'pyspiel'
+Loading environment open_spiel_env failed: No module named 'pyspiel'
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+           ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/tempa/kerja/cari_buka.py", line 46, in satu
+    fa, _ = muat_agen(fa_path)
+            ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/tempa/kerja/cepat.py", line 40, in muat_agen
+    spec.loader.exec_module(m)
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1133, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1063, in source_to_code
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/bk_lok.py", line 65
+    ["BUY_PRODUCT", "WHEAT", 17], ["HIRE"], ["HIRE"]],
+                                                    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 34
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/tempa/kerja/cari_buka.py", line 132, in <module>
+    s, n = nilai(pool, path, SEEDS)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/tempa/kerja/cari_buka.py", line 59, in nilai
+    r = [x for x in pool.map(satu, [(path, s, k) for s in seeds for k in (0, 1)])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/pool.py", line 774, in get
+    raise self._value
+  File "/tmp/bk_lok.py", line 65
+    ["BUY_PRODUCT", "WHEAT", 17], ["HIRE"], ["HIRE"]],
+                                                    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 34

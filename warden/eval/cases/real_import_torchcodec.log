@@ -1,0 +1,60 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[librivox_id] GAGAL TOTAL:
+Traceback (most recent call last):
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 76, in <module>
+    dump(*args)
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 36, in dump
+    ds = load_dataset(repo, config) if config else load_dataset(repo)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1696, in load_dataset
+    builder_instance = load_dataset_builder(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1323, in load_dataset_builder
+    dataset_module = dataset_module_factory(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1215, in dataset_module_factory
+    raise e1 from None
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1175, in dataset_module_factory
+    raise RuntimeError(f"Dataset scripts are no longer supported, but found {filename}")
+RuntimeError: Dataset scripts are no longer supported, but found librivox-indonesia.py
+[fleurs_r_id] GAGAL TOTAL:
+Traceback (most recent call last):
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 76, in <module>
+    dump(*args)
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 36, in dump
+    ds = load_dataset(repo, config) if config else load_dataset(repo)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1696, in load_dataset
+    builder_instance = load_dataset_builder(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/load.py", line 1361, in load_dataset_builder
+    builder_instance: DatasetBuilder = builder_cls(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/builder.py", line 351, in __init__
+    self.config, self.config_id = self._create_builder_config(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/builder.py", line 549, in _create_builder_config
+    raise ValueError(
+ValueError: BuilderConfig 'id_id' not found. Available: ['default']
+Generating train split:   0%|          | 0/2579 [00:00<?, ? examples/s]Generating train split:  39%|███▉      | 1000/2579 [00:03<00:05, 265.20 examples/s]Generating train split:  78%|███████▊  | 2000/2579 [00:04<00:01, 497.27 examples/s]Generating train split: 100%|██████████| 2579/2579 [00:05<00:00, 587.70 examples/s]Generating train split: 100%|██████████| 2579/2579 [00:05<00:00, 488.57 examples/s]
+Generating validation split:   0%|          | 0/350 [00:00<?, ? examples/s]Generating validation split: 100%|██████████| 350/350 [00:00<00:00, 727.92 examples/s]Generating validation split: 100%|██████████| 350/350 [00:00<00:00, 708.70 examples/s]
+Generating test split:   0%|          | 0/687 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 687/687 [00:02<00:00, 290.54 examples/s]Generating test split: 100%|██████████| 687/687 [00:02<00:00, 286.95 examples/s]
+[fleurs_id] GAGAL TOTAL:
+Traceback (most recent call last):
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 76, in <module>
+    dump(*args)
+  File "/home/ubuntu/chimera-project/scripts/download_audio.py", line 40, in dump
+    for i, row in enumerate(ds[split]):
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/arrow_dataset.py", line 2765, in __iter__
+    formatted_output = format_table(
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/formatting/formatting.py", line 674, in format_table
+    return formatter(pa_table, query_type=query_type)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/formatting/formatting.py", line 427, in __call__
+    return self.format_row(pa_table)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/formatting/formatting.py", line 476, in format_row
+    row = self.python_features_decoder.decode_row(row)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/formatting/formatting.py", line 240, in decode_row
+    return self.features.decode_example(row, token_per_repo_id=self.token_per_repo_id) if self.features else row
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/features/features.py", line 2222, in decode_example
+    return {
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/features/features.py", line 2223, in <dictcomp>
+    column_name: decode_nested_example(feature, value, token_per_repo_id=token_per_repo_id)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/features/features.py", line 1524, in decode_nested_example
+    return schema.decode_example(obj, token_per_repo_id=token_per_repo_id) if obj is not None else None
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/datasets/features/audio.py", line 186, in decode_example
+    raise ImportError("To support decoding audio data, please install 'torchcodec'.")
+ImportError: To support decoding audio data, please install 'torchcodec'.
+SEMUA SUMBER DIPROSES

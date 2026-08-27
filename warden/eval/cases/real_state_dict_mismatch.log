@@ -1,0 +1,13 @@
+  memuat encoder:
+    kita_122000.t7: 25/25 tensor cocok (hilang 0, asing 1)
+Traceback (most recent call last):
+  File "/home/ubuntu/chimera-project/scripts/adu_plbert.py", line 156, in <module>
+    main()
+  File "/home/ubuntu/chimera-project/scripts/adu_plbert.py", line 142, in main
+    papercup = muat_encoder("/tmp/papercup/step_1100000.t7")
+  File "/home/ubuntu/chimera-project/scripts/adu_plbert.py", line 60, in muat_encoder
+    r = b.load_state_dict(sd, strict=False)
+  File "/home/ubuntu/chimera-project/venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 2638, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for AlbertModel:
+	size mismatch for embeddings.word_embeddings.weight: copying a param with shape torch.Size([178, 128]) from checkpoint, the shape in current model is torch.Size([179, 128]).

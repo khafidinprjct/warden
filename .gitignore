@@ -8,6 +8,8 @@ __pycache__/
 .ruff_cache/
 /tmp/
 *.log
+# ...except the gold set: those .log files ARE the evaluation data, not output (catalogue #37)
+!warden/eval/cases/*.log
 data/emulator/
 .secrets/
 docs/video/raw/

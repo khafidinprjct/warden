@@ -1,0 +1,8 @@
+=== wrun climate-fold r20260826T050000 phase=F3 start=2026-08-26T05:00:00+00:00 ===
+=== [F3] latih fold 0/5 ===
+Traceback (most recent call last):
+  File "/opt/job/run_pipeline.py", line 412, in <module>
+    params = CFG["models"][args.model]["params"]
+KeyError: 'tabicl_v2'
+=== wrun selesai exit=1 artefak=0 RUN_FIN ditulis ===
+EXIT=1

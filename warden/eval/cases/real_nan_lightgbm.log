@@ -1,0 +1,748 @@
+=== [F2] fitur ===
+/root/climate-health/src/features.py:202: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['child_x_year'] = df.age_child * (df.year - 2015)
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:247: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['drought_burden'] = df.tavg_90d / np.maximum(df.rain_sum_90d, 10.0)
+/root/climate-health/src/features.py:248: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['dry_to_wet_shock'] = df.rain_sum_30d / np.maximum(df.rain_sum_90d, 10.0)
+/root/climate-health/src/features.py:249: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['dust_risk'] = df.max_temperature * (1.0 - df.ndvi_30d)
+/root/climate-health/src/features.py:250: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['age_x_tavg90'] = df.age * df.tavg_90d
+/root/climate-health/src/features.py:251: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['age_x_rain90'] = df.age * df.rain_sum_90d
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:246: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df[k] = vv
+/root/climate-health/src/features.py:247: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['drought_burden'] = df.tavg_90d / np.maximum(df.rain_sum_90d, 10.0)
+/root/climate-health/src/features.py:248: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['dry_to_wet_shock'] = df.rain_sum_30d / np.maximum(df.rain_sum_90d, 10.0)
+/root/climate-health/src/features.py:249: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['dust_risk'] = df.max_temperature * (1.0 - df.ndvi_30d)
+/root/climate-health/src/features.py:250: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['age_x_tavg90'] = df.age * df.tavg_90d
+/root/climate-health/src/features.py:251: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  df['age_x_rain90'] = df.age * df.rain_sum_90d
+power/indeks-panas: False
+openmeteo: True | shape (3146, 132)/(1030, 131) (7s)
+pseudo: 349/1030 baris test yakin (>=0.92/<=0.08), bobot 0.7
+/root/climate-health/run_pipeline.py:104: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  tr['kmeans5'] = _km.predict(tr[['latitude', 'longitude']]).astype(float)
+/root/climate-health/run_pipeline.py:105: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  te['kmeans5'] = _km.predict(te[['latitude', 'longitude']]).astype(float)
+MODE EKSTERNAL: 31 fitur CHIRPS/LST + plasebo 31 acak
+=== [F3-4] varian eksternal: 138 fitur ===
+  null-importance (hanya kandidat baru): lolos=['tavg_30d_zanom', 'ndvi_x_rainfrac', 'elev_x_tshock', 'age_neonat', 'kmeans5', 'kp_app14', 'elder_kp_app14', 'agelog_kp_tmax14', 'infant_x_year', 'child_x_year', 'kp_tmean365', 'age_x_tavg90', 'age_x_rain90', 'ch_kering_max90', 'ch_sum_14d', 'ch_kp_30', 'lst_amp_90d', 'eks_adult_lstkp90', 'eks_infpost18_chkp180', 'eks_infpost18_chkp30'] | gugur=['avg_temperature_zanom', 'max_temperature_zanom', 'precipitation_zanom', 'rain_sum_30d_zanom', 'precip_x_raindays', 'agelog_x_tshock', 'hot_x_elder', 'range_x_hotfrac', 'neonat_x_rain', 'infant_x_tshock', 'infant_x_hotfrac', 't_ushape', 't_ushape30', 'kp_rain14', 'kp_rain30', 'kp_rain90', 'kp_tmean14', 'kp_tmax14', 'avg_temperature_ploc', 'max_temperature_ploc', 'precipitation_ploc', 'tavg_7d_ploc', 'tavg_30d_ploc', 'tavg_90d_ploc', 'rain_sum_7d_ploc', 'rain_sum_30d_ploc', 'rain_sum_90d_ploc', 'ndvi_30d_ploc', 'hot_days_30d_ploc', 'temp_range_mean_30d_ploc', 'child_kp_rain30', 'child_kp_rain14', 'infant_kp_rain30', 'elder_ndvi90', 'kp_rain180', 'kp_rain365', 'kp_tmean180', 'drought_burden', 'dry_to_wet_shock', 'dust_risk', 'ch_tahunan_desa', 'ch_hari_basah90', 'ch_sum_30d', 'ch_sum_90d', 'ch_sum_180d', 'ch_sum_365d', 'ch_kp_14', 'ch_kp_90', 'ch_kp_180', 'ch_kp_365', 'lst_desa_day', 'lst_desa_night', 'lst_desa_amp', 'lst_day_30d', 'lst_day_90d', 'lst_day_365d', 'lst_kp_day_30', 'lst_kp_day_90', 'lst_kp_day_365', 'lst_night_30d', 'lst_night_90d', 'lst_night_365d', 'eks_elder_lstkp90', 'eks_elder_kering'] | total fitur=72
+  adversarial AUC=0.9862 (0,5=tak bergeser) | pemisah teratas: ['elevation', 'slope', 'zone', 'kmeans5', 'lst_amp_90d', 't_shock_min', 'kp_tmean365', 'kp_app14']
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[119]	valid_0's binary_logloss: 0.480304
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[122]	valid_0's binary_logloss: 0.490585
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[151]	valid_0's binary_logloss: 0.484057
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[113]	valid_0's binary_logloss: 0.495466
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[152]	valid_0's binary_logloss: 0.491237
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.480445
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[55]	valid_0's binary_logloss: 0.489273
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[61]	valid_0's binary_logloss: 0.487514
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[58]	valid_0's binary_logloss: 0.499451
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[70]	valid_0's binary_logloss: 0.493014
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[187]	valid_0's binary_logloss: 0.480889
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[194]	valid_0's binary_logloss: 0.488831
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[197]	valid_0's binary_logloss: 0.490042
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[175]	valid_0's binary_logloss: 0.495593
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[230]	valid_0's binary_logloss: 0.489061
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[188]	valid_0's binary_logloss: 0.482838
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[219]	valid_0's binary_logloss: 0.484497
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[204]	valid_0's binary_logloss: 0.487918
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[199]	valid_0's binary_logloss: 0.49982
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[230]	valid_0's binary_logloss: 0.487822
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[81]	valid_0's binary_logloss: 0.482628
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[93]	valid_0's binary_logloss: 0.487722
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[81]	valid_0's binary_logloss: 0.492997
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[71]	valid_0's binary_logloss: 0.496958
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[115]	valid_0's binary_logloss: 0.490236
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[52]	valid_0's binary_logloss: 0.483204
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[41]	valid_0's binary_logloss: 0.485957
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[63]	valid_0's binary_logloss: 0.490704
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[49]	valid_0's binary_logloss: 0.496438
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[74]	valid_0's binary_logloss: 0.486716
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[234]	valid_0's binary_logloss: 0.483775
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[179]	valid_0's binary_logloss: 0.493465
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[232]	valid_0's binary_logloss: 0.49061
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[192]	valid_0's binary_logloss: 0.502147
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[239]	valid_0's binary_logloss: 0.486766
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[267]	valid_0's binary_logloss: 0.481502
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[233]	valid_0's binary_logloss: 0.490541
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[359]	valid_0's binary_logloss: 0.490708
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[199]	valid_0's binary_logloss: 0.499847
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[353]	valid_0's binary_logloss: 0.490469
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[252]	valid_0's binary_logloss: 0.477524
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[240]	valid_0's binary_logloss: 0.483768
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[229]	valid_0's binary_logloss: 0.488636
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[270]	valid_0's binary_logloss: 0.49841
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[330]	valid_0's binary_logloss: 0.485075
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[129]	valid_0's binary_logloss: 0.480762
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[153]	valid_0's binary_logloss: 0.485212
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[146]	valid_0's binary_logloss: 0.489856
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[102]	valid_0's binary_logloss: 0.497147
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[154]	valid_0's binary_logloss: 0.485023
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[101]	valid_0's binary_logloss: 0.481531
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[86]	valid_0's binary_logloss: 0.48546
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[120]	valid_0's binary_logloss: 0.487964
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[80]	valid_0's binary_logloss: 0.496262
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[99]	valid_0's binary_logloss: 0.495873
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[101]	valid_0's binary_logloss: 0.487198
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[88]	valid_0's binary_logloss: 0.486018
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[119]	valid_0's binary_logloss: 0.487971
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[72]	valid_0's binary_logloss: 0.496273
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[95]	valid_0's binary_logloss: 0.495484
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[187]	valid_0's binary_logloss: 0.487858
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[88]	valid_0's binary_logloss: 0.487492
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[163]	valid_0's binary_logloss: 0.488768
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[72]	valid_0's binary_logloss: 0.497533
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[142]	valid_0's binary_logloss: 0.497256
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[86]	valid_0's binary_logloss: 0.480616
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[75]	valid_0's binary_logloss: 0.490955
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[74]	valid_0's binary_logloss: 0.488289
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[67]	valid_0's binary_logloss: 0.497893
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[92]	valid_0's binary_logloss: 0.491707
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[114]	valid_0's binary_logloss: 0.484674
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[99]	valid_0's binary_logloss: 0.488534
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[125]	valid_0's binary_logloss: 0.487816
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[107]	valid_0's binary_logloss: 0.496277
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[218]	valid_0's binary_logloss: 0.494135
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[32]	valid_0's binary_logloss: 0.481539
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[40]	valid_0's binary_logloss: 0.490818
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[44]	valid_0's binary_logloss: 0.491345
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[34]	valid_0's binary_logloss: 0.497196
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[39]	valid_0's binary_logloss: 0.493814
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[78]	valid_0's binary_logloss: 0.481021
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[53]	valid_0's binary_logloss: 0.490492
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[73]	valid_0's binary_logloss: 0.488657
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[59]	valid_0's binary_logloss: 0.498728
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[88]	valid_0's binary_logloss: 0.494345
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[52]	valid_0's binary_logloss: 0.47805
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[47]	valid_0's binary_logloss: 0.493413
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[43]	valid_0's binary_logloss: 0.49425
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[36]	valid_0's binary_logloss: 0.505109
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[102]	valid_0's binary_logloss: 0.48963
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[132]	valid_0's binary_logloss: 0.48405
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[103]	valid_0's binary_logloss: 0.491057
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[191]	valid_0's binary_logloss: 0.489076
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[110]	valid_0's binary_logloss: 0.497926
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[148]	valid_0's binary_logloss: 0.495867
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.48382
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[38]	valid_0's binary_logloss: 0.493048
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[43]	valid_0's binary_logloss: 0.483617
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[27]	valid_0's binary_logloss: 0.504272
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[49]	valid_0's binary_logloss: 0.488255
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[52]	valid_0's binary_logloss: 0.480349
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[55]	valid_0's binary_logloss: 0.490454
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[59]	valid_0's binary_logloss: 0.486004
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[48]	valid_0's binary_logloss: 0.49712
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[61]	valid_0's binary_logloss: 0.493994
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[74]	valid_0's binary_logloss: 0.481981
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[67]	valid_0's binary_logloss: 0.490285
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[96]	valid_0's binary_logloss: 0.486727
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[71]	valid_0's binary_logloss: 0.498376
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[103]	valid_0's binary_logloss: 0.493402
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[142]	valid_0's binary_logloss: 0.480946
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[101]	valid_0's binary_logloss: 0.486902
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[156]	valid_0's binary_logloss: 0.490265
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[106]	valid_0's binary_logloss: 0.499775
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[162]	valid_0's binary_logloss: 0.490719
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[76]	valid_0's binary_logloss: 0.486749
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[67]	valid_0's binary_logloss: 0.492063
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[150]	valid_0's binary_logloss: 0.485443
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[91]	valid_0's binary_logloss: 0.494595
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[91]	valid_0's binary_logloss: 0.498197
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[63]	valid_0's binary_logloss: 0.481089
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[60]	valid_0's binary_logloss: 0.492916
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[95]	valid_0's binary_logloss: 0.492797
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[45]	valid_0's binary_logloss: 0.493579
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[70]	valid_0's binary_logloss: 0.493572
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[101]	valid_0's binary_logloss: 0.486442
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.489676
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[73]	valid_0's binary_logloss: 0.49064
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[46]	valid_0's binary_logloss: 0.495634
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[60]	valid_0's binary_logloss: 0.495493
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[43]	valid_0's binary_logloss: 0.483619
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.490838
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[47]	valid_0's binary_logloss: 0.488197
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[40]	valid_0's binary_logloss: 0.503655
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[61]	valid_0's binary_logloss: 0.490376
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.474918
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[36]	valid_0's binary_logloss: 0.485756
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[46]	valid_0's binary_logloss: 0.487816
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.493458
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[74]	valid_0's binary_logloss: 0.492524
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[45]	valid_0's binary_logloss: 0.482422
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.488572
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[50]	valid_0's binary_logloss: 0.486273
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[46]	valid_0's binary_logloss: 0.497149
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[30]	valid_0's binary_logloss: 0.497548
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[49]	valid_0's binary_logloss: 0.480409
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[50]	valid_0's binary_logloss: 0.489153
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[60]	valid_0's binary_logloss: 0.489136
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[39]	valid_0's binary_logloss: 0.502756
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[50]	valid_0's binary_logloss: 0.490236
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.479529
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[37]	valid_0's binary_logloss: 0.489644
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[38]	valid_0's binary_logloss: 0.491601
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[44]	valid_0's binary_logloss: 0.499088
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[53]	valid_0's binary_logloss: 0.495294
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[67]	valid_0's binary_logloss: 0.481485
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.488085
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[89]	valid_0's binary_logloss: 0.491199
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[70]	valid_0's binary_logloss: 0.496052
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[221]	valid_0's binary_logloss: 0.491691
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[62]	valid_0's binary_logloss: 0.481455
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[63]	valid_0's binary_logloss: 0.489428
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[62]	valid_0's binary_logloss: 0.486901
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[63]	valid_0's binary_logloss: 0.498411
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[59]	valid_0's binary_logloss: 0.496729
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[61]	valid_0's binary_logloss: 0.483705
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[39]	valid_0's binary_logloss: 0.493592
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.489493
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[36]	valid_0's binary_logloss: 0.500528
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[41]	valid_0's binary_logloss: 0.495196
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[44]	valid_0's binary_logloss: 0.48039
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.485937
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.487539
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[33]	valid_0's binary_logloss: 0.498309
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[46]	valid_0's binary_logloss: 0.493152
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[40]	valid_0's binary_logloss: 0.485344
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[42]	valid_0's binary_logloss: 0.49027
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[70]	valid_0's binary_logloss: 0.487473
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[52]	valid_0's binary_logloss: 0.49988
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[51]	valid_0's binary_logloss: 0.49742
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[57]	valid_0's binary_logloss: 0.481524
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[50]	valid_0's binary_logloss: 0.4901
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[63]	valid_0's binary_logloss: 0.494273
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[47]	valid_0's binary_logloss: 0.495825
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[70]	valid_0's binary_logloss: 0.488011
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[41]	valid_0's binary_logloss: 0.480536
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[39]	valid_0's binary_logloss: 0.488143
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[55]	valid_0's binary_logloss: 0.487744
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[33]	valid_0's binary_logloss: 0.495647
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[58]	valid_0's binary_logloss: 0.493776
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[68]	valid_0's binary_logloss: 0.485286
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[62]	valid_0's binary_logloss: 0.486703
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[56]	valid_0's binary_logloss: 0.487938
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[44]	valid_0's binary_logloss: 0.50382
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[104]	valid_0's binary_logloss: 0.491337
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[102]	valid_0's binary_logloss: 0.48044
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[88]	valid_0's binary_logloss: 0.48959
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[98]	valid_0's binary_logloss: 0.494511
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[107]	valid_0's binary_logloss: 0.494079
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[177]	valid_0's binary_logloss: 0.489068
+  optuna(40 trial) lgb_opt comp-f0=0.8195 params={'learning_rate': 0.04743135298492085, 'num_leaves': 36, 'min_child_samples': 46, 'reg_alpha': 3.9889853340465904, 'reg_lambda': 0.20809622306598385, 'feature_fraction': 0.8520328983988699, 'bagging_fraction': 0.7553082698269054}
+  paralel: 3 model serentak x 8 thread
+/usr/local/lib/python3.12/dist-packages/sklearn/linear_model/_logistic.py:1403: FutureWarning: 'penalty' was deprecated in version 1.8 and will be removed in 1.10. To avoid this warning, leave 'penalty' set to its default value and use 'l1_ratio' or 'C' instead. Use l1_ratio=0 instead of penalty='l2', l1_ratio=1 instead of penalty='l1', l1_ratio set to a float between 0 and 1 instead of penalty='elasticnet', and C=np.inf instead of penalty=None.
+  warnings.warn(
+Training until validation scores don't improve for 100 rounds
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[89]	valid_0's binary_logloss: 0.47472
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[75]	valid_0's binary_logloss: 0.475041
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[87]	valid_0's binary_logloss: 0.480101
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[92]	valid_0's binary_logloss: 0.47573
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[96]	valid_0's binary_logloss: 0.477654
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[84]	valid_0's binary_logloss: 0.477144
+Early stopping, best iteration is:
+[85]	valid_0's binary_logloss: 0.476797
+Training until validation scores don't improve for 100 rounds
+Training until validation scores don't improve for 100 rounds
+Training until validation scores don't improve for 100 rounds
+Early stopping, best iteration is:
+[87]	valid_0's binary_logloss: 0.480545
+Early stopping, best iteration is:
+[94]	valid_0's binary_logloss: 0.472242
+Early stopping, best iteration is:
+[77]	valid_0's binary_logloss: 0.476888
+joblib.externals.loky.process_executor._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/joblib/_utils.py", line 109, in __call__
+    return self.func(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 607, in __call__
+    return [func(*args, **kwargs) for func, args, kwargs in self.items]
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/climate-health/run_pipeline.py", line 235, in _tugas
+    return k, fit_predict(kind, spec2, Xt2, yt2, Xv, yv, Xte_all, catidx, w=w2)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/climate-health/src/modeling.py", line 307, in fit_predict
+    m.fit(Xtr, ytr)
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 1403, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/pipeline.py", line 649, in fit
+    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/base.py", line 1403, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/linear_model/_logistic.py", line 1459, in fit
+    X, y = validate_data(
+           ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 3055, in validate_data
+    X, y = check_X_y(X, y, **check_params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 1327, in check_X_y
+    X = check_array(
+        ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 1087, in check_array
+    _assert_all_finite(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 137, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/usr/local/lib/python3.12/dist-packages/sklearn/utils/validation.py", line 186, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/climate-health/run_pipeline.py", line 244, in <module>
+    hasil_par = Parallel(n_jobs=KPAR, backend='threading')(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 2072, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 1682, in _get_outputs
+    yield from self._retrieve()
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 1784, in _retrieve
+    self._raise_error_fast()
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 1859, in _raise_error_fast
+    error_job.get_result(self.timeout)
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 758, in get_result
+    return self._return_or_raise()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/joblib/parallel.py", line 773, in _return_or_raise
+    raise self._result
+ValueError: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+EXIT=1
