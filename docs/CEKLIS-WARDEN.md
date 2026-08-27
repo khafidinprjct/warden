@@ -22,7 +22,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ C1 Structured Diagnostician + deterministic cross-check + second opinion.
 - ✅ C2 Investigator with read-only tools (per-run log, heartbeats, artifacts, history, instance).
 - ✅ C3 No artificial limits; framework defaults only.
-- ◐ C4 Gold evaluation set from real logs (NaN, OOM, wake-loop, kernel fallback, deps) — action accuracy ≥ 90 %, zero fabricated evidence, re-run on every prompt/model change. The set itself is proven: **11/11, 0 fabricated, $0.07/run** (manual run, 26 Aug, `eval/gold_report.json`). The *nightly* leg was a false claim until 27 Aug: `warden-gold-eval` returned 401 every night (catalogue #35) and, once that was fixed, 500 because the gold set was not in the image (#36). Both fixed; the item closes when a scheduled run writes `eval/<ts>` and health `gold_eval` unaided.
+- ✅ C4 Gold evaluation set from real logs (NaN, OOM, wake-loop, kernel fallback, deps) — action accuracy ≥ 90 %, zero fabricated evidence, re-run on every prompt/model change. **Proven through the scheduled path** 27 Aug (rev 00023-pl5): Cloud Scheduler → `/eval` → `eval/2026-08-27T144330Z` = **11/11, accuracy 1.0, 0 fabricated, $0.0695**, health `gold_eval` green, no human step. Until that day the nightly leg had never run: 401 every night (catalogue #35), then three layers of a missing gold set in the image (#36).
 - ✅ C5 Multimodal (training-curve PNG attached for plateau/throughput/grad/NaN/stuck incidents; Ask Warden reads a phone photo, labelled, never acting): loss curve rendered and judged when numbers are ambiguous; phone screenshots read (labelled, never auto-acting).
 
 ## D. Actions — every recommendation has a real executor
@@ -91,7 +91,7 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 ## M. Testing
 - ✅ M1 25 chaos scenarios, unit tests, infra chaos.
 - ✅ M2 Live on Compute Engine (26 Aug, drill #5, `chaos/live_lifecycle_report.json`): resume_smaller_batch (auto, L2), relocate_zone (snapshot → zone c, source kept TERMINATED), change_machine_type (e2-medium → e2-small), clean_disk (3 checkpoints freed after md5 match), stop — each verified against the world. resize_disk, rollback and kill are proven on the fake provider only.
-- ◐ M3 Gold set proven (11/11); the nightly leg is fixed but not yet proven unaided — see C4.
+- ✅ M3 Gold set + nightly evaluation, both proven through Cloud Scheduler on 27 Aug (see C4).
 - ✅ M4 Full lifecycle without a human touch (26 Aug, drill #5): spec → VM in 22 s → RUNNING 64 s → OOM at step 600 → diagnosis oom_gpu → resume batch 0.5 (47 s after the incident) → verified → COMPLETE, 22 artifacts opened → report (ETTR 0.73, $0.0017) → machine stopped by close-out. Five earlier drills each found one real defect (catalog #29–#33).
 
 ## N. Documentation & reproducibility

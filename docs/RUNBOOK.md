@@ -28,7 +28,7 @@ Job page → **Request an action** (any action; same policy/approval path as War
 CLI: `python -m warden.cli launch|job list|job show|tick|steward|freeze on|off|approve|deny <id>|ettr <job>`.
 
 ## Evaluation
-`python -m warden.eval.gold` (≈ $0.07) runs the gold set (real logs) against the Diagnostician; nightly at 02:00 WIB via `/eval`; below 0.9 → health `gold_eval` red + notification. Run it after every prompt or model change.
+`python -m warden.eval.gold` (≈ $0.07) runs the gold set (real logs) against the Diagnostician; nightly at 02:00 WIB via `/eval`; below 0.9 → health `gold_eval` red + notification. A crash also lands there (health + notification), not only in the HTTP status. Run it after every prompt or model change. The gold set ships inside the image at `warden/eval/cases/`; if you add a case, confirm it is uploaded — `gcloud meta list-files-for-upload . | grep warden/eval/cases` — because `.gcloudignore` drops `*.log` everywhere else (catalogue #36). Checking a scheduled job: `ENABLED` and `lastAttemptTime` only mean it fired; read the target's HTTP status with `gcloud logging read 'resource.type="cloud_scheduler_job" AND severity>=ERROR'` (catalogue #35).
 
 ## Recovery of Warden itself
 State is in Firestore: incidents keep their verification spec, attempt count and remaining hypotheses, so a restart of warden-core resumes where it stopped. Re-deploy: `gcloud run deploy warden-core --source .` (and `warden-ui`). Secrets: `warden-ingest-hmac` (rotate with `infra/rotate_hmac.py`, grace period keeps old signatures valid).
