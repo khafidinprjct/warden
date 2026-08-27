@@ -142,8 +142,10 @@ def policies(request: Request):
     pol = load_policy()
     level_text = {"L0": "L0 · Observe", "L1": "L1 · Propose, approval required", "L2": "L2 · Act, then report", "L3": "L3 · Act silently"}
     rows = [{"action": data.label(data.ACTION_LABEL, a), "level": level_text.get(str(l), str(l)), "cls": "ok" if str(l) in ("L2", "L3") else "warn" if str(l) == "L1" else "muted",
-             "limits": ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in (pol["limits"].get(a, {}) or {}).items()) or "—"} for a, l in pol["autonomy"].items()]
-    return render(request, "policies.html", "policies", "Policies", data.base_context(), rows=rows, pol=pol, hard=[data.label(data.ACTION_LABEL, x) for x in pol["hard_deny"]])
+             "limits": data.limits_text(pol["limits"].get(a, {}))} for a, l in pol["autonomy"].items()]
+    return render(request, "policies.html", "policies", "Policies", data.base_context(), rows=rows, pol=pol,
+                  caps=data.policy_pairs(pol.get("global")), breaker=data.policy_pairs(pol.get("circuit_breaker")),
+                  hard=[data.label(data.ACTION_LABEL, x) for x in pol["hard_deny"]])
 
 
 @app.get("/audit", response_class=HTMLResponse)

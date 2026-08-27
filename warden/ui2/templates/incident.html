@@ -71,9 +71,9 @@
 </section>
 
 {% elif tab == 'timeline' %}
-<section class="card table scroll">
+<section class="card table stack">
   <div class="th cols-timeline"><div>Time</div><div>Transition</div><div>Note</div><div>Actor</div></div>
-  {% for t in timeline %}<div class="tr cols-timeline"><div class="num muted"><time data-utc="{{ t.ts }}" data-fmt="clock"></time></div><div>{{ t.from }} → {{ t.to }}</div><div class="text-2">{{ t.note }}</div><div><span class="actor actor-{{ t.actor|lower }}">{{ t.actor }}</span></div></div>{% endfor %}
+  {% for t in timeline %}<div class="tr cols-timeline"><div class="num muted" data-l="Time"><time data-utc="{{ t.ts }}" data-fmt="clock"></time></div><div data-l="Transition">{{ t.from }} → {{ t.to }}</div><div class="text-2" data-l="Note">{{ t.note }}</div><div data-l="Actor"><span class="actor actor-{{ t.actor|lower }}">{{ t.actor }}</span></div></div>{% endfor %}
 </section>
 
 {% elif tab == 'evidence' %}

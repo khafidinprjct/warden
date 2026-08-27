@@ -59,6 +59,55 @@ def usd(v: float, digits: int = 2) -> str:
     return f"${v:,.{digits}f}"
 
 
+# Policy keys are configuration identifiers; an operator should read what the limit means, with the unit on the
+# value where it belongs, not a de-underscored variable name ("Approval ttl minutes 30").
+POLICY_LABEL = {
+    "auto_spend_daily_cap_usd": ("Automatic spend, per day", "usd"),
+    "approval_ttl_minutes": ("Approval expires after", "min"),
+    "idle_grace_minutes": ("Idle before flagged", "min"),
+    "orphan_grace_minutes": ("Orphan before flagged", "min"),
+    "boot_grace_minutes": ("Grace after boot", "min"),
+    "max_auto_actions_per_hour": ("Automatic actions, per hour", ""),
+    "max_failed_verifications_in_row": ("Failed verifications before opening", ""),
+    "open_minutes": ("Stays open for", "min"),
+    "max_attempts_per_incident": ("Hypotheses per incident", ""),
+    "streak": ("Approvals in a row to promote", ""),
+}
+LIMIT_LABEL = {"per_hour": "{v}/hour", "per_day": "{v}/day", "max_cost_usd": "max {money}",
+               "max_price_increase_pct": "max +{v}% price"}
+
+
+def _unit(v: Any, unit: str) -> str:
+    if unit == "usd":
+        try:
+            return f"${float(v):,.2f}"
+        except (TypeError, ValueError):
+            return str(v)
+    return f"{v} min" if unit == "min" else str(v)
+
+
+def policy_pairs(d: dict) -> list[tuple[str, str]]:
+    """Config keys → operator-readable label and a value that carries its own unit."""
+    out = []
+    for k, v in (d or {}).items():
+        lab, unit = POLICY_LABEL.get(k, (k.replace("_", " ").capitalize(), ""))
+        out.append((lab, _unit(v, unit)))
+    return out
+
+
+def limits_text(d: dict) -> str:
+    if not d:
+        return "—"
+    out = []
+    for k, v in d.items():
+        try:
+            money = f"${float(v):,.2f}"
+        except (TypeError, ValueError):
+            money = str(v)
+        out.append(LIMIT_LABEL.get(k, k.replace("_", " ") + " {v}").format(v=v, money=money))
+    return " · ".join(out)
+
+
 def label(m: dict, k: Any) -> str:
     k = _s(k); return m.get(k, k.replace("_", " ").capitalize())
 

@@ -78,6 +78,7 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .cols-override { grid-template-columns: 160px 200px 80px 160px minmax(0, 1fr); }
 .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ask-form { display: grid; grid-template-columns: minmax(0, 1fr) 220px 140px; gap: 10px; align-items: end; }
+.cell-clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell-2 { min-width: 0; } .cell-2 .sub { color: var(--muted); } .gap4 { display: flex; flex-direction: column; gap: 4px; }
 
 input, select, textarea, button { max-width: 100%; box-sizing: border-box; }
@@ -119,7 +120,27 @@ select { width: 100%; }
   .two, .split { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .stat .v { font-size: 22px; }
   .cols-incidents { grid-template-columns: 90px minmax(0, 1fr); } .cols-incidents > :nth-child(n+3) { display: none; }
   .cols-decision { grid-template-columns: 1fr; gap: 10px; } .card.decision { position: static; }
-  .table { overflow-x: auto; }
+  /* Dense tables do not survive a 390 px column. Sideways scrolling technically fits them, but it hides the
+     columns that matter (the audit log showed Time/Actor/Phase and hid Action/Target/Result), so a `stack` table
+     turns each row into labelled lines instead. `scroll` stays for tables that read as a grid or not at all. */
+  .table.scroll { overflow-x: auto; }
+  .table.stack .th { display: none; }
+  .table.stack .tr { grid-template-columns: 1fr; min-width: 0; gap: 6px; padding: 12px 14px; align-items: start; }
+  .table.stack .tr > * { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; min-width: 0; }
+  .table.stack .tr > *::before { content: attr(data-l); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .table.stack .tr > *:not([data-l]) { grid-template-columns: 1fr; }
+  .table.stack .cell-clip { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+  /* The audit log is the densest table and the longest list: one labelled line per cell would be six lines per
+     entry. What happened (action → target → result) gets a line each; when, who and which phase share one. */
+  .table.stack .cols-audit { grid-template-columns: auto auto minmax(0, 1fr); column-gap: 10px; row-gap: 2px; }
+  .table.stack .cols-audit > [data-l='Action'] { grid-column: 1 / -1; font-weight: 600; color: var(--text); }
+  .table.stack .cols-audit > [data-l='Target'], .table.stack .cols-audit > [data-l='Result'] { grid-column: 1 / -1; }
+  .table.stack .cols-audit > [data-l='Time'] { grid-column: 1; } .table.stack .cols-audit > [data-l='Actor'] { grid-column: 2; }
+  .table.stack .cols-audit > [data-l='Phase'] { grid-column: 3; }
+  .table.stack .cols-audit > [data-l='Time'], .table.stack .cols-audit > [data-l='Actor'],
+  .table.stack .cols-audit > [data-l='Phase'] { display: block; }
+  .table.stack .cols-audit > [data-l='Time']::before, .table.stack .cols-audit > [data-l='Actor']::before,
+  .table.stack .cols-audit > [data-l='Phase']::before { content: none; }
   .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; } .cols-timeline { min-width: 600px; } .cols-override { min-width: 640px; }
   .ask-form { grid-template-columns: 1fr; }
   .props { grid-template-columns: 110px minmax(0, 1fr); }
