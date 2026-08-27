@@ -1,7 +1,48 @@
 {
- "job": "live-1522-phase",
- "pass": false,
- "error": "AssertionError: no preempted incident; rules saw: ['fin_ok_pending_verify']",
+ "job": "live-1539-phase",
+ "gate": "A4",
+ "checks": {
+  "reached_eval": {
+   "step": 400,
+   "run_id": "r20260827T154042"
+  },
+  "real_preemption": {
+   "operations": 1,
+   "at_eval_fold": "4/10",
+   "phase_seconds_left": 262
+  },
+  "auto_recovery": {
+   "rule": "preempted",
+   "action": "start_instance",
+   "verdict": "AUTO",
+   "status": "DONE"
+  },
+  "phase_resumed": {
+   "phase": "eval",
+   "step": 400,
+   "run_before": "r20260827T154042",
+   "run_after": "r20260827T154650",
+   "lowest_step_seen_after_restart": 400
+  },
+  "artifacts": {
+   "eval.jsonl": 10,
+   "pred.csv": 2001
+  },
+  "report": {
+   "spent_usd": 0.0034,
+   "ettr": 0.11,
+   "incidents": {
+    "by_rule": {
+     "fin_ok_pending_verify": 1,
+     "preempted": 1
+    },
+    "needed_human": 0,
+    "total": 2,
+    "resolved_by_warden": 1
+   }
+  }
+ },
+ "pass": true,
  "events": [
   {
    "t": 1,
@@ -10,92 +51,359 @@
   },
   {
    "t": 1,
-   "msg": "A4 GATE: preemption inside the eval phase \u2014 job live-1522-phase, 400 steps, 15s per eval fold"
+   "msg": "A4 GATE: preemption inside the eval phase \u2014 job live-1539-phase, 400 steps, 45s per eval fold"
   },
   {
-   "t": 14,
+   "t": 11,
    "msg": "launched",
    "zone": null,
-   "instance": "us-central1-b/warden-live-1522-phase"
+   "instance": "us-central1-b/warden-live-1539-phase"
   },
   {
-   "t": 117,
+   "t": 53,
    "msg": "\u2714 job RUNNING on first heartbeat",
    "value": true
   },
   {
-   "t": 313,
-   "msg": "\u2714 phase = eval with training finished (step == steps)",
+   "t": 280,
+   "msg": "\u2714 phase = eval, training finished, heartbeat FRESH (\u226490 s old, so the phase has time left)",
    "value": {
-    "log_mtime": "2026-08-27T15:27:41Z",
-    "gpu_util": null,
-    "step_per_s": 0.0,
-    "loss": 0.18935516635754726,
-    "preempt_notice": false,
-    "step": 400,
-    "operator_active": false,
-    "lr": null,
-    "ts": "2026-08-27T15:27:49Z",
-    "boot_id": "48657787-def1-489c-bf69-bdf3b37d3969",
-    "cpu_pct": 3.5,
-    "disk_avail_gb": 17.35,
-    "vram_total_mb": null,
-    "run_id": "r20260827T152440",
-    "synthetic": false,
-    "grad_norm": null,
+    "epoch": 4,
+    "cpu_pct": 3.0,
     "open_writers": [],
-    "job_id": "live-1522-phase",
-    "vram_used_mb": null,
+    "phase": "eval",
+    "log_mtime": "2026-08-27T15:43:57Z",
+    "step_per_s": 0.0,
+    "gpu_util": null,
+    "step": 400,
     "procs": [
      {
-      "cmd": "bash /usr/local/bin/wrun --job live-1522-phase --phase train -- python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 15",
-      "ppid": 1311,
-      "pid": 1639
+      "ppid": 1314,
+      "cmd": "bash /usr/local/bin/wrun --job live-1539-phase --phase train -- python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 45",
+      "pid": 1640
      },
      {
-      "cmd": "python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 15",
-      "ppid": 1639,
-      "pid": 1651
+      "ppid": 1640,
+      "cmd": "python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 45",
+      "pid": 1652
      }
     ],
-    "epoch": null,
-    "phase": "eval"
+    "vram_used_mb": null,
+    "loss": 0.18935516635754726,
+    "operator_active": false,
+    "boot_id": "2e8b9bef-a5f1-4d17-a05e-6c334c755b0e",
+    "lr": null,
+    "grad_norm": null,
+    "ts": "2026-08-27T15:44:22Z",
+    "synthetic": false,
+    "vram_total_mb": null,
+    "disk_avail_gb": 17.35,
+    "run_id": "r20260827T154042",
+    "preempt_notice": false,
+    "job_id": "live-1539-phase"
    }
   },
   {
-   "t": 313,
+   "t": 280,
    "msg": "triggering a real Spot preemption inside the eval phase",
-   "instance": "us-central1-b/warden-live-1522-phase"
+   "instance": "us-central1-b/warden-live-1539-phase",
+   "at_eval_fold": "4/10",
+   "phase_seconds_left": 262
   },
   {
-   "t": 320,
+   "t": 287,
    "msg": "simulate-maintenance-event",
    "rc": 0,
-   "err": "Simulating maintenance on instance(s) [https://compute.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1522-phase]...\n...........done."
+   "err": "Simulating maintenance on instance(s) [https://compute.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1539-phase]...\n............done."
   },
   {
-   "t": 372,
+   "t": 340,
    "msg": "\u2714 GCE recorded a real preemption operation for this VM",
    "value": [
     {
-     "insertTime": "2026-08-27T08:28:47.035-07:00",
+     "insertTime": "2026-08-27T08:45:11.807-07:00",
      "operationType": "compute.instances.preempted",
      "status": "DONE",
-     "targetLink": "https://www.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1522-phase"
+     "targetLink": "https://www.googleapis.com/compute/v1/projects/warden-260825-a1446f/zones/us-central1-b/instances/warden-live-1539-phase"
     }
    ]
   },
   {
-   "t": 984,
-   "msg": "\u2718 TIMEOUT incident `preempted` opened after 600s"
+   "t": 402,
+   "msg": "\u2714 Warden opened an incident for the interruption",
+   "value": {
+    "state": "VERIFYING",
+    "diagnosis": {},
+    "created_at": "2026-08-27T15:46:05.797947Z",
+    "crosscheck": {},
+    "evidence_ids": [
+     "ev_01M11YCQB5ABCFXRVWB9R2Q3TX"
+    ],
+    "attempt": 1,
+    "decision_ids": [
+     "dec_01M11YCR8A4F5NVEE7AKZ7BY4T"
+    ],
+    "verify": {
+     "baseline": {
+      "hb_ts": "2026-08-27T15:44:55+00:00",
+      "disk_avail_gb": 17.35,
+      "machine_type": "e2-medium",
+      "run_id": "r20260827T154042",
+      "boot_id": "2e8b9bef-a5f1-4d17-a05e-6c334c755b0e",
+      "step": 400
+     },
+     "since": "2026-08-27T15:46:17.815977+00:00",
+     "kind": "start_instance",
+     "deadline": "2026-08-27T15:54:17.816017+00:00",
+     "nonce": "",
+     "params": {
+      "run_id": "r20260827T154042",
+      "instance_ref": "us-central1-b/warden-live-1539-phase"
+     },
+     "checks": [
+      {
+       "ts": "2026-08-27T15:46:18.490210+00:00",
+       "status": "pending",
+       "why": "RUNNING, waiting for the harness heartbeat"
+      }
+     ],
+     "decision_id": "dec_01M11YCR8A4F5NVEE7AKZ7BY4T",
+     "instance_ref": "us-central1-b/warden-live-1539-phase"
+    },
+    "dedupe_key": "down:us-central1-b/warden-live-1539-phase:2531751295505523879",
+    "ladder": [
+     {
+      "action": "relocate_zone",
+      "params": {},
+      "why": "start failed on stock-out; move the disk to another zone"
+     },
+     {
+      "action": "relocate_zone",
+      "params": {
+       "spot": false
+      },
+      "why": "no zone holds a Spot machine: leave Spot for on-demand (policy decides whether the price increase is allowed)"
+     }
+    ],
+    "llm_cost_usd": 0.0,
+    "incident_id": "inc_01M11YCQB5ABCFXRVWB9R2Q3TW",
+    "updated_at": "2026-08-27T15:46:17.816100Z",
+    "summary": "us-central1-b/warden-live-1539-phase TERMINATED without RUN_FIN (preempted); job live-1539-phase phase eval",
+    "rule": "preempted",
+    "memory_ref": "",
+    "cost_burning_usd_per_hour": 0.0,
+    "timeline": [
+     {
+      "ts": "2026-08-27T15:46:05.874048+00:00",
+      "note": "rule preempted",
+      "from": "DETECTED",
+      "actor": "warden",
+      "to": "TRIAGED"
+     },
+     {
+      "ts": "2026-08-27T15:46:07.269356+00:00",
+      "note": "start_instance: AUTO",
+      "from": "TRIAGED",
+      "actor": "warden",
+      "to": "DECIDED"
+     },
+     {
+      "ts": "2026-08-27T15:46:07.269557+00:00",
+      "note": "",
+      "from": "DECIDED",
+      "actor": "warden",
+      "to": "EXECUTING"
+     },
+     {
+      "ts": "2026-08-27T15:46:17.816092+00:00",
+      "note": "start_instance: RUNNING \u2014 verifying until 15:54 UTC",
+      "from": "EXECUTING",
+      "actor": "warden",
+      "to": "VERIFYING"
+     }
+    ],
+    "job_id": "live-1539-phase",
+    "severity": "critical",
+    "instance_ref": "us-central1-b/warden-live-1539-phase"
+   }
   },
   {
-   "t": 984,
-   "msg": "A4 GATE FAILED: AssertionError: no preempted incident; rules saw: ['fin_ok_pending_verify']"
+   "t": 402,
+   "msg": "route taken by Warden",
+   "rule": "preempted",
+   "run_fin": "absent"
   },
   {
-   "t": 990,
+   "t": 403,
+   "msg": "\u2714 a recovery action executed automatically (no human)",
+   "value": {
+    "action": "start_instance",
+    "cost_usd": 0.01005,
+    "status": "DONE",
+    "created_at": "2026-08-27T15:46:06.730261Z",
+    "explain": [
+     "hard guards passed; base level L2",
+     "L2: automatic"
+    ],
+    "result": {
+     "op_id": "operation-1787845568135-65a093c007fbe-5ae198e5-c99b87f4",
+     "ok": true,
+     "error": "",
+     "requested": "start us-central1-b/warden-live-1539-phase",
+     "observed": "RUNNING"
+    },
+    "dry_run_plan": {
+     "ok": true,
+     "error": "",
+     "requested": "start us-central1-b/warden-live-1539-phase",
+     "plan": {
+      "hourly_usd": 0.01005,
+      "from": "TERMINATED",
+      "instance": "warden-live-1539-phase",
+      "zone": "us-central1-b",
+      "api": "instances.start",
+      "to": "RUNNING"
+     }
+    },
+    "blast_radius": "this_run",
+    "expires_at": null,
+    "channel_msg_ref": "",
+    "incident_id": "inc_01M11YCQB5ABCFXRVWB9R2Q3TW",
+    "params": {
+     "run_id": "r20260827T154042",
+     "instance_ref": "us-central1-b/warden-live-1539-phase"
+    },
+    "autonomy": "L2",
+    "approved_by": "",
+    "job_id": "live-1539-phase",
+    "decision_id": "dec_01M11YCR8A4F5NVEE7AKZ7BY4T",
+    "verdict": "AUTO"
+   }
+  },
+  {
+   "t": 405,
+   "msg": "\u2714 machine RUNNING again",
+   "value": true
+  },
+  {
+   "t": 457,
+   "msg": "\u2714 resumed run is back in the eval phase (new run id)",
+   "value": {
+    "epoch": null,
+    "cpu_pct": 41.5,
+    "open_writers": [],
+    "phase": "eval",
+    "log_mtime": "2026-08-27T15:46:50Z",
+    "step_per_s": null,
+    "gpu_util": null,
+    "step": 400,
+    "procs": [
+     {
+      "ppid": 1163,
+      "cmd": "bash /usr/local/bin/wrun --job live-1539-phase --phase train -- python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 45",
+      "pid": 1360
+     },
+     {
+      "ppid": 1360,
+      "cmd": "python3 /opt/job/toy_train.py --steps 400 --sleep 0.15 --eval-sleep 45",
+      "pid": 1372
+     }
+    ],
+    "vram_used_mb": null,
+    "loss": 0.18935516635754726,
+    "operator_active": false,
+    "boot_id": "7e81de3e-8efa-4054-94ea-f366d1da1e59",
+    "lr": null,
+    "grad_norm": null,
+    "ts": "2026-08-27T15:47:17Z",
+    "synthetic": false,
+    "vram_total_mb": null,
+    "disk_avail_gb": 17.34,
+    "job_id": "live-1539-phase",
+    "preempt_notice": false,
+    "run_id": "r20260827T154650"
+   }
+  },
+  {
+   "t": 923,
+   "msg": "\u2714 job COMPLETE (artifacts opened & VERIFIED)",
+   "value": true
+  },
+  {
+   "t": 929,
+   "msg": "\u2714 final report written",
+   "value": {
+    "job_id": "live-1539-phase",
+    "started_at": "2026-08-27T15:40:32+00:00",
+    "wall_h": 0.24,
+    "instance_ref": "us-central1-b/warden-live-1539-phase",
+    "finished_at": "2026-08-27T15:55:05+00:00",
+    "budget_cap_usd": 0.5,
+    "ettr": 0.11,
+    "written_at": "2026-08-27T15:55:12.756531+00:00",
+    "artifacts": [
+     {
+      "name": "ckpt_000200.npz",
+      "sha256": "e79f370444e9670e85fb4e929afe8e18d1e93a8f0f1f2be2517a8a2445bb1eff",
+      "bytes": 912
+     },
+     {
+      "name": "ckpt_000200.npz.meta.json",
+      "sha256": "f7f4d54a70dd7065ce28cc90ce08d1af4e0a05d0d1133fc3b616d9d6fdfb5d68",
+      "bytes": 62
+     },
+     {
+      "name": "ckpt_000400.npz",
+      "sha256": "f31c7d21d44a89b25a1dfe2fb38310a98835de98576c2db4143f79e402efe354",
+      "bytes": 912
+     },
+     {
+      "name": "ckpt_000400.npz.meta.json",
+      "sha256": "ec066541c53c61967992007bfe4707c6a2c740f357633f30ec791de4b3c6d422",
+      "bytes": 62
+     },
+     {
+      "name": "eval.jsonl",
+      "sha256": "d39666e95bc604c69650a92a262a0f4bbc5bc631049140c65bd5330b0ae25e08",
+      "bytes": 254
+     },
+     {
+      "name": "pred.csv",
+      "sha256": "4377bca95dfd10a55264892712248528e6439c8835870cfebd7dc48bbba4b0ec",
+      "bytes": 30913
+     }
+    ],
+    "incidents": {
+     "by_rule": {
+      "fin_ok_pending_verify": 1,
+      "preempted": 1
+     },
+     "needed_human": 0,
+     "total": 2,
+     "resolved_by_warden": 1
+    },
+    "spent_usd": 0.0034,
+    "run_id": "r20260827T154650",
+    "status": "COMPLETE",
+    "llm_usd": 0.0
+   }
+  },
+  {
+   "t": 982,
+   "msg": "\u2714 machine stopped by the close-out rule",
+   "value": true
+  },
+  {
+   "t": 982,
+   "msg": "A4 GATE PASSED"
+  },
+  {
+   "t": 1034,
    "msg": "machine STOPPED"
+  },
+  {
+   "t": 1044,
+   "msg": "machine and disk deleted (drill passed; evidence is in the report)"
   }
  ]
 }

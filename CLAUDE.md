@@ -15,7 +15,7 @@ Barbados di `/home/ubuntu/barbados`) tidak disentuh dari sini.
 - Kredit GCP $150 → hemat: uji pada komponen NYATA (Firestore prod, VM asli) tapi STOP setelah uji, deploy per batch. Model Gemini: jangan "lite" untuk penalaran agen.
 
 ## 2. Status terakhir (27 Agu 2026 ~21:45 WIB, AKTIF — beku dibuka)
-- Ceklis **68 butir** (angka "61" yang lama basi): ✅ 62 · ◐ 5 (A4 fase eval live; H5 soak s/d 1 Sep — 27 Agu: 26 insiden/12 tindakan/**0 palsu**; J4 ekspor billing = pemilik; K1 audit desktop = pemilik; N2 waktu deploy-ke-hidup) · ☐ 1 (K4 Discord + video — TERAKHIR).
+- Ceklis **68 butir** (angka "61" yang lama basi): ✅ 63 · ◐ 4 (H5 soak s/d 1 Sep — 27 Agu: 26 insiden/12 tindakan/**0 palsu**; J4 ekspor billing = pemilik; K1 audit desktop = pemilik; N2 separuh project-segar) · ☐ 1 (K4 Discord + video — TERAKHIR).
 - **27 Agu:** katalog #35 (gold-eval & soak 401 tiap malam sejak lahir — audience OIDC menunjuk nama host lama) + #36 (set emas tak pernah sampai ke image; TIGA lapis: salah direktori → crash tanpa jejak → aturan `*.log`) ditemukan & ditutup. Core **rev 00023-pl5**. Nightly gold eval berjalan untuk pertama kalinya lewat Scheduler: **11/11, accuracy 1,0, 0 palsu, $0,0695**. pytest 83, chaos 25/25.
 - Bukti kunci: drill hidup #5 LULUS PENUH (`chaos/live_lifecycle_report.json`: spec→VM→OOM→resume batch 0,5→verifikasi→COMPLETE→laporan→stop); IAM condition I2 terbukti; gold eval 11/11 (terjadwal); pytest 83; chaos 25/25.
 - **27 Agu:** armada GCE **nol** — 9 VM + 9 disk drill dihapus atas perintah pemilik (hemat ≈$14–18/bln); snapshot relocate ditahan sebagai bukti; job sisa `live-1923-ops` ditutup ABANDONED lebih dulu; setelahnya 0 insiden baru, health hijau, soak tetap 0 tindakan palsu.

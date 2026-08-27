@@ -279,3 +279,13 @@ Pemilik menjalankan deploy (classifier memblokir saya). Rev **00022-drh** melaya
 - Perbaikan: fase eval 10×45 dtk; drill menolak denyut lebih tua dari 90 dtk; trainer melaporkan nomor fold (`epoch`) sehingga sisa fase **dihitung**, bukan ditebak; gerbang menegaskan tidak ada RUN_FIN exit 0 sebelum maupun sesudah preempt — drill yang tidak menginterupsi apa pun harus gagal nyaring, bukan lulus diam-diam.
 - Pelebaran yang benar: aturan `preempted` hanya menyala bila RUN_FIN tidak ada; bila masa tenggang mematikan sempat membuat `wrun` menulis RUN_FIN, Warden lewat `run_fin_nonzero` → diagnosis → resume. A4 menuntut **resume**-nya, bukan labelnya, jadi drill menerima kedua jalur dan mencatat mana yang dipakai.
 - Temuan sampingan (diperbaiki): run yang resume langsung ke fase eval tidak pernah masuk loop training, sehingga `last_loss` tetap 1.0 default dan `evidence.json` melaporkan `final_loss` 1.0 alih-alih 0,1894 milik checkpoint. Checkpoint sudah menyimpan loss; resume kini memulihkannya.
+
+### 27 Agu 2026 ~23:10 WIB — A4 LULUS: preempt nyata di tengah fase eval → resume sadar fase, tanpa manusia
+Percobaan #2 dengan drill yang diperbaiki (`chaos/live_phase_resume.py`, laporan `chaos/live_phase_resume_report.json`):
+- **Interupsi sungguhan, dibuktikan dulu:** preempt Spot nyata pada **fold 4 dari 10, sisa fase 262 dtk**, setelah training selesai (step 400/400). GCE mencatat `compute.instances.preempted` 15:45:11Z; gerbang menolak lanjut sebelum operasi itu terlihat, dan menolak lanjut bila ada RUN_FIN exit 0 (pelajaran #38).
+- **Reaksi Warden:** aturan `preempted` (TERMINATED ∧ tanpa RUN_FIN) → `start_instance` **AUTO / DONE, nol persetujuan manusia** ($0,01005 dinilai di muka) → mesin RUNNING lagi 3 dtk kemudian.
+- **Inti A4:** run baru `r20260827T154650` masuk kembali ke fase **eval**, dan **step terendah yang teramati setelah restart = 400** — sama dengan jumlah step penuh, jadi **training tidak diulang sama sekali**; yang diulang hanya fase eval dari fold 1. Lanjut ke export → RUN_FIN → verifikasi → **COMPLETE** dengan `eval.jsonl` 10 baris dan `pred.csv` 2001 baris dibuka & VERIFIED.
+- **Close-out:** mesin dimatikan aturan `complete_running`; drill lalu menghapus VM+disk sendiri karena lulus (armada kembali nol — nol tagihan tertinggal).
+- **Angka:** biaya job $0,0034 · ETTR 0,11 · 2 insiden · 1 diselesaikan Warden · 0 butuh manusia · **$0 Gemini** (jalur preempt deterministik, LLM memang tidak diperlukan).
+- **Ceklis: A4 → ✅. Status 63 ✅ · 4 ◐ · 1 ☐ dari 68.** Sisa ◐: H5 (jendela tutup 1 Sep, otomatis), J4 & K1 (pemilik), N2 (separuh project segar). ☐: K4 Discord+video (terakhir).
+- Total biaya dua percobaan A4 ≈ **$0,009** VM, nol LLM.
