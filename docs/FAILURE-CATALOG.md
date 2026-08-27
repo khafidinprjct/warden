@@ -78,3 +78,12 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Proof:** rev 00023-pl5, `warden-gold-eval` triggered through Cloud Scheduler → `eval/2026-08-27T144330Z`: **11/11, accuracy 1.0, 0 fabricated, $0.0695**, health `gold_eval` green. First time the nightly leg has ever run.
 - **Cost:** $0 for the failed attempts (they crashed before reaching Gemini) + $0.07 for the successful one.
 - **Operator rule:** "the file is in the repo" is not "the file is in the image". For anything the deployed service reads at runtime, the gate is `gcloud meta list-files-for-upload`, and a test that asserts it.
+
+## #37 · The gold set was never in the repository (27 Aug 2026)
+- **Symptom:** a clean clone of `main` failed two tests that are green in the working tree: `git clone` → venv → `pytest` → 2 failed, 81 passed. Found by running the N2 gate, which exists for exactly this.
+- **Cause:** `.gitignore` carries a blanket `*.log`. The eleven real failure logs the Diagnostician is evaluated against have always ended in `.log`, so they were never committed — not under `warden/eval/cases/`, and not under `tests/fixtures/gold` before that. `git mv` moved the directory on disk and updated the index only for the one tracked file (`cases.yaml`), without a word about the rest. The gold set existed on exactly one machine; C4's "11/11 from real logs" was reproducible nowhere.
+- **Why it hid so long:** `gcloud run deploy --source .` uploads the *working tree*, not the git checkout, so production had the files (once `.gcloudignore` allowed them — #36) even though the repository never did. Local pytest passed for the same reason.
+- **Fix:** `.gitignore` re-includes `warden/eval/cases/*.log`; the eleven files are committed. The guard test now requires every gold file to be **tracked by git**, not merely present on disk.
+- **Proof:** clean clone of the fixing commit → 12 gold files present, **84 passed**, chaos 25/25, 77.6 s from `git clone` to green (2.2 s clone · 2.5 s venv · 41 s pip · 27 s pytest · 4.6 s chaos).
+- **Cost:** $0. The damage was potential: the evaluation set was one disk failure away from gone, and no reviewer could have reproduced C4.
+- **Family:** #36 and #37 are the same mistake in two ignore files — a blanket pattern written for *output* applied to *data*. Whenever an asset's extension matches an ignore rule, check both `.gitignore` and `.gcloudignore`, and prove it with `git ls-files` and `gcloud meta list-files-for-upload`.

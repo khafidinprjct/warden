@@ -96,5 +96,5 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 
 ## N. Documentation & reproducibility
 - ✅ N1 README, ADR-0014/15/16, architecture diagram (recovery loop, lifecycle API calls, signed mailbox) updated 26 Aug.
-- ◐ N2 Clean clone → venv → 76 tests + chaos 25/25 in 36 s (26 Aug); the full deploy-to-live timing is measured at the next fresh project.
+- ◐ N2 Clean clone → green, measured end to end on 27 Aug from `main` (a4e1bcc): **77.6 s** — 2.2 s `git clone` · 2.5 s venv · 41 s pip · 27 s **84 tests** · 4.6 s chaos 25/25 (the 36 s quoted on 26 Aug did not include pip). The gate earned its keep: the same clone one commit earlier **failed 2 tests**, because the gold set had never been committed (catalogue #37). **Still open — the half this item also asks for:** deploy-to-live from a *fresh GCP project*. README steps 1–6 are prose, not a script, so that path has never been executed end to end by anyone. Closing it needs a new project (owner's call); the honest alternative is to write `infra/bootstrap_project.sh` first so there is something to time.
 - ✅ N3 Operator runbook (docs/RUNBOOK.md, English, incl. Warden self-recovery).
