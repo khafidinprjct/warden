@@ -6,7 +6,7 @@ Barbados di `/home/ubuntu/barbados`) tidak disentuh dari sini.
 ## 0. Baca DULU, sebelum bertindak
 1. `docs/CEKLIS-WARDEN.md` — status resmi 61 butir A–N (✅/◐/☐) dengan bukti tiap butir.
 2. `docs/JURNAL-KEPUTUSAN.md` — kronologi; entri terakhir **FREEZE 26 Agu pagi** (dibekukan atas perintah pemilik).
-3. `docs/FAILURE-CATALOG.md` (33+ cacat nyata yang ditemukan drill), `docs/RUNBOOK.md`, `docs/SUBMISSION.md`, `docs/SECURITY-REVIEW.md`, `docs/OBSERVABILITY.md`, `docs/DEMO.md`.
+3. `docs/FAILURE-CATALOG.md` (36 cacat nyata yang ditemukan drill/gerbang hidup), `docs/RUNBOOK.md`, `docs/SUBMISSION.md`, `docs/SECURITY-REVIEW.md`, `docs/OBSERVABILITY.md`, `docs/DEMO.md`.
 4. Rencana induk (Fase 0–14, prinsip P1–P14, katalog 25 mode kegagalan): `/home/ubuntu/.claude/plans/witty-jingling-whisper.md`.
 
 ## 1. Fakta hackathon
@@ -14,12 +14,13 @@ Barbados di `/home/ubuntu/barbados`) tidak disentuh dari sini.
 - Rumah: akun inyongkhafid@gmail.com, project GCP `warden-260825-a1446f`; Cloud Run `warden-core` (rev ≥00021), `warden-ui` (00010), `warden-deadman`; Scheduler tick 1 mnt, steward 10 mnt, digest, gold-eval 02:00 WIB, soak 02:30 WIB. Repo GitHub `khafidinprjct/warden` (pushed).
 - Kredit GCP $150 → hemat: uji pada komponen NYATA (Firestore prod, VM asli) tapi STOP setelah uji, deploy per batch. Model Gemini: jangan "lite" untuk penalaran agen.
 
-## 2. Status terakhir (26 Agu 2026 ~06:00 WIB, BEKU)
-- Ceklis: ✅ 55 · ◐ 5 (A4 fase eval live; H5 soak 7 hari s/d 1 Sep; J4 ekspor billing BigQuery = pemilik; K1 audit desktop = pemilik; N2 waktu deploy-ke-hidup) · ☐ 1 (K4 Discord + video — TERAKHIR, setelah semua selesai).
+## 2. Status terakhir (27 Agu 2026 ~21:00 WIB, AKTIF — beku dibuka)
+- Ceklis **68 butir** (angka "61" yang lama basi): ✅ 60 · ◐ 7 (A4 fase eval live; C4+M3 nightly gold eval baru diperbaiki, tunggu satu putaran terjadwal; H5 soak s/d 1 Sep — 27 Agu: 26 insiden/12 tindakan/**0 palsu**; J4 ekspor billing = pemilik; K1 audit desktop = pemilik; N2 waktu deploy-ke-hidup) · ☐ 1 (K4 Discord + video — TERAKHIR).
+- **27 Agu:** katalog #35 (gold-eval & soak 401 tiap malam sejak lahir — audience OIDC menunjuk nama host lama) + #36 (`/eval` 500: set emas ada di `tests/`, tidak ikut image) ditemukan & diperbaiki; set emas pindah ke `warden/eval/cases/`. pytest 82, chaos 25/25. **Belum di-deploy** (`gcloud run deploy warden-core --source .` diblokir classifier — minta pemilik menjalankan).
 - Bukti kunci: drill hidup #5 LULUS PENUH (`chaos/live_lifecycle_report.json`: spec→VM→OOM→resume batch 0,5→verifikasi→COMPLETE→laporan→stop); IAM condition I2 terbukti; gold eval 11/11; pytest 79; chaos 25/25.
 - Pending pemilik: hapus/tidak 9 disk VM drill (≈$14/bulan); ekspor billing; audit desktop UI; Discord creds + video di akhir.
 - Alat: `python -m chaos.live_lifecycle` (≈$0,02), `infra/iam_condition.sh apply|test`, `python -m warden.eval.gold`, `python -m chaos.soak --days 7`, `infra/billing_reconcile.py`, `Makefile`, `Procfile*`.
-- Jebakan: (1) revisi Cloud Run lama masih melayani ±2 mnt setelah "deployed" → cek `/health` field `revision` (`/healthz` dijawab 404 oleh frontend Google); (2) `pgrep/pkill -f` pola yang muncul di perintah sendiri → exit 144 — pakai `[c]haos` dan jangan sebut string yang sama di perintah lain; (3) health row merah (gcs/gemini) = drill tidak sah; (4) us-central1-a badai preempt spot 25–26 Agu.
+- Jebakan: (1) revisi Cloud Run lama masih melayani ±2 mnt setelah "deployed" → cek `/health` field `revision` (`/healthz` dijawab 404 oleh frontend Google); (2) `pgrep/pkill -f` pola yang muncul di perintah sendiri → exit 144 — pakai `[c]haos` dan jangan sebut string yang sama di perintah lain; (3) health row merah (gcs/gemini) = drill tidak sah; (4) us-central1-a badai preempt spot 25–26 Agu; (5) Scheduler `ENABLED` + `lastAttemptTime` hanya berarti job MENYALA — gerbangnya status HTTP target (`severity>=ERROR` pada `resource.type="cloud_scheduler_job"`) + artefak yang seharusnya ia tulis (katalog #35).
 
 ## 3. Arah produk (keputusan pemilik, mengikat)
 - Warden = agen SRE sungguhan untuk pekerjaan komputasi panjang: mengurus GPU/CPU/disk/biaya/artefak — BUKAN mengurus token API dirinya sendiri. Tanpa batas LLM/tool buatan sendiri: default framework.

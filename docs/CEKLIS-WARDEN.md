@@ -22,7 +22,7 @@ Status legend: ✅ proven · ◐ partial · ☐ open. Each item names the eviden
 - ✅ C1 Structured Diagnostician + deterministic cross-check + second opinion.
 - ✅ C2 Investigator with read-only tools (per-run log, heartbeats, artifacts, history, instance).
 - ✅ C3 No artificial limits; framework defaults only.
-- ✅ C4 Gold evaluation set (11/11, 0 fabricated, $0.07/run; nightly `warden-gold-eval`) from real logs (NaN, OOM, wake-loop, kernel fallback, deps) — action accuracy ≥ 90 %, zero fabricated evidence, re-run on every prompt/model change.
+- ◐ C4 Gold evaluation set from real logs (NaN, OOM, wake-loop, kernel fallback, deps) — action accuracy ≥ 90 %, zero fabricated evidence, re-run on every prompt/model change. The set itself is proven: **11/11, 0 fabricated, $0.07/run** (manual run, 26 Aug, `eval/gold_report.json`). The *nightly* leg was a false claim until 27 Aug: `warden-gold-eval` returned 401 every night (catalogue #35) and, once that was fixed, 500 because the gold set was not in the image (#36). Both fixed; the item closes when a scheduled run writes `eval/<ts>` and health `gold_eval` unaided.
 - ✅ C5 Multimodal (training-curve PNG attached for plateau/throughput/grad/NaN/stuck incidents; Ask Warden reads a phone photo, labelled, never acting): loss curve rendered and judged when numbers are ambiguous; phone screenshots read (labelled, never auto-acting).
 
 ## D. Actions — every recommendation has a real executor
@@ -63,7 +63,7 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 - ✅ H2 Separate deadman; DLQ; retries; Gemini/provider breaker; HMAC rotation.
 - ✅ H3 Idempotency proven (5 ticks = 1 start; test_idempotent_ticks_do_not_double_act).
 - ✅ H4 Two jobs guarded concurrently without interference (test).
-- ◐ H5 Soak: measurement in place (`python -m chaos.soak --days 7`, writes eval/soak-*); 2-day baseline 0 false actions; the 7-day window closes 1 Sep.
+- ◐ H5 Soak: 7-day window measured 27 Aug — **26 incidents, 12 actions, 0 false actions** (`eval/soak-20260827`); 7 resolved by Warden, 8 needed a human. Measured twice: locally (`python -m chaos.soak --days 7`) and through the scheduled `/soak`, which returned **HTTP 200** only after the audience fix (catalogue #35 — the nightly job had been failing 401 since 25 Aug). The window closes 1 Sep.
 
 ## I. Security & credentials
 - ✅ I1 Separate SAs, minimal roles, OIDC push, HMAC ingest, Secret Manager.
@@ -91,7 +91,7 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 ## M. Testing
 - ✅ M1 25 chaos scenarios, unit tests, infra chaos.
 - ✅ M2 Live on Compute Engine (26 Aug, drill #5, `chaos/live_lifecycle_report.json`): resume_smaller_batch (auto, L2), relocate_zone (snapshot → zone c, source kept TERMINATED), change_machine_type (e2-medium → e2-small), clean_disk (3 checkpoints freed after md5 match), stop — each verified against the world. resize_disk, rollback and kill are proven on the fake provider only.
-- ✅ M3 Gold set + nightly evaluation (C4).
+- ◐ M3 Gold set proven (11/11); the nightly leg is fixed but not yet proven unaided — see C4.
 - ✅ M4 Full lifecycle without a human touch (26 Aug, drill #5): spec → VM in 22 s → RUNNING 64 s → OOM at step 600 → diagnosis oom_gpu → resume batch 0.5 (47 s after the incident) → verified → COMPLETE, 22 artifacts opened → report (ETTR 0.73, $0.0017) → machine stopped by close-out. Five earlier drills each found one real defect (catalog #29–#33).
 
 ## N. Documentation & reproducibility

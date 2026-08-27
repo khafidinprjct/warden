@@ -222,3 +222,24 @@ README ditulis ulang dalam Inggris (masalah, kemampuan, arsitektur dengan batas 
 - Posisi beku: ceklis A–N 55/61 ✅ (`docs/CEKLIS-WARDEN.md`), core rev 00021 / ui 00010 melayani, semua health hijau, semua VM TERMINATED, 136 commit di origin/main. Drill hidup #5 lulus penuh (M2/M4). Tenggat lomba 1 Sep 07:00 WIB.
 - Sisa saat dibekukan: H5 soak (otomatis s/d 1 Sep), A4 fase eval live, N2 waktu deploy segar, J4 (ekspor billing — pemilik), K1 (audit desktop — pemilik), K4 Discord + video (terakhir), keputusan 9 disk drill (pemilik).
 - Saat dibangunkan: baca ceklis + jurnal ini; jalankan `python -m chaos.soak --days 7` dan `python -m warden.eval.gold`; pastikan tidak ada revisi baru sebelum drill (`/health` revision).
+
+## 27 Agu 2026 ~21:00 WIB — BEKU DIBUKA; dua pekerjaan malam ternyata mati sejak lahir (katalog #35, #36)
+**Keputusan pemilik:** lanjutkan Warden. Langkah pertama sesuai catatan pembekuan: baca ceklis+jurnal, lalu jalankan soak & gold eval.
+
+**Keadaan saat dibangunkan (FAKTA, dibaca dari prod):** `warden-core` 00021-km7, `warden-ui` 00010, `warden-deadman` melayani; 6 Scheduler ENABLED; 9 VM semuanya TERMINATED; 8 baris health hijau; pytest 79 lulus, chaos 25/25.
+
+**Temuan 1 — katalog #35 (nol uang, dua malam evaluasi hilang).** `gcloud scheduler jobs list` menampilkan `warden-gold-eval` dan `warden-soak` ENABLED dengan `lastAttemptTime` tiap malam — terlihat sehat. Log berkata lain: **401 UNAUTHENTICATED setiap percobaan sejak 25 Agu**. Sebab: kedua job menembak nama host lama layanan (`warden-core-hfgre6y7ta-uc.a.run.app`) sehingga audience token OIDC-nya adalah URL itu, sedangkan container memeriksa `audience == WARDEN_SELF_URL` (`warden-core-603873318528.us-central1.run.app`); saat tidak cocok `_oidc_ok` jatuh ke verifikasi tanpa audience lalu mensyaratkan pemanggil = email pemilik — SA Scheduler tidak pernah begitu. `warden-tick`/`steward`/`digest` dibuat dengan nama host nomor-project maka selamat; `warden-deadman` tidak memeriksa apa pun di lapisan aplikasi (dijaga IAM: invoker-nya hanya SA scheduler) maka target lamanya tetap jalan.
+- Perbaikan: kedua job diarahkan ulang + `--oidc-token-audience` yang cocok. **Bukti hidup:** `jobs run warden-soak` → Cloud Run **HTTP 200** (14:00 UTC), padahal job yang sama 401 pada 19:30 UTC malam sebelumnya. Satu-satunya yang diubah = URI+audience.
+- **Alternatif ditolak:** melonggarkan `_oidc_ok` agar menerima SA yang diizinkan walau audience tidak cocok — itu membuang pemeriksaan audience, satu-satunya yang mencegah token untuk layanan lain dipakai di sini. Yang salah adalah pemanggilnya, bukan pemeriksanya.
+
+**Temuan 2 — katalog #36, tersembunyi di balik 401.** Begitu auth lolos, `/eval` **crash 500 dalam 0,14 dtk**: `warden/eval/gold.py` membaca set emas dari `tests/fixtures/gold`, sementara `.gcloudignore` menahan `tests/` keluar dari image Cloud Run. Jadi jalur nightly gold eval rusak **dua lapis**; angka 11/11 yang dipakai C4 seluruhnya berasal dari run manual 26 Agu.
+- Perbaikan: set emas = data produksi untuk evaluasi malam, bukan fixture tes → dipindah ke dalam paket (`warden/eval/cases/`, `git mv`, satu rujukan diperbarui). `/eval` sekarang gagal-nyaring: exception → health `gold_eval` merah + notifikasi, baru dilempar ulang (pelajaran #33: crash tanpa jejak = buta). `tests/test_deployable_assets.py` (3 tes) menolak aset runtime yang diletakkan di luar paket — diverifikasi menolak lokasi lama dan menerima yang baru.
+- pytest **82** lulus, chaos 25/25.
+
+**Pelajaran operator (masuk katalog):** `ENABLED` + `lastAttemptTime` hanya membuktikan job **menyala**, bukan **berhasil**. Gerbangnya = status HTTP target (`severity>=ERROR` pada `resource.type="cloud_scheduler_job"`) dan — untuk job yang seharusnya menulis sesuatu — artefak yang seharusnya ia tulis. Dua malam ini lolos karena saya dulu hanya melihat daftar job.
+
+**H5 terukur (jendela 7 hari, 27 Agu):** 26 insiden · 12 tindakan · **0 tindakan palsu** · 7 diselesaikan Warden · 8 butuh manusia (`eval/soak-20260827`). Diukur dua kali: lokal dan lewat `/soak` terjadwal.
+
+**Koreksi angka:** ceklis berisi **68 butir**, bukan 61 (angka di CLAUDE.md & jurnal basi sejak butir D/M diperinci). Status jujur sekarang: **60 ✅ · 7 ◐ · 1 ☐**. C4 dan M3 diturunkan dari ✅ ke ◐ — klaim "nightly" tidak pernah berjalan; keduanya menutup setelah satu putaran terjadwal berhasil tanpa dibantu.
+
+**Menunggu pemilik:** `gcloud run deploy warden-core --source .` diblokir classifier dua kali, jadi perbaikan #36 belum hidup di prod. Setelah deploy: picu `warden-gold-eval` sekali (≈$0,07) untuk menutup C4/M3.
