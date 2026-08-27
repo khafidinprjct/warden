@@ -218,6 +218,14 @@ def base_context() -> dict:
             "services": services, "n_pending": len(pending), "n_open": len(open_incs)}
 
 
+def _needs_attention(rows: list[dict], keep: int = 8) -> list[dict]:
+    """The overview is an inbox: show the jobs a human would look at first, and link to the rest."""
+    def rank(r: dict) -> tuple:
+        return (0 if r["hb_cls"] == "crit" else 1 if r["hb_cls"] == "warn" else 2,
+                0 if r["status"] not in ("Complete", "Abandoned") else 1, r["job_id"])
+    return sorted(rows, key=rank)[:keep]
+
+
 def overview_context() -> dict:
     from warden.steward import ledger
     ctx = base_context()
@@ -238,6 +246,7 @@ def overview_context() -> dict:
         inc = inc_by_id.get(d.incident_id); ref = d.params.get("instance_ref") or (inc.instance_ref if inc else "")
         decisions.append(decision_view(d, inc, inst_by_ref.get(ref)))
     job_rows = []
+    sev_order = {"critical": 0, "warning": 1, "info": 2}
     for j in sorted(jobs, key=lambda x: (_s(x.status) != "RUNNING", x.job_id)):
         h = db.last_heartbeat(j.job_id); txt, cls, ts = hb_state(h); st, scls = JOB_STATUS.get(_s(j.status), (_s(j.status), "grey"))
         total = int((j.expect or {}).get("steps") or 0)
@@ -258,7 +267,8 @@ def overview_context() -> dict:
                                                    "burn": usd(proj["burn_usd_per_hour"], 3), "mtd": usd(proj["month_to_date_usd"]), "cap": usd(proj["cap_usd"], 0),
                                                    "cap_pct": max(1, round(100 * proj["month_to_date_usd"] / max(proj["cap_usd"], 1))) if proj["month_to_date_usd"] > 0 else 0,
                                                    "ettr_pct": round(100 * eff / paid) if paid else None, "eff_h": round(eff, 2), "paid_h": round(paid, 2), "today": usd(proj["today_usd"])},
-                "open_rows": [incident_row(i) for i in ctx["open_incs"][:8]], "jobs": job_rows, "activity": activity_rows(ctx["incs"], ctx["decs"], 6), "proj": proj})
+                "open_rows": [incident_row(i) for i in sorted(ctx["open_incs"], key=lambda i: (sev_order.get(_s(i.severity), 3), -i.created_at.timestamp()))[:8]],
+                "jobs": job_rows, "jobs_shown": _needs_attention(job_rows), "activity": activity_rows(ctx["incs"], ctx["decs"], 6), "proj": proj})
     return ctx
 
 

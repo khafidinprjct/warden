@@ -84,6 +84,13 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 input, select, textarea, button { max-width: 100%; box-sizing: border-box; }
 select { width: 100%; }
 
+/* keyboard focus must be visible: an operator approving an action should always see what is selected */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.empty-line { padding: 12px 18px; }
+.chart-x { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+.card.quiet .card-head { border-bottom: none; }
+
 /* semantics */
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
 .pill-ok { background: var(--ok-bg); color: var(--ok-text); } .pill-warn { background: var(--warn-bg); color: var(--warn-text); } .pill-crit { background: var(--crit-bg); color: var(--crit-text); }
@@ -93,6 +100,7 @@ select { width: 100%; }
 .health { display: inline-flex; align-items: center; gap: 6px; } .health .dot { width: 7px; height: 7px; }
 .actor { display: inline-flex; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 .actor-warden { background: var(--line); color: var(--text-2); } .actor-gemini { background: var(--gemini-bg); color: var(--gemini); } .actor-operator { background: var(--ok-bg); color: var(--ok-text); }
+.props-wide { grid-template-columns: 150px minmax(0, 1fr); }
 .props { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 6px 16px; } .props.narrow { grid-template-columns: 130px minmax(0, 1fr); gap: 8px 12px; } .props .k { color: var(--muted); } .props .v { min-width: 0; overflow-wrap: anywhere; }
 .code { padding: 10px 12px; border-radius: 6px; background: var(--canvas); border: 1px solid var(--border); font-family: "IBM Plex Mono", Menlo, monospace; font-size: 12px; white-space: pre-wrap; }
 .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); font-weight: 500; }
@@ -143,5 +151,13 @@ select { width: 100%; }
   .table.stack .cols-audit > [data-l='Phase']::before { content: none; }
   .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; } .cols-timeline { min-width: 600px; } .cols-override { min-width: 640px; }
   .ask-form { grid-template-columns: 1fr; }
-  .props { grid-template-columns: 110px minmax(0, 1fr); }
+  /* On a phone a 110 px label column leaves ~200 px for the value, which broke log excerpts mid-token.
+     The label goes above the value instead, matching the stacked tables. */
+  .props, .props.narrow, .props-wide { grid-template-columns: 1fr; gap: 2px 0; }
+  .props .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .props .v { margin-bottom: 6px; }
+  /* The chart is drawn in a 640-unit viewBox scaled to ~330 px, so 10-unit labels render at about 5 px. */
+  .card svg text { font-size: 19px; } .chart-x { font-size: 19px; }
+  /* When a decision is waiting, it is the reason the operator opened the page — put it first on a phone. */
+  .split > aside.decision { order: -1; }
 }

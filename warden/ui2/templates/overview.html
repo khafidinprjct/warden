@@ -8,7 +8,7 @@
   <div class="actions"><span class="select">Last 24 hours</span>{% include "_freeze.html" %}</div>
 </header>
 
-<section class="card">
+<section class="card{% if not decisions %} quiet{% endif %}">
   <div class="card-head"><div class="h">Needs your decision</div><div class="s12 muted num">{{ decisions|length }} pending</div></div>
   {% for d in decisions %}
   <div class="tr cols-decision">
@@ -22,7 +22,7 @@
       <a class="btn btn-secondary" href="/incidents/{{ d.incident_id }}">Review</a>
     </div>
   </div>
-  {% else %}<div class="empty"><b>No pending decisions</b><span>Warden lists decisions here when a policy requires you.</span></div>{% endfor %}
+  {% else %}<div class="empty-line s12 muted">Nothing waiting on you. Warden asks here when a policy requires your approval.</div>{% endfor %}
 </section>
 
 <section class="stats">
@@ -48,8 +48,8 @@
 
 <section class="two">
   <div class="card">
-    <div class="card-head"><div class="h">Jobs</div><a class="s12" href="/jobs">View all jobs</a></div>
-    {% for j in jobs %}
+    <div class="card-head"><div class="h">Jobs needing attention</div><a class="s12" href="/jobs">All {{ jobs|length }} jobs</a></div>
+    {% for j in jobs_shown %}
     <div class="section-row" style="display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;align-items:center;justify-content:space-between"><a class="plain" href="/jobs">{{ j.job_id }}</a><span class="pill pill-{{ j.status_cls }}">{{ j.status }}{% if j.phase %} · {{ j.phase }}{% endif %}</span></div>
       {% if j.pct is not none %}<div class="progress"><i class="{{ 'done' if j.pct >= 100 else '' }}" style="width:{{ j.pct }}%"></i></div>{% endif %}
