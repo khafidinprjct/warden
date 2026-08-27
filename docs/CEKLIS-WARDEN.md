@@ -78,7 +78,7 @@ Evidence: tests/test_recovery_fake.py, chaos 25/25, live drill #5 (M2).
 - ◐ J4 Ledger vs Billing ± 10 % — `infra/billing_reconcile.py` ready; needs the owner to enable the BigQuery billing export (console-only setting), then run.
 
 ## K. Human interface
-- ◐ K1 Dashboard v2: phone audit passed; desktop not audited.
+- ◐ K1 Dashboard v2 audited on both viewports 28 Aug (`docs/UX-AUDIT.md`), with the `frontend-design` plugin as the lens. Instruments: `chaos/ui_tour.py` (recorded walkthrough, 23 failure modes live at once, every control clicked and verified in Firestore — `docs/video/tour/warden-{desktop,phone}.mp4`), `chaos/ui_overflow.py` (element-level, 16 surfaces), `chaos/ui_shots.py` (26 screenshots). **Seven classes of defect fixed**: phone side-scroll on 7 surfaces, hidden columns behind that scroll, config identifiers shown as labels, overview ranked by name instead of severity, unreadable phone details, no keyboard focus anywhere, a broken empty-state sentence. **Six findings documented and open** (proposed action with no control, Freeze in the phone reading path, chart without a unit, status stated twice in conflict, no table semantics, light theme only). Closes when the owner has watched the walkthrough and given a verdict.
 - ✅ K2 Every decision shows evidence → diagnosis → hypotheses → cost → verification.
 - ✅ K3 Ask Warden answers with citations; any action can be requested through the job page (same policy/approval path) an action through the same approval path.
 - ☐ K4 Discord — last.
