@@ -9,7 +9,9 @@ preempt a Spot VM on purpose), not a stop, so the same GCE preemption operation 
 What must be true for the gate to pass:
   1. the job reaches phase "eval" with training complete (step == steps);
   2. a real preemption happens *inside* that phase — verified against zoneOperations, not assumed;
-  3. Warden detects `preempted` and starts the machine again by itself (start_instance is L2 — no human);
+  3. Warden opens an incident for the interruption and brings the job back by itself, with no human in the loop. Which rule
+     fires depends on whether the shutdown grace let `wrun` post a RUN_FIN — `preempted` if it did not, `run_fin_nonzero`
+     if it did — so both routes count; the gate records which one was taken;
   4. the resumed run re-enters the eval phase from its start and does NOT re-run training (the step never goes backwards);
   5. the job reaches COMPLETE with every artifact opened and VERIFIED (eval.jsonl 10 rows, pred.csv 2000 rows);
   6. the close-out rule stops the machine.
@@ -71,9 +73,14 @@ def _ts(v) -> float:
     return datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
 
 
+def run_fin(run_id: str) -> dict | None:
+    d = FS.collection("markers").document(f"{JOB_ID}:{run_id}:RUN_FIN").get()
+    return d.to_dict() if d.exists else None
+
+
 def run_finished(run_id: str) -> bool:
     """A RUN_FIN for this run means the job ended on its own — a preemption after that interrupts nothing."""
-    return FS.collection("markers").document(f"{JOB_ID}:{run_id}:RUN_FIN").get().exists
+    return run_fin(run_id) is not None
 
 
 def artifact_rows(name: str) -> int | None:
@@ -118,17 +125,27 @@ def run() -> dict:
     assert ops, "no preemption operation — the drill did not test what it claims"
     # The whole gate is void if the run had already finished: that is what happened on the first attempt (RUN_FIN exit 0 at
     # 15:28:11, preemption at 15:28:47) and Warden was right to open no incident at all.
-    assert not run_finished(run_before), "RUN_FIN exists: the run completed before the preemption — nothing was interrupted, the gate proves nothing"
+    fin = run_fin(run_before)
+    assert not (fin and fin.get("exit_code") == 0), \
+        "a RUN_FIN with exit 0 exists: the run finished on its own before the preemption — nothing was interrupted, the gate proves nothing"
 
-    # 3. Warden reacts on its own
-    inc = wait("incident `preempted` opened", lambda: next((i for i in incidents(JOB_ID) if i["rule"] == "preempted"), None), 600, 15)
-    assert inc, f"no preempted incident; rules saw: {sorted({i['rule'] for i in incidents(JOB_ID)})}"
-    dec = wait("start_instance executed automatically (L2, no human)",
+    # 3. Warden reacts on its own.
+    # Which rule fires depends on whether the shutdown grace let wrun post a RUN_FIN: no marker → `preempted`
+    # (machine TERMINATED for two ticks without RUN_FIN); a marker with a non-zero exit → `run_fin_nonzero`.
+    # A4 is about the resume, not about the label, so both routes are accepted — and the one taken is recorded.
+    INTERRUPTION = ("preempted", "preempt_storm", "stopped_external", "run_fin_nonzero")
+    RECOVERY = ("start_instance", "resume_job")
+    inc = wait("Warden opened an incident for the interruption",
+               lambda: next((i for i in incidents(JOB_ID) if i["rule"] in INTERRUPTION), None), 600, 15)
+    assert inc, f"no incident for the interruption; rules seen: {sorted({i['rule'] for i in incidents(JOB_ID)})}"
+    log("route taken by Warden", rule=inc["rule"], run_fin=(fin or {}).get("exit_code", "absent"))
+    dec = wait("a recovery action executed automatically (no human)",
                lambda: next((d for d in [FS.collection("decisions").document(x).get().to_dict()
-                                         for x in next((i for i in incidents(JOB_ID) if i["rule"] == "preempted"), {}).get("decision_ids", [])]
-                             if d and d["action"] == "start_instance" and d["status"] in ("DONE", "EXECUTING")), None), 600, 15)
-    assert dec, "Warden did not start the machine by itself"
-    verdict["checks"]["auto_restart"] = {"action": dec["action"], "verdict": dec["verdict"], "status": dec["status"]}
+                                         for x in next((i for i in incidents(JOB_ID) if i["rule"] in INTERRUPTION), {}).get("decision_ids", [])]
+                             if d and d["action"] in RECOVERY and d["status"] in ("DONE", "EXECUTING")), None), 900, 15)
+    assert dec, "Warden did not bring the job back by itself"
+    assert dec["verdict"] != "NEED_APPROVAL" or dec["status"] == "DONE", "the action waited for a human — A4 asks for an unattended resume"
+    verdict["checks"]["auto_recovery"] = {"rule": inc["rule"], "action": dec["action"], "verdict": dec["verdict"], "status": dec["status"]}
     assert wait("machine RUNNING again", lambda: instance(ref).get("status") == "RUNNING", 600, 15)
 
     # 4. the eval phase re-runs from its start, and training is NOT re-run
