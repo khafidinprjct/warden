@@ -252,3 +252,14 @@ Pemilik menjalankan deploy (classifier memblokir saya). Rev **00022-drh** melaya
 - **BUKTI PENUTUP (rev 00023-pl5):** Scheduler → `/eval` → `eval/2026-08-27T144330Z` = **11/11, accuracy 1,0, 0 bukti palsu, $0,0695**, health `gold_eval` hijau, nol langkah manusia. Ini **pertama kalinya** leg nightly benar-benar berjalan sejak dibuat.
 - Ceklis: **C4 dan M3 naik kembali ke ✅** — kali ini buktinya putaran terjadwal, bukan run manual. Status: **62 ✅ · 5 ◐ · 1 ☐ dari 68**.
 - Biaya sesi ini: $0,0695 (gold eval sukses) + $0 untuk percobaan yang crash sebelum menyentuh Gemini. pytest 83, chaos 25/25.
+
+### 27 Agu 2026 ~22:15 WIB — 9 VM + 9 disk drill DIHAPUS atas perintah pemilik; armada nol
+**Keputusan pemilik (mengoreksi saya):** "STOP bukan DELETE" adalah aturan **bersyarat**, bukan mutlak — berlaku untuk keadaan yang memang mengharuskannya (mesin yang masih dipakai, bukti yang belum dipanen), bukan untuk sisa uji yang sudah tidak diperlukan. Perintah: hapus.
+**Pemeriksaan sebelum menghapus (bukan formalitas — dua di antaranya mengubah urutan kerja):**
+1. Disk boot tidak bisa dihapus selagi masih nempel; jadi 9 VM (semuanya TERMINATED, cangkang $0) harus dihapus lebih dulu. Flag `--no-boot-disk-auto-delete` yang dipasang sejak awal terbukti bekerja: setelah 9 VM hilang, 9 disk masih `READY` dan lepas — baru kemudian dihapus terpisah.
+2. Job `live-1923-ops` masih berstatus **RUNNING** padahal mesinnya sudah mati sejak 25 Agu (sisa drill #5 jalur operator yang tak pernah ditutup). Menghapus mesinnya lebih dulu berisiko memunculkan insiden palsu dan merusak gerbang H5 sebelum 1 Sep. Job ditandai **ABANDONED** dengan entri audit (`human:owner`, before/after) lebih dulu; setelah itu nol job RUNNING.
+3. Aturan lain yang mungkin menyala (`stuck`, `harness_dead`, `orphan`, `idle`) semuanya butuh fakta mesin/denyut, jadi mesin yang lenyap membuatnya diam — diperiksa di `warden/watcher/rules.py`, bukan diasumsikan.
+**Dihapus:** `demo-train-1/2` (VM demo pra-Warden) + `warden-live-1800/1813/1842/1901/1923-oom` (drill #1–#5) + `warden-live-1923-ops` & `...-ops-c3956` (fase operator drill #5). 9 VM, lalu 9 disk 20 GB pd-balanced (180 GB).
+**Ditahan:** snapshot `warden-live-1923-ops-reloc-20260825193956` (1,24 GB, ≈$0,03/bln) — itu bukti relocate_zone drill #5, harganya tak berarti.
+**Verifikasi per sumber daya (tanpa memangkas stderr):** `instances list` → 0 item; `disks list` → 0 item; snapshot → 1. Lalu 3 tick berturut-turut: **0 insiden baru, 10 baris health hijau**; soak diukur ulang: 26 insiden · 12 tindakan · **0 tindakan palsu** — gerbang H5 tidak tercemar oleh pembersihan ini.
+**Hemat:** ≈$14–18/bulan (taksiran; tarif pasti belum bisa diverifikasi karena ekspor billing J4 belum aktif). Bukti drill tetap utuh di repo (`chaos/live_lifecycle_report.json`), Firestore (`reports/live-1923-oom`, insiden, audit) dan Storage — disk hanya menyimpan keadaan mesin.
