@@ -10,7 +10,9 @@ from typing import Any
 
 import yaml
 
-FIX = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "gold"
+# The gold set ships inside the package: the nightly /eval runs in the Cloud Run image, where tests/ is not present
+# (catalogue #36 — every attempt crashed with FileNotFoundError once authentication started working).
+FIX = Path(__file__).resolve().parent / "cases"
 
 
 def load_cases() -> tuple[float, list[dict]]:

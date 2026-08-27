@@ -234,7 +234,12 @@ def eval_gold(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
     from warden.eval import gold
-    rep = gold.run(); gold.record(rep, notify=_notify)
+    try:
+        rep = gold.run(); gold.record(rep, notify=_notify)
+    except Exception as e:                                   # a crashed evaluation must leave a trace, not only a 500 (catalogue #36)
+        db.health("gold_eval", False, f"{type(e).__name__}: {e}")
+        _notify(None, None, f"\u26a0\ufe0f Diagnostician gold eval crashed: {type(e).__name__}: {e}")
+        raise
     return {k: v for k, v in rep.items() if k != "rows"} | {"failed": [r["file"] for r in rep["rows"] if not r.get("ok")]}
 
 
