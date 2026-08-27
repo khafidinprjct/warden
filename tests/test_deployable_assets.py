@@ -1,36 +1,73 @@
-"""Guard for catalogue #36: files the *deployed service* reads at runtime must live inside the shipped image.
+"""Guard for catalogue #36: files the *deployed service* reads at runtime must survive `.gcloudignore`.
 
-The nightly gold evaluation (/eval) ran in Cloud Run, where `.gcloudignore` excludes `tests/`, `docs/`, `chaos/` and `data/`.
-The gold set used to live under `tests/fixtures/gold`, so every nightly attempt crashed with FileNotFoundError. These tests fail
-on the same mistake being made again — for the gold set and for any other runtime asset placed outside the package.
+The nightly gold evaluation (/eval) runs inside the Cloud Run image. The gold set first lived under `tests/fixtures/gold`
+(excluded by the `tests/` rule), and after it moved into the package its `.log` case files were still dropped by the blanket
+`*.log` rule — the evaluation failed twice for the same reason at two different layers. These tests evaluate every runtime
+asset against the ignore file the way gcloud does (last matching pattern wins, `!` re-includes).
+
+The authoritative check is `gcloud meta list-files-for-upload .`; this is its offline equivalent, so the failure shows up in
+pytest rather than in production at 02:00.
 """
 from __future__ import annotations
 
+from fnmatch import fnmatch
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "warden"
-IGNORED = [line.strip().rstrip("/") for line in (ROOT / ".gcloudignore").read_text().splitlines()
-           if line.strip() and not line.startswith("#")]
+
+
+def _patterns() -> list[tuple[str, bool]]:
+    out = []
+    for line in (ROOT / ".gcloudignore").read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        neg = line.startswith("!")
+        out.append((line[1:] if neg else line, neg))
+    return out
+
+
+def is_uploaded(rel: str) -> bool:
+    """True if `rel` (a repo-relative posix path) would be sent to Cloud Build."""
+    ignored = False
+    for pat, neg in _patterns():
+        if pat.endswith("/"):
+            hit = rel == pat[:-1] or rel.startswith(pat)
+        elif "/" in pat:
+            hit = fnmatch(rel, pat)
+        else:
+            hit = fnmatch(Path(rel).name, pat)
+        if hit:
+            ignored = not neg
+    return not ignored
+
+
+def test_the_matcher_agrees_with_the_rules_we_rely_on():
+    # a matcher that never excludes anything would make every other test in this file pass vacuously
+    assert not is_uploaded("tests/test_rules.py")
+    assert not is_uploaded("chaos/run.py")
+    assert not is_uploaded("some/other/place/train.log")
+    assert is_uploaded("warden/main.py")
 
 
 def test_gold_set_lives_inside_the_shipped_package():
     from warden.eval import gold
     assert gold.FIX.is_relative_to(PKG), f"gold set at {gold.FIX} is outside {PKG} and would not ship to Cloud Run"
-    top = gold.FIX.relative_to(ROOT).parts[0]
-    assert top not in IGNORED, f".gcloudignore excludes '{top}', so the gold set would be missing in the image"
 
 
-def test_every_gold_case_file_is_present_and_readable():
+def test_every_gold_case_file_is_present_and_uploaded():
     from warden.eval import gold
     threshold, cases = gold.load_cases()
     assert 0 < threshold <= 1 and cases, "gold set must declare a threshold and at least one case"
-    for c in cases:
-        f = gold.FIX / c["file"]
+    for name in ["cases.yaml"] + [c["file"] for c in cases]:
+        f = gold.FIX / name
         assert f.is_file(), f"gold case file missing: {f}"
         assert f.read_text(errors="ignore").strip(), f"gold case file empty: {f}"
+        rel = f.relative_to(ROOT).as_posix()
+        assert is_uploaded(rel), f".gcloudignore drops {rel}; the nightly /eval would crash on it in Cloud Run"
 
 
 def test_gold_cases_yaml_is_the_one_the_package_ships():

@@ -6,3 +6,5 @@ docs/
 chaos/
 .git/
 *.log
+# ...but the gold set is production data read by the nightly /eval inside the image (catalogue #36)
+!warden/eval/cases/*.log

@@ -3,7 +3,7 @@
   "n": 1,
   "mode": "preempt spot, tidak ada yang menyalakan",
   "ok": true,
-  "ms": 178,
+  "ms": 142,
   "info": {
    "aksi": [
     [
@@ -24,7 +24,7 @@
   "n": 2,
   "mode": "preempt + disk ikut terhapus (konfigurasi tak aman)",
   "ok": true,
-  "ms": 200,
+  "ms": 168,
   "info": {
    "catatan": "start ditolak sampai konfigurasi aman"
   },
@@ -34,7 +34,7 @@
   "n": 3,
   "mode": "preempt saat fase eval → resume sadar fase",
   "ok": true,
-  "ms": 146,
+  "ms": 136,
   "info": {
    "bukti_fase": "F5-eval"
   },
@@ -46,7 +46,7 @@
   "ok": true,
   "ms": 65,
   "info": {
-   "denyut_watcher": "2026-08-27T14:00:18.133963+00:00"
+   "denyut_watcher": "2026-08-27T14:37:45.514071+00:00"
   },
   "error": ""
  },
@@ -54,7 +54,7 @@
   "n": 5,
   "mode": "DONE palsu tanpa exit code",
   "ok": true,
-  "ms": 115,
+  "ms": 112,
   "info": {},
   "error": ""
  },
@@ -62,7 +62,7 @@
   "n": 6,
   "mode": "RUN_FIN dengan tanda tangan salah / basi",
   "ok": true,
-  "ms": 107,
+  "ms": 119,
   "info": {},
   "error": ""
  },
@@ -80,7 +80,7 @@
   "n": 8,
   "mode": "disk penuh → checkpoint 15 % ditolak + disk_low",
   "ok": true,
-  "ms": 127,
+  "ms": 115,
   "info": {
    "verifier": "size_vs_expect: 150000 outside [900000,1100000] (15% of expected)"
   },
@@ -90,7 +90,7 @@
   "n": 9,
   "mode": "OOM di kasus terburuk (regex + cek silang)",
   "ok": true,
-  "ms": 4,
+  "ms": 3,
   "info": {
    "checks": [
     "evidence_lines_in_range",
@@ -116,7 +116,7 @@
   "n": 11,
   "mode": "pip gagal senyap → exit code proses anak ≠ 0 → run_fin_nonzero (LLM)",
   "ok": true,
-  "ms": 83,
+  "ms": 74,
   "info": {},
   "error": ""
  },
@@ -124,7 +124,7 @@
   "n": 12,
   "mode": "image tanpa pip → PREFLIGHT_FAIL marker diterima",
   "ok": true,
-  "ms": 44,
+  "ms": 39,
   "info": {},
   "error": ""
  },
@@ -132,7 +132,7 @@
   "n": 13,
   "mode": "fallback kernel senyap → 'slow' (basi tapi sibuk), bukan 'stuck'",
   "ok": true,
-  "ms": 115,
+  "ms": 110,
   "info": {},
   "error": ""
  },
@@ -160,7 +160,7 @@
   "n": 16,
   "mode": "create gagal per-item → OpResult.error terstruktur, bukan stderr dipangkas",
   "ok": true,
-  "ms": 150,
+  "ms": 159,
   "info": {
    "error": "ZONE_RESOURCE_POOL_EXHAUSTED"
   },
@@ -199,7 +199,7 @@
   "n": 19,
   "mode": "badai preempt → batas 3 start/jam menahan yang ke-4",
   "ok": true,
-  "ms": 423,
+  "ms": 456,
   "info": {
    "start": 2,
    "storm": 1
@@ -210,7 +210,7 @@
   "n": 20,
   "mode": "proses ganda → dup_process",
   "ok": true,
-  "ms": 108,
+  "ms": 97,
   "info": {},
   "error": ""
  },
@@ -218,7 +218,7 @@
   "n": 21,
   "mode": "selesai tapi artefak tidak mendarat → verifikasi menandai hilang",
   "ok": true,
-  "ms": 136,
+  "ms": 123,
   "info": {
    "tenggang": {
     "verified": 1,
@@ -255,7 +255,7 @@
   "n": 24,
   "mode": "nohup via ssh gantung → tidak ada ssh di jalur kritis (mailbox)",
   "ok": true,
-  "ms": 49,
+  "ms": 48,
   "info": {
    "plan": {
     "channel": "mailbox",
