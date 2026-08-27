@@ -20,6 +20,7 @@ ap = argparse.ArgumentParser(); ap.add_argument("--steps", type=int, default=300
 ap.add_argument("--sleep", type=float, default=0.05); ap.add_argument("--nan-at", type=int, default=0)
 ap.add_argument("--oom-at", type=int, default=0, help="drill: raise a CUDA-style OOM at this step unless WARDEN_BATCH_SCALE < 1")
 ap.add_argument("--oom-until-scale", type=float, default=0.5, help="drill: OOM keeps happening until batch_scale <= this")
+ap.add_argument("--eval-sleep", type=float, default=0.2, help="drill: seconds per eval fold — makes the eval phase long enough to be preempted mid-phase (checklist A4)")
 a = ap.parse_args()
 BATCH_SCALE = float(os.environ.get("WARDEN_BATCH_SCALE", "1")); LR_SCALE = float(os.environ.get("WARDEN_LR_SCALE", "1"))
 RESUME_CKPT = os.environ.get("WARDEN_RESUME_CKPT", "")
@@ -33,10 +34,13 @@ if RESUME_CKPT:   # Warden asked for a specific checkpoint (rollback): only that
     ck = [c for c in ck if os.path.basename(c) <= os.path.basename(RESUME_CKPT)]
 # Resume dari checkpoint UTUH terakhir, bukan yang terbaru (katalog #7/#8): preempt nyata 25 Agu memotong
 # ckpt_001700.npz → np.load EOFError → run gagal. Yang rusak dikarantina (.corrupt), lalu mundur satu.
-resumed = False
+resumed = False; resume_loss = None
 for c in reversed(ck):
     try:
-        z = np.load(c); w, step = z["w"], int(z["step"]); print(f"=== [resume] dari {os.path.basename(c)} step {step} ===", flush=True); resumed = True; break
+        # the loss is restored too: a run resumed straight into eval never enters the training loop, so without this the
+        # metrics it reports would be the 1.0 default instead of the real loss (found while proving A4 locally)
+        z = np.load(c); w, step = z["w"], int(z["step"]); resume_loss = float(z["loss"]) if "loss" in z else None
+        print(f"=== [resume] dari {os.path.basename(c)} step {step} loss {resume_loss if resume_loss is not None else float('nan'):.4f} ===", flush=True); resumed = True; break
     except Exception as e:  # noqa: BLE001 — checkpoint rusak/terpotong
         os.replace(c, c + ".corrupt")
         for side in (".meta.json", ".sha256", ".meta.json.sha256"):
@@ -55,7 +59,7 @@ def save(tag: str = ""):
     print(f"checkpoint {os.path.basename(p)} {tag}", flush=True)
 
 
-last_loss = 1.0
+last_loss = resume_loss if resume_loss is not None else 1.0
 # Handler sinyal hanya MENANDAI; simpan dilakukan di loop utama (anti re-entrancy: dua SIGUSR1 beruntun
 # saat save() sedang menulis bisa merusak file — dugaan kuat penyebab ckpt_001700 terpotong).
 preempt = {"flag": False, "saved": False}
@@ -85,7 +89,10 @@ print("=== [eval] ===", flush=True); beat(phase="eval", step=step, loss=last_los
 with open(os.path.join(a.out, "eval.jsonl"), "w") as f:
     for k in range(10):
         j = rng.integers(0, 2000, 200); pk = 1 / (1 + np.exp(-X[j] @ w)); acc = float(np.mean((pk > 0.5) == y[j]))
-        f.write(json.dumps({"fold": k, "acc": acc}) + "\n"); time.sleep(0.2)
+        f.write(json.dumps({"fold": k, "acc": acc}) + "\n"); f.flush()
+        print(f"eval fold {k+1}/10 acc {acc:.3f}", flush=True)     # a partial eval.jsonl is how we see where a preemption cut the phase
+        beat(phase="eval", step=step, loss=last_loss)
+        time.sleep(a.eval_sleep)
 print("=== [export] ===", flush=True); beat(phase="export", step=step, loss=last_loss)
 pk = 1 / (1 + np.exp(-X @ w))
 with open(os.path.join(a.out, "pred.csv"), "w") as f:
