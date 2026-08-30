@@ -42,6 +42,19 @@ def list_jobs() -> dict:
                       "last_step": j.last_step, "spent_usd": round(j.spent_usd, 4)} for j in db.jobs.list(limit=200)]}
 
 
+def list_fleet() -> dict:
+    """Every machine in the ledger with its current status, price and job. Use this for any question about machines,
+    cost per hour or what is running — never infer the fleet from an incident summary, which describes the past."""
+    from warden.providers.registry import compute
+    live = {i.ref for i in compute().list_instances()}
+    out = []
+    for i in db.fleet.list(limit=200):
+        out.append({"ref": i.ref, "name": i.name, "zone": i.zone, "status": str(i.status), "machine_type": i.machine_type,
+                    "spot": i.spot, "hourly_price_usd": i.hourly_price_usd, "job_id": i.job_id,
+                    "exists_at_provider": i.ref in live})
+    return {"machines": out, "running_now": [m for m in out if m["status"] == "RUNNING" and m["exists_at_provider"]]}
+
+
 def list_incidents(state: str = "", n: int = 40) -> dict:
     """Recent incidents, newest first; pass state to filter (for example ESCALATED for the ones that needed a human)."""
     incs = db.incidents.list(limit=300)
@@ -146,7 +159,7 @@ def _never_raises(fn):
     return wrapper
 
 
-TOOLS = [_never_raises(f) for f in (list_jobs, list_incidents, get_log_window, search_log, get_heartbeats,
+TOOLS = [_never_raises(f) for f in (list_jobs, list_fleet, list_incidents, get_log_window, search_log, get_heartbeats,
                                     get_artifacts, get_incident_history, get_instance)]
 
 SYSTEM = (
