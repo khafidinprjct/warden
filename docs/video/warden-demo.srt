@@ -1,39 +1,79 @@
 1
-00:00:00,352 --> 00:00:05,359
+00:00:00,337 --> 00:00:04,846
 Warden — an SRE agent for long-running compute jobs
 
 2
-00:00:05,359 --> 00:00:10,862
+00:00:04,846 --> 00:00:09,851
 A live machine is not correct training. Finished is not intact.
 
 3
-00:00:10,862 --> 00:00:19,803
-Right now: one job training on a Spot machine in Compute Engine
+00:00:09,851 --> 00:00:25,454
+Warden was handed a spec. It is building the machine on Compute Engine right now.
 
 4
-00:00:19,803 --> 00:00:31,057
-Warden is watching it — heartbeats, phase markers, signed completion markers
+00:00:25,454 --> 00:00:36,599
+Running: a Spot machine, a real model, heartbeats every few seconds
 
 5
-00:00:31,057 --> 00:01:34,816
-The job is about to hit a GPU out-of-memory error at step 600
+00:00:36,599 --> 00:00:43,627
+At step 600 this run hits a GPU out-of-memory error. Nobody is watching it.
 
 6
-00:01:34,816 --> 00:01:48,027
-It died. Warden opened an incident in seconds — nobody was watching
+00:00:43,627 --> 00:00:56,710
+It died. Warden opened an incident within one tick.
 
 7
-00:01:48,027 --> 00:01:57,795
-Evidence first: the log line, quoted from the run's own log
+00:00:56,710 --> 00:01:06,606
+Evidence first — the failing line, quoted from the run's own log
 
 8
-00:01:57,795 --> 00:02:38,003
-Then the diagnosis — and every quote is checked against the raw log before anything happens
+00:01:06,606 --> 00:01:30,492
+Then the diagnosis. Every quote is checked against the raw log before anything is allowed to happen.
 
 9
-00:02:38,003 --> 00:02:56,621
+00:01:30,492 --> 00:01:46,310
 Warden decided by itself: resume at half the batch size. No human was asked.
 
 10
-00:02:56,621 --> 00:04:00,000
-And then it checks the world: did the new run actually pass the step it died at?
+00:01:46,310 --> 00:01:56,371
+Then it checks the world: did the new run actually pass the step it died at?
+
+11
+00:01:56,371 --> 00:02:11,194
+Past step 600 on the resumed run. The incident closes on evidence, not on an API returning OK.
+
+12
+00:02:11,194 --> 00:02:21,031
+Some actions Warden may not take alone. Those stop and wait for a person.
+
+13
+00:02:21,031 --> 00:02:34,014
+Every request carries what it will touch, what it costs, and when it lapses
+
+14
+00:02:34,014 --> 00:02:46,448
+Approved by the operator — and executed under the same policy as everything Warden does alone
+
+15
+00:02:46,448 --> 00:02:53,452
+The disk actually grew. Warden checked the machine, not the API's answer.
+
+16
+00:02:53,452 --> 00:03:09,218
+Every intent and every result is written down — including approvals answered from a phone in Discord
+
+17
+00:03:09,218 --> 00:03:25,464
+Warden cannot delete anything. That is denied by an IAM condition, not by good intentions.
+
+18
+00:03:25,464 --> 00:03:36,431
+And one button stops all of it
+
+19
+00:03:36,431 --> 00:03:46,566
+Frozen. Warden still watches and still proposes, but acts on nothing.
+
+20
+00:03:46,566 --> 00:03:53,570
+A live machine is not correct training. Finished is not intact. Warden watches the work.

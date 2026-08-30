@@ -15,3 +15,6 @@ data/emulator/
 docs/video/raw/
 docs/video/*.webm
 docs/video/rekam.log
+docs/video/*-raw.mp4
+docs/video/chk_*.png
+docs/video/f[0-9]*.png

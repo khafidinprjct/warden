@@ -211,7 +211,19 @@ class Stage:
                 pass
 
     def goto(self, path: str, settle: float = 1.2):
-        self.page.goto(UI + path, wait_until="load", timeout=60000)
+        """Navigate, tolerating a navigation the page started itself.
+
+        Approving a card posts and then reloads. A goto issued into that window is aborted by Chromium with
+        ERR_ABORTED — not a failure of the product, but it ended a six-minute take at the last scene. Wait for the
+        page's own navigation to land, then go."""
+        for attempt in (1, 2, 3):
+            try:
+                self.page.goto(UI + path, wait_until="load", timeout=60000)
+                break
+            except Exception as e:  # noqa: BLE001
+                if "ERR_ABORTED" not in str(e) or attempt == 3:
+                    raise
+                self.page.wait_for_timeout(1800)
         self.page.wait_for_timeout(int(settle * 1000))
         self._recaption()
 
@@ -385,6 +397,8 @@ def scene_demo(s: Stage) -> None:
     if pend and s.page.locator("button.btn-approve").count():
         s.say("Approved by the operator — and executed under the same policy as everything Warden does alone", 1.5)
         s.click("button.btn-approve", settle=4.5)
+        s.page.wait_for_load_state("load")
+        s.beat(2.0)
         _wait(s, "waiting for the approved action to run against Compute Engine",
               lambda: str(db.decisions.get(pend.decision_id).status) in ("DONE", "FAILED"), 300,
               every=4.0, tour=["/approvals", "/fleet"])

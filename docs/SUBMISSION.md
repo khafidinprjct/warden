@@ -87,7 +87,7 @@ onboarding a second GPU training job with real checkpoints.
 | Repository | `github.com/khafidinprjct/warden` |
 | Spin-up instructions | README "Quick start" — clean clone to green measured at **77.6 s** |
 | Architecture diagram | `docs/architecture.png` + Mermaid in README |
-| Demo video ≤ 4 min | **outstanding** |
+| Demo video ≤ 4 min | `docs/video/warden-demo.mp4` — **3:56**, one live take, subtitles in `warden-demo.srt` |
 
 ## Checklist
 - [x] Repository access for judges — `devposttesting` invited; repository made public
@@ -95,7 +95,8 @@ onboarding a second GPU training job with real checkpoints.
 - [x] Architecture diagram
 - [x] Hosted dashboard URL, reachable without a login
 - [x] Discord approvals wired: bot in the server, token in Secret Manager, approver allow-list, signed interactions
-- [ ] **Demo video ≤ 4:00 on YouTube** (public, English, Cloud Console visible, unedited live execution)
+- [x] **Demo video, 3:56** — recorded live against production on 30 Aug: Warden builds a Spot machine, trains, hits a GPU OOM at step 600, diagnoses it, resumes at half the batch size with no human asked, verifies against the world, then takes an approval and grows a disk. Cloud Run, Compute Engine, Firestore state and the audit log are on screen throughout. Nothing is cut: the four waiting stretches are time-compressed with a badge naming the factor.
+- [ ] Upload it to YouTube as public (owner's account) and paste the link into Devpost
 - [ ] Devpost description submitted with the category selected
 - [ ] Bonus: social post with #AllThingsAgenticHackathon (+0.2), write-up from the decision journal (+0.2)
 

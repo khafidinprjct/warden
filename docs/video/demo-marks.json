@@ -1,0 +1,111 @@
+{
+ "marks": [
+  [
+   0.33748316764831543,
+   "Warden \u2014 an SRE agent for long-running compute jobs"
+  ],
+  [
+   4.846339464187622,
+   "A live machine is not correct training. Finished is not intact."
+  ],
+  [
+   9.850728273391724,
+   "Warden was handed a spec. It is building the machine on Compute Engine right now."
+  ],
+  [
+   74.09647679328918,
+   "Running: a Spot machine, a real model, heartbeats every few seconds"
+  ],
+  [
+   85.24099898338318,
+   "At step 600 this run hits a GPU out-of-memory error. Nobody is watching it."
+  ],
+  [
+   215.899240732193,
+   "It died. Warden opened an incident within one tick."
+  ],
+  [
+   228.9831211566925,
+   "Evidence first \u2014 the failing line, quoted from the run's own log"
+  ],
+  [
+   238.87857127189636,
+   "Then the diagnosis. Every quote is checked against the raw log before anything is allowed to happen."
+  ],
+  [
+   619.2102360725403,
+   "Warden decided by itself: resume at half the batch size. No human was asked."
+  ],
+  [
+   635.0283758640289,
+   "Then it checks the world: did the new run actually pass the step it died at?"
+  ],
+  [
+   674.9131639003754,
+   "Past step 600 on the resumed run. The incident closes on evidence, not on an API returning OK."
+  ],
+  [
+   689.735981464386,
+   "Some actions Warden may not take alone. Those stop and wait for a person."
+  ],
+  [
+   699.5727276802063,
+   "Every request carries what it will touch, what it costs, and when it lapses"
+  ],
+  [
+   712.5555975437164,
+   "Approved by the operator \u2014 and executed under the same policy as everything Warden does alone"
+  ],
+  [
+   724.9903833866119,
+   "The disk actually grew. Warden checked the machine, not the API's answer."
+  ],
+  [
+   731.9936428070068,
+   "Every intent and every result is written down \u2014 including approvals answered from a phone in Discord"
+  ],
+  [
+   747.760153055191,
+   "Warden cannot delete anything. That is denied by an IAM condition, not by good intentions."
+  ],
+  [
+   764.0056097507477,
+   "And one button stops all of it"
+  ],
+  [
+   774.9730439186096,
+   "Frozen. Warden still watches and still proposes, but acts on nothing."
+  ],
+  [
+   785.1078736782074,
+   "A live machine is not correct training. Finished is not intact. Warden watches the work."
+  ],
+  [
+   792.1121270656586,
+   ""
+  ]
+ ],
+ "ramps": [
+  {
+   "start": 19.929075717926025,
+   "end": 74.09647011756897,
+   "label": "waiting for the Spot machine to boot and send its first heartbeat"
+  },
+  {
+   "start": 86.74343419075012,
+   "end": 215.89923286437988,
+   "label": "waiting for the run to reach step 600 and die"
+  },
+  {
+   "start": 254.64453959465027,
+   "end": 616.6154985427856,
+   "label": "waiting for the diagnosis and the decision"
+  },
+  {
+   "start": 637.0317618846893,
+   "end": 672.3806908130646,
+   "label": "waiting for the resumed run to pass the step it died at"
+  }
+ ],
+ "duration": 793.33362865448
+}
