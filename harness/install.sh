@@ -2,7 +2,7 @@
 # install.sh — pasang harness Warden di mesin (idempoten, stdlib saja, tanpa pip).
 #   sudo WARDEN_JOB=<id> WARDEN_CORE_URL=https://... WARDEN_HMAC=<rahasia> [WARDEN_BUCKET=<bucket>] [WARDEN_ENTRY=<substr>] bash install.sh
 set -euo pipefail
-: "${WARDEN_JOB:?WARDEN_JOB wajib}"; : "${WARDEN_CORE_URL:?WARDEN_CORE_URL wajib}"; : "${WARDEN_HMAC:?WARDEN_HMAC wajib}"
+: "${WARDEN_JOB:?WARDEN_JOB is required}"; : "${WARDEN_CORE_URL:?WARDEN_CORE_URL is required}"; : "${WARDEN_HMAC:?WARDEN_HMAC is required}"
 SRC="$(cd "$(dirname "$0")" && pwd)"
 install -d /opt/warden /etc/warden "/var/lib/warden/$WARDEN_JOB/markers" "/var/lib/warden/$WARDEN_JOB/artifacts" /run/lock
 install -m 0755 "$SRC/wrun" /usr/local/bin/wrun
@@ -27,7 +27,7 @@ AVAIL=$(df -BG --output=avail / | tail -1 | tr -dc '0-9'); [ "${AVAIL:-0}" -ge "
 if [ -n "${WARDEN_PREFLIGHT_PY:-}" ]; then $WARDEN_PREFLIGHT_PY -c "import torch; assert torch.cuda.is_available()" 2>/dev/null || FAIL="torch/cuda tidak siap"; fi
 if [ -n "$FAIL" ]; then
   echo "{\"kind\":\"PREFLIGHT_FAIL\",\"job_id\":\"$WARDEN_JOB\",\"ts\":\"$(date -u -Iseconds)\",\"reason\":\"$FAIL\"}" > "/var/lib/warden/$WARDEN_JOB/markers/PREFLIGHT_FAIL.json"
-  echo "PREFLIGHT GAGAL: $FAIL" >&2
+  echo "PREFLIGHT FAILED: $FAIL" >&2
 fi
 systemctl daemon-reload && systemctl enable --now warden-agent >/dev/null 2>&1 || true
 echo "harness terpasang: job=$WARDEN_JOB core=$WARDEN_CORE_URL preflight=${FAIL:-OK}"

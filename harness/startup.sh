@@ -9,11 +9,11 @@ RESUME=$(md warden-resume-cmd); WORKDIR=$(md warden-workdir); HURL=$(md warden-h
 for k in $(curl -sf -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/" | tr ' ' '\n' | grep '^warden-env-'); do
   export "${k#warden-env-}=$(md "$k")"
 done
-[ -n "$JOB" ] || { echo "startup: metadata warden-job kosong — bukan mesin Warden"; exit 0; }
+[ -n "$JOB" ] || { echo "startup: metadata warden-job is empty — not a Warden machine"; exit 0; }
 mkdir -p /opt/warden-src && cd /opt/warden-src
 [ -n "$HURL" ] && gcloud storage cp -r "$HURL/*" /opt/warden-src/ -q 2>/dev/null || true
 WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BUCKET" WARDEN_ENTRY="$ENTRY" \
-  WARDEN_RESUME_CMD="$RESUME" WARDEN_WORKDIR="${WORKDIR:-/}" bash /opt/warden-src/install.sh || echo "startup: preflight gagal (marker ditulis)"
+  WARDEN_RESUME_CMD="$RESUME" WARDEN_WORKDIR="${WORKDIR:-/}" bash /opt/warden-src/install.sh || echo "startup: preflight failed (marker written)"
 # peluncuran/resume sadar fase: belum ada RUN_FIN (boot pertama, atau RUN_START terputus oleh preempt) → jalankan RESUME
 D="/var/lib/warden/$JOB/markers"
 # selesai hanya bila RUN_FIN milik run yang SAMA dengan RUN_START (RUN_FIN run lama ≠ selesai)
@@ -28,7 +28,7 @@ except Exception:
 PY
 )
 if [ "$SELESAI" != "ya" ] && [ -n "$RESUME" ]; then
-  echo "startup: belum ada RUN_FIN ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START ada = lanjut setelah terputus' || echo 'boot pertama')) → $RESUME"
+  echo "startup: no RUN_FIN yet ($( [ -f "$D/RUN_START.json" ] && echo 'RUN_START present = resuming after an interruption' || echo 'first boot')) → $RESUME"
   # the resume command runs with the FULL Warden environment (job id, core URL, bucket, entry) — a bootstrap that falls back to a
   # default job id would otherwise report under the wrong job (live drill 26 Aug: training ran as "toy-train" instead of the launched job)
   mkdir -p "${WORKDIR:-/}"; (cd "${WORKDIR:-/}" && WARDEN_JOB="$JOB" WARDEN_CORE_URL="$CORE" WARDEN_HMAC="$HMAC" WARDEN_BUCKET="$BUCKET" WARDEN_ENTRY="$ENTRY" WARDEN_DIR=/var/lib/warden nohup bash -c "$RESUME" > /var/log/warden-resume.log 2>&1 &)

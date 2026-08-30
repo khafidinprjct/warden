@@ -7,13 +7,13 @@ JOB=""; RUN=""; PHASE="run"; POWEROFF=0
 while [ $# -gt 0 ]; do case "$1" in
   --job) JOB="$2"; shift 2;; --run-id) RUN="$2"; shift 2;; --phase) PHASE="$2"; shift 2;;
   --poweroff-on-success) POWEROFF=1; shift;; --) shift; break;; *) echo "wrun: argumen tak dikenal $1" >&2; exit 64;; esac; done
-[ -n "$JOB" ] || { echo "wrun: --job wajib" >&2; exit 64; }
-[ $# -gt 0 ] || { echo "wrun: perintah wajib setelah --" >&2; exit 64; }
+[ -n "$JOB" ] || { echo "wrun: --job is required" >&2; exit 64; }
+[ $# -gt 0 ] || { echo "wrun: a command is required after --" >&2; exit 64; }
 RUN="${RUN:-r$(date -u +%Y%m%dT%H%M%S)}"
 DIR="${WARDEN_DIR:-/var/lib/warden}/$JOB"; mkdir -p "$DIR/markers" "$DIR/artifacts"
 rm -f "$DIR/markers/RUN_FIN.json"        # RUN_FIN milik run LAMA tidak boleh menyamar sebagai milik run ini (bug 25 Agu: memblokir resume)
 LOCK="/run/lock/warden-$JOB.lock"; exec 9>"$LOCK"
-flock -n 9 || { echo "wrun: job $JOB sudah berjalan (flock $LOCK) — tidak meluncurkan yang kedua" >&2; exit 75; }
+flock -n 9 || { echo "wrun: job $JOB is already running (flock $LOCK) — refusing to start a second one" >&2; exit 75; }
 export WARDEN_JOB="$JOB" WARDEN_RUN="$RUN" WARDEN_DIR="${WARDEN_DIR:-/var/lib/warden}"
 LOG="$DIR/run.log"; START=$(date -u +%s); BOOT=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo "-")
 python3 - "$DIR" "$JOB" "$RUN" "$PHASE" "$START" "$BOOT" "$*" <<'PY'
@@ -57,18 +57,18 @@ fin = {"v": 1, "job_id": job, "run_id": run, "kind": "RUN_FIN", "ts": ts, "exit_
        "artifacts": arts, "evidence": ev, "signature": sig}
 tmp = os.path.join(d, "markers", "RUN_FIN.json.pending")     # becomes RUN_FIN.json only after the log and artifacts have landed in Storage
 json.dump(fin, open(tmp, "w"))
-print(f"=== wrun selesai exit={ex} artefak={len(arts)} RUN_FIN disiapkan ===")
+print(f"=== wrun finished exit={ex} artifacts={len(arts)} RUN_FIN staged ===")
 PY
 echo "EXIT=$EXIT" >> "$LOG"
 # artefak WAJIB mendarat sebelum job dianggap selesai (mode #21; preempt nyata 25 Agu memakan jendela unggah agent):
 # unggah artefak + marker ke GCS secara SINKRON di sini, bukan menunggu agent.
 if [ -n "${WARDEN_BUCKET:-}" ] && command -v gcloud >/dev/null 2>&1; then
-  gcloud storage cp -r "$DIR/artifacts/"* "gs://$WARDEN_BUCKET/jobs/$JOB/artifacts/" -q 2>/dev/null || echo "wrun: unggah artefak GAGAL" | tee -a "$LOG"
+  gcloud storage cp -r "$DIR/artifacts/"* "gs://$WARDEN_BUCKET/jobs/$JOB/artifacts/" -q 2>/dev/null || echo "wrun: artifact upload FAILED" | tee -a "$LOG"
   # log per run id FIRST: the Diagnostician must find the evidence in Storage the moment the marker appears (catalog #32)
-  tail -c 1048576 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/$RUN.log" -q 2>/dev/null || echo "wrun: unggah log per run GAGAL" | tee -a "$LOG"
+  tail -c 1048576 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/$RUN.log" -q 2>/dev/null || echo "wrun: per-run log upload FAILED" | tee -a "$LOG"
   tail -c 262144 "$LOG" | gcloud storage cp - "gs://$WARDEN_BUCKET/jobs/$JOB/log/tail.log" -q 2>/dev/null || true
   gcloud storage cp "$DIR/markers/RUN_FIN.json.pending" "gs://$WARDEN_BUCKET/jobs/$JOB/markers/RUN_FIN_$RUN.json" -q 2>/dev/null || true
-  echo "wrun: log+artefak+RUN_FIN diunggah ke gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
+  echo "wrun: log, artifacts and RUN_FIN uploaded to gs://$WARDEN_BUCKET/jobs/$JOB/" | tee -a "$LOG"
 fi
 mv -f "$DIR/markers/RUN_FIN.json.pending" "$DIR/markers/RUN_FIN.json"   # now the agent may report the run as finished
 if [ "$POWEROFF" = 1 ] && [ "$EXIT" = 0 ]; then sleep 90; sudo poweroff; fi   # 90 dtk: beri agent waktu mengirim RUN_FIN
