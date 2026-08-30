@@ -124,7 +124,8 @@ def fleet(request: Request):
                      "status_cls": data.INSTANCE_STATUS.get(data._s(i.status), (None, "grey"))[1],
                      "seen_iso": data.iso(i.last_seen), "price": data.usd(i.hourly_price_usd, 3),
                      "unsafe": i.termination_action == "DELETE" or bool(i.boot_disk_auto_delete)})
-    return render(request, "fleet.html", "fleet", "Fleet", ctx, rows=rows)
+    return render(request, "fleet.html", "fleet", "Fleet", ctx, rows=rows,
+                  running=sum(1 for r in rows if r["status"] == "RUNNING"))
 
 
 @app.get("/budget", response_class=HTMLResponse)

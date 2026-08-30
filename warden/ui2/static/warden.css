@@ -1,10 +1,10 @@
 /* Warden design system — the only stylesheet. Tokens from docs/mockup-v2/Components.dc.html. */
 :root {
   --canvas: #f6f7f9; --surface: #ffffff; --border: #e3e6eb; --line: #eef0f3; --control: #d5dae2;
-  --text: #1a2130; --text-2: #3d4757; --muted: #6b7686; --dim: #9aa3b1;
+  --text: #1a2130; --text-2: #3d4757; --muted: #626b79; --dim: #666f7d;   /* AA over both surfaces: 5.03 / 4.74 on the canvas */
   --accent: #2f5fd6; --accent-2: #1f47ab; --accent-bg: #eef2fb;
   --ok: #2ea043; --ok-text: #1f7a3d; --ok-bg: #e6f4ea;
-  --warn: #e0a52a; --warn-text: #8a5a0b; --warn-bg: #fdf3e1; --warn-line: #b7791f;
+  --warn: #e0a52a; --warn-text: #8a5a0b; --warn-bg: #fdf3e1; --warn-line: #9c6410;   /* white on this = 4.95, AA at 11 px */
   --crit: #d9363e; --crit-text: #b42323; --crit-bg: #fbe9e9;
   --gemini: #5b3fb8; --gemini-bg: #efeafd; --frozen-bg: #e8edf8;
 }
@@ -51,6 +51,10 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
 .card.decision { border-color: var(--warn-line); position: sticky; top: 24px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.card-head { position: relative; }
+.card-head a.plain::after { content: ""; position: absolute; inset: 0; }
+.card-head a.plain { position: relative; z-index: 1; }
+.card-head .pill, .card-head .btn, .card-head button, .card-head a:not(.plain) { position: relative; z-index: 2; }
 .card-head .h { font-size: 15px; font-weight: 600; }
 .card-body { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
 .section-row { padding: 14px 18px; border-bottom: 1px solid var(--line); } .section-row:last-child { border-bottom: none; }
@@ -65,7 +69,11 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 
 /* tables */
 .table { display: flex; flex-direction: column; }
-.tr { display: grid; gap: 16px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); } .tr:last-child { border-bottom: none; }
+.tr { display: grid; gap: 16px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); position: relative; }
+/* The row, not the 19 px line of text, is the hit area — WCAG 2.5.8 target size without changing the layout. */
+.tr a.plain::after { content: ""; position: absolute; inset: 0; }
+.tr a.plain { position: relative; z-index: 1; }
+.tr .btn, .tr button, .tr .pill, .tr time { position: relative; z-index: 2; } .tr:last-child { border-bottom: none; }
 .th { display: grid; gap: 16px; padding: 8px 18px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--line); }
 .cols-incidents { grid-template-columns: 120px minmax(0, 1fr) 120px 150px 170px; }
 .cols-activity { grid-template-columns: 96px 88px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 18px; }
@@ -76,6 +84,7 @@ a.plain { color: var(--text); font-weight: 600; } a.plain:hover { color: var(--a
 .cols-stale { grid-template-columns: minmax(0, 1fr) 140px 200px 130px; }
 .cols-timeline { grid-template-columns: 150px 220px minmax(0, 1fr) 100px; }
 .cols-override { grid-template-columns: 160px 200px 80px 160px minmax(0, 1fr); }
+.cols-fleet { grid-template-columns: minmax(0, 1.4fr) 110px minmax(0, 1fr) 110px 90px 150px 170px; }
 .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ask-form { display: grid; grid-template-columns: minmax(0, 1fr) 220px 140px; gap: 10px; align-items: end; }
 .cell-clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -88,7 +97,7 @@ select { width: 100%; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 .empty-line { padding: 12px 18px; }
-.chart-x { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+.chart-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 .card.quiet .card-head { border-bottom: none; }
 
 /* semantics */
@@ -149,7 +158,10 @@ select { width: 100%; }
   .table.stack .cols-audit > [data-l='Phase'] { display: block; }
   .table.stack .cols-audit > [data-l='Time']::before, .table.stack .cols-audit > [data-l='Actor']::before,
   .table.stack .cols-audit > [data-l='Phase']::before { content: none; }
-  .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; } .cols-timeline { min-width: 600px; } .cols-override { min-width: 640px; }
+  .cols-audit { min-width: 760px; } .cols-policy { min-width: 520px; } .cols-ettr { min-width: 560px; } .cols-stale { min-width: 560px; } .cols-timeline { min-width: 600px; } .cols-override { min-width: 640px; } .cols-fleet { min-width: 0; }
+  /* 23 machines × 7 labelled lines is a scroll marathon: on a phone keep what tells you a machine needs
+     attention — name, status, job, heartbeat and price — and leave type and last-seen to the desktop. */
+  .table.stack .cols-fleet > [data-l='Type'], .table.stack .cols-fleet > [data-l='Last seen'] { display: none; }
   .ask-form { grid-template-columns: 1fr; }
   /* On a phone a 110 px label column leaves ~200 px for the value, which broke log excerpts mid-token.
      The label goes above the value instead, matching the stacked tables. */

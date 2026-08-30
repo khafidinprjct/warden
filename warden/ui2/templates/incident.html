@@ -53,7 +53,7 @@
       <div class="card-head"><div class="h">{{ 'Training heartbeat' if contract else 'Host heartbeat' }} · last 60</div></div>
       <svg viewBox="0 0 640 140" role="img" aria-label="{{ chart.label }} over the last 60 heartbeats" style="width:100%;height:160px;padding:8px 12px;box-sizing:border-box">
         <line x1="40" y1="110" x2="620" y2="110" stroke="#e3e6eb"></line><line x1="40" y1="70" x2="620" y2="70" stroke="#eef0f3"></line><line x1="40" y1="30" x2="620" y2="30" stroke="#eef0f3"></line>
-        <text x="8" y="114" fill="#6b7686" font-size="10">0</text><text x="8" y="74" fill="#6b7686" font-size="10">{{ chart.mid }}</text><text x="8" y="34" fill="#6b7686" font-size="10">{{ chart.max }}</text>
+        <text x="8" y="114" fill="#6b7686" font-size="11">0</text><text x="8" y="74" fill="#6b7686" font-size="11">{{ chart.mid }}</text><text x="8" y="34" fill="#6b7686" font-size="11">{{ chart.max }}</text>
         <polyline fill="none" stroke="#2f5fd6" stroke-width="2" points="{{ chart.points }}"></polyline>
         <foreignObject x="40" y="120" width="580" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="chart-x"><time data-utc="{{ chart.t0 }}"></time><time data-utc="{{ chart.t1 }}"></time><time data-utc="{{ chart.t2 }}"></time></div></foreignObject>
       </svg>

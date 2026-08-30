@@ -10,9 +10,9 @@
 <section class="card"><div class="card-head"><div class="h">Cumulative spend</div></div>
   <svg viewBox="0 0 640 140" role="img" aria-label="Cumulative spend against the budget cap" style="width:100%;height:170px;padding:8px 12px;box-sizing:border-box">
     <line x1="40" y1="110" x2="620" y2="110" stroke="#e3e6eb"></line><line x1="40" y1="30" x2="620" y2="30" stroke="#c9ced6" stroke-dasharray="4 4"></line>
-    <text x="8" y="114" fill="#6b7686" font-size="10">$0</text><text x="8" y="34" fill="#6b7686" font-size="10">{{ stats.cap }}</text>
+    <text x="8" y="114" fill="#6b7686" font-size="11">$0</text><text x="8" y="34" fill="#6b7686" font-size="11">{{ stats.cap }}</text>
     {% if chart_points %}<polyline fill="none" stroke="#2f5fd6" stroke-width="2" points="{{ chart_points }}"></polyline>{% endif %}
-    {% if labels %}<text x="40" y="130" fill="#6b7686" font-size="10">{{ labels[0] }}</text><text x="596" y="130" fill="#6b7686" font-size="10">{{ labels[-1] }}</text>{% endif %}
+    {% if labels %}<text x="40" y="130" fill="#6b7686" font-size="11">{{ labels[0] }}</text><text x="596" y="130" fill="#6b7686" font-size="11">{{ labels[-1] }}</text>{% endif %}
   </svg>
 </section>
 <section class="card table stack"><div class="card-head"><div class="h">Effective training time by job · 7 days</div></div>

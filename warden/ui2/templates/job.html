@@ -32,7 +32,7 @@
       <div class="s12 muted" style="margin-bottom:8px">Goes through the same policy and approval path as Warden's own proposals.</div>
       <form data-propose="/jobs/{{ job.job_id }}/propose" data-key="{{ job.job_id }}" style="display:flex;flex-direction:column;gap:8px">
         <select name="action" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit;background:#fff">{% for v, l in actions %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
-        <input name="why" maxlength="200" placeholder="Why (recorded in the audit log)" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit">
+        <input name="why" maxlength="200" aria-label="Why this action is being requested" placeholder="Why (recorded in the audit log)" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit">
         <button class="btn btn-primary" type="submit">Propose</button>
       </form></div></div>
   </aside>

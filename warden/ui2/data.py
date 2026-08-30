@@ -11,7 +11,12 @@ STALE_HB_S = 180
 STALE_HEALTH_S = 900
 PERIODIC_SOURCES = {"watcher", "steward", "deadman", "compute_api"}
 SOURCE_NAME = {"watcher": "Watcher", "steward": "Steward", "deadman": "Watchdog", "compute_api": "Compute Engine API", "gcs": "Cloud Storage",
-               "gemini": "Gemini", "llm_budget": "LLM budget", "llm_circuit": "Gemini circuit breaker", "discord": "Discord", "verifier": "Verifier"}
+               "gemini": "Gemini", "llm_budget": "LLM budget", "llm_circuit": "Gemini circuit breaker", "discord": "Discord", "verifier": "Verifier",
+               "memory": "Incident memory", "gold_eval": "Diagnostician evaluation", "soak": "Soak measurement"}
+# What a tick actually did, in the operator's words — the raw stats dict used to be printed at them as a Python repr.
+STAT_LABEL = {"instances": "Machines seen", "findings": "Findings", "incidents_new": "New incidents", "auto": "Acted automatically",
+              "approval": "Waiting for approval", "denied": "Denied by policy", "held": "Held", "verify": "Verifications",
+              "recovery": "Recovery steps", "llm": "Diagnoses", "errors": "Errors"}
 STATE_LABEL = {"DETECTED": "Open", "TRIAGED": "Open", "DIAGNOSING": "Open", "DIAGNOSED": "Open", "DECIDED": "Open", "EXECUTING": "Executing", "VERIFYING": "Verifying",
                "RESOLVED": "Resolved", "AWAITING_APPROVAL": "Awaiting approval", "HELD": "Held", "ESCALATED": "Escalated", "FAILED_ACTION": "Escalated", "CLOSED": "Closed", "FALSE_POSITIVE": "Closed"}
 STATE_CLS = {"Open": "crit", "Executing": "info", "Verifying": "info", "Resolved": "ok", "Awaiting approval": "warn", "Held": "grey", "Escalated": "crit", "Closed": "grey"}
@@ -125,6 +130,19 @@ def is_frozen() -> bool:
     return bool(d.exists and d.to_dict().get("frozen"))
 
 
+def stat_pairs(d) -> list[tuple[str, str]]:
+    """A tick's counters as label-value pairs; anything unmapped is still humanised, never shown as a raw key."""
+    if not isinstance(d, dict):
+        return []
+    out = []
+    for k, v in d.items():
+        if isinstance(v, (list, dict)) and not v:
+            continue
+        lab = STAT_LABEL.get(k, k.replace("_", " ").capitalize())
+        out.append((lab, ", ".join(str(x) for x in v) if isinstance(v, list) else str(v)))
+    return out
+
+
 def health_rows() -> list[dict]:
     out = []
     for d in db.client().collection("health").stream():
@@ -135,7 +153,7 @@ def health_rows() -> list[dict]:
             st, cls = ("Stale", "stale") if (a is None or a > STALE_HEALTH_S) else (("Healthy", "ok") if fails == 0 else ("Degraded", "warn"))
         else:
             st, cls = ("Healthy", "ok") if fails == 0 else ("Failing", "crit")
-        out.append({"src": r["src"], "name": SOURCE_NAME.get(r["src"], r["src"]), "status": st, "cls": cls, "last_ok_iso": last or "", "fails": fails, "error": str(r.get("last_error", ""))[:160], "stats": r.get("stats")})
+        out.append({"src": r["src"], "name": SOURCE_NAME.get(r["src"], r["src"].replace("_", " ").capitalize()), "status": st, "cls": cls, "last_ok_iso": last or "", "fails": fails, "error": str(r.get("last_error", ""))[:160], "stats": stat_pairs(r.get("stats"))})
     return sorted(out, key=lambda x: x["name"])
 
 
