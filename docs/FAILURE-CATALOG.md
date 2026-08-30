@@ -110,3 +110,10 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Fix:** `ui_serve` runs on its own ports (8098/18098), both are overridable through `WARDEN_TOUR_UI_PORT` / `WARDEN_TOUR_CORE_PORT`, and `serve()` now refuses to start when the port already answers instead of quietly inheriting someone else's server.
 - **Cost:** ~20 minutes and one wasted tour run. No production impact.
 - **Operator rule:** a harness that starts its own server must prove the server it talks to is the one it started. Silent port reuse turns a test into a coin toss.
+
+## #41 · Ask Warden never worked in production: a sync wrapper called from the event loop (30 Aug 2026)
+- **Symptom:** the `gemini` health row went red with `asyncio.run() cannot be called from a running event loop`, three consecutive failures, while `last_ok_at` still read 25 Aug. Found while verifying a deploy — and the timing (07:22 WIB) matches the owner opening the production dashboard, so the first person to hit it was the owner.
+- **Cause:** `/ask` is an `async def` endpoint, so FastAPI runs it **inside** the event loop. It called `concierge.ask()`, the synchronous face of `ask_async()`, which is `asyncio.run(...)` — illegal from a running loop. Every question asked through the dashboard raised, was caught, and wrote a red health row. The sibling endpoints that use the LLM (`/tick`, `/eval`) are plain `def`, so FastAPI runs them in a worker thread where `asyncio.run` is fine; only `/ask` sat on the wrong side of that line.
+- **Why it hid:** the failure is invisible unless somebody asks a question. Nothing in the drills, the gold evaluation or the chaos suite calls `/ask`, and the health row was the only witness — a red row nobody read, which is the same shape as catalogue #33 and #35.
+- **Fix:** the endpoint awaits `ask_async` directly. `tests/test_ask_endpoint.py` asserts it, and — the general rule — that **no** async endpoint calls one of the sync agent wrappers; verified to fail when the fix is reverted.
+- **Cost:** $0. Ask Warden, one of the three checklist items under K3, has never answered a question in production.

@@ -118,8 +118,8 @@
   {
    "control": "Request this action",
    "page": "desktop: incident",
-   "ok": false,
-   "detail": "23 \u2192 23 decisions"
+   "ok": true,
+   "detail": "23 \u2192 24 decisions"
   },
   {
    "control": "Approve",
@@ -299,7 +299,7 @@
    "control": "Group repeats",
    "page": "phone: incidents",
    "ok": true,
-   "detail": "30 rows \u2192 27"
+   "detail": "31 rows \u2192 28"
   },
   {
    "control": "no horizontal scroll",
@@ -311,7 +311,7 @@
    "control": "Filter by severity",
    "page": "phone: incidents",
    "ok": true,
-   "detail": "16 of 30"
+   "detail": "16 of 31"
   },
   {
    "control": "no horizontal scroll",
@@ -339,7 +339,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z",
+   "page": "phone: /incidents/inc_01M1833CBQ4QVNQ92S1AVZ62EY",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -351,7 +351,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=timeline",
+   "page": "phone: /incidents/inc_01M1833CBQ4QVNQ92S1AVZ62EY?tab=timeline",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -363,7 +363,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=decisions",
+   "page": "phone: /incidents/inc_01M1833CBQ4QVNQ92S1AVZ62EY?tab=decisions",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -375,7 +375,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=evidence",
+   "page": "phone: /incidents/inc_01M1833CBQ4QVNQ92S1AVZ62EY?tab=evidence",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -387,7 +387,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z",
+   "page": "phone: /incidents/inc_01M1833CBQ4QVNQ92S1AVZ62EY",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -400,8 +400,8 @@
   {
    "control": "Request this action",
    "page": "phone: incident",
-   "ok": false,
-   "detail": "24 \u2192 24 decisions"
+   "ok": true,
+   "detail": "25 \u2192 26 decisions"
   },
   {
    "control": "no horizontal scroll",
@@ -548,8 +548,8 @@
    "detail": ""
   }
  ],
- "passed": 85,
- "failed": 2,
+ "passed": 87,
+ "failed": 0,
  "videos": [
   "/home/ubuntu/warden/docs/video/tour/warden-desktop.webm",
   "/home/ubuntu/warden/docs/video/tour/warden-phone.webm"

@@ -107,7 +107,9 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
         raise HTTPException(401, "HMAC salah")
     if not q.strip():
         raise HTTPException(400, "question required")
-    from warden.agents.concierge import ask as _ask
+    # `/ask` is an async endpoint, so it already runs inside the event loop; the sync wrapper calls asyncio.run()
+    # and raises "cannot be called from a running event loop". Await the coroutine instead (catalogue #41).
+    from warden.agents.concierge import ask_async
     img = None; mime = str(body.get("image_mime", "image/png"))
     if body.get("image_b64"):
         try:
@@ -115,7 +117,7 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
         except Exception:  # noqa: BLE001
             raise HTTPException(400, "image_b64 invalid")
     try:
-        return _ask(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")), image=img, image_mime=mime)
+        return await ask_async(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")), image=img, image_mime=mime)
     except Exception as e:  # noqa: BLE001
         db.health("gemini", False, str(e)[:200])
         return {"ok": False, "error": str(e)[:200]}
