@@ -95,3 +95,10 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Fix:** the eval phase is now long enough to outlast the lag (10 folds × 45 s), the drill refuses to act on a heartbeat older than 90 s, the trainer reports the eval fold number so the remaining phase time is *computed* rather than assumed, and the gate asserts `RUN_FIN` does not exist both immediately before and after the preemption — a drill that interrupts nothing must fail loudly instead of passing quietly.
 - **Cost:** ≈ $0.005 (one e2-medium Spot VM for ~9 min).
 - **Operator rule:** never trigger a timed event off a lagging signal. Either wait for a signal that carries its own timestamp and check its age, or make the window wide enough that the lag cannot consume it — and always assert afterwards that the thing you meant to interrupt was actually still running.
+
+## #39 · `gcloud run deploy warden-ui --source .` serves the *core* app (30 Aug 2026)
+- **Symptom:** after deploying the dashboard, `GET /` on `warden-ui` returned `{"detail":"Not Found"}` and `/health` answered with the core's payload (`provider`, `project`). The dashboard was down for the minute between the deploy and the check.
+- **Cause:** the repository ships four Procfiles — `Procfile` (core), `Procfile.core`, `Procfile.ui`, `Procfile.deadman` — and buildpacks read `Procfile`. `--source .` therefore builds every service with the **core** entrypoint. Nothing in the command names the service's real entrypoint, so the mistake is silent: the build succeeds, the revision goes healthy, and the health endpoint even answers 200.
+- **Fix now:** deploy the UI with `Procfile.ui` in place (`cat Procfile.ui > Procfile`, deploy, restore), which is what earlier deploys did by hand.
+- **Detection rule:** a Cloud Run deploy is not verified by a green revision or a 200 on `/health` — both services answer that. The gate is a response only that service can give: `curl -s $UI_URL/ | grep '<title>Overview · Warden'`.
+- **Cost:** ~1 minute of dashboard downtime, caught immediately because the deploy was followed by opening the page rather than trusting the "Done."
