@@ -59,6 +59,18 @@ def projection() -> dict[str, Any]:
             "if_left_running_30d_usd": round(burn * 24 * 30, 2)}
 
 
+def budget_message(pct: float, acted: list[str]) -> str:
+    """A Discord card is read on a phone; a Python dict pasted into it is not a sentence."""
+    p = projection()
+    burn = float(p.get("burn_usd_per_hour") or 0)
+    rate = (f"burning ${burn:,.3f}/h · {p['runway_days']} days of runway left"
+            if burn > 0 and p.get("runway_days") is not None else "no machine is burning right now")
+    what = "; ".join(acted) if acted else "no action taken — this is a warning"
+    return (f"\U0001f4b8 Budget at {pct*100:.1f}% of ${p['cap_usd']:,.0f}\n"
+            f"Spent ${p['month_to_date_usd']:,.2f} this month, ${p['today_usd']:,.2f} today · {rate}\n"
+            f"{what}")
+
+
 def budget_kill_switch(pct: float, notify=None) -> dict[str, Any]:
     """Ambang Billing Budget: 0,5 peringatan; 0,8 stop mesin demo + turunkan model; 1,0 stop semua + baca-saja."""
     rt = db.client().collection("policies").document("runtime")
@@ -76,7 +88,7 @@ def budget_kill_switch(pct: float, notify=None) -> dict[str, Any]:
     else:
         rt.set({"budget_pct": pct}, merge=True)
     if notify:
-        notify(None, None, f"💸 Budget {pct*100:.0f}% — actions: {acted or 'warning only'} | projection: {projection()}")
+        notify(None, None, budget_message(pct, acted))
     return {"pct": pct, "acted": acted}
 
 
