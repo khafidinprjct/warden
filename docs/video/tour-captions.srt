@@ -1,35 +1,35 @@
 1
-00:00:00,000 --> 00:00:03,017
+00:00:00,000 --> 00:00:03,015
 Warden — an SRE agent for long-running compute jobs
 
 2
-00:00:03,017 --> 00:00:06,519
+00:00:03,015 --> 00:00:06,521
 A live machine is not correct training. Finished is not intact.
 
 3
-00:00:06,519 --> 00:00:11,902
+00:00:06,521 --> 00:00:11,839
 The dashboard, served from Cloud Run
 
 4
-00:00:11,902 --> 00:00:20,715
+00:00:11,839 --> 00:00:20,575
 Every incident Warden has open, newest first
 
 5
-00:00:20,715 --> 00:00:24,616
+00:00:20,575 --> 00:00:24,819
 Filters, because an unfiltered list is not an inbox
 
 6
-00:00:24,616 --> 00:00:36,660
+00:00:24,819 --> 00:00:36,897
 One incident: evidence, then diagnosis, then the decision
 
 7
-00:00:36,660 --> 00:00:45,419
+00:00:36,897 --> 00:00:45,390
 Warden's own health — the row that invalidates a drill
 
 8
-00:00:45,419 --> 00:00:51,775
+00:00:45,390 --> 00:00:51,552
 Ask Warden reads a photo from the operator's phone
 
 9
-00:00:51,775 --> 00:00:53,067
+00:00:51,552 --> 00:00:52,777
 

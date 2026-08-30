@@ -91,3 +91,18 @@ def test_every_gold_case_file_is_committed():
     _, cases = gold.load_cases()
     missing = {"cases.yaml", *(c["file"] for c in cases)} - committed
     assert not missing, f"gold files present on disk but not committed: {sorted(missing)} — a clean clone cannot run /eval"
+
+
+def test_procfile_is_the_core_entrypoint_not_the_dashboard():
+    """The two services are built from one source tree, and buildpacks read `Procfile` to decide what runs.
+
+    A UI deploy that writes `Procfile.ui` over `Procfile` and does not put it back leaves the repository pointing at
+    the dashboard, so the next `gcloud run deploy warden-core --source .` silently ships the dashboard under the core's
+    name: the watcher, the tick and every ingest endpoint stop existing, and `/health` still answers `{"ok":true}`
+    because both apps have one. Catalogue #44 — production core was down for eleven minutes on 30 Aug.
+    """
+    core = (ROOT / "Procfile").read_text()
+    ui = (ROOT / "Procfile.ui").read_text()
+    assert "warden.main:app" in core, f"Procfile must launch the core; it says: {core.strip()!r}"
+    assert "warden.ui2.app" not in core, f"Procfile is the dashboard's, not the core's: {core.strip()!r}"
+    assert "warden.ui2.app" in ui, f"Procfile.ui must launch the dashboard; it says: {ui.strip()!r}"

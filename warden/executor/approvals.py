@@ -153,9 +153,13 @@ ACTION_TEXT = {"notify": "Notify", "start_instance": "Start instance", "resume_j
                "change_machine_type": "Change machine type", "clean_disk": "Clean disk"}
 
 
-def propose(job_id: str, action: str, params: dict | None, who: str, why: str = "") -> dict:
+def propose(job_id: str, action: str, params: dict | None, who: str, why: str = "", notify=None) -> dict:
     """A human (dashboard / Ask Warden) asks for an action. It goes through the SAME policy and approval path as Warden's own
-    proposals: policy-evaluated, dry-run planned, then executed (AUTO) or queued for approval — never a side door."""
+    proposals: policy-evaluated, dry-run planned, then executed (AUTO) or queued for approval — never a side door.
+
+    It also announces itself the way Warden's own proposals do. A request that lands in AWAITING_APPROVAL with no card
+    sent is a request nobody is ever asked about: it sits in Firestore until it expires. The operator who typed it may
+    be at the dashboard, but the person allowed to approve it is on their phone."""
     from warden.core.models import Action, Incident, IncidentState as S
     from warden.executor import recovery
     from warden.policy.engine import evaluate as policy_eval
@@ -184,9 +188,21 @@ def propose(job_id: str, action: str, params: dict | None, who: str, why: str = 
     if dec.verdict == Verdict.AUTO:
         transition(inc, S.EXECUTING); dec.status = DecisionStatus.EXECUTING; db.decisions.put(dec)
         r = ex.execute(dec, compute(), actor=f"human:{who}")
-        db.incidents.put(inc); recovery.after_execute(inc, dec, r)
+        db.incidents.put(inc); recovery.after_execute(inc, dec, r, notify)
         db.incidents.put(inc)
+        if notify:
+            notify(inc, dec, f"{'✅' if r.ok else '❌'} {inc.summary} → {ACTION_TEXT.get(action, action)} ran straight away "
+                             f"({dec.autonomy}): {r.observed or r.error}")
         return {"ok": r.ok, "incident_id": inc.incident_id, "decision_id": dec.decision_id, "verdict": str(dec.verdict), "observed": r.observed, "error": r.error}
     transition(inc, S.AWAITING_APPROVAL if dec.verdict == Verdict.NEED_APPROVAL else S.HELD if dec.verdict == Verdict.HELD else S.ESCALATED)
     db.incidents.put(inc)
+    if notify:
+        if dec.verdict == Verdict.NEED_APPROVAL:
+            when = f" (expires {dec.expires_at:%H:%M} UTC)" if dec.expires_at else ""
+            notify(inc, dec, f"🟡 {who} asked for **{ACTION_TEXT.get(action, action)}** on {job_id}"
+                             + (f" — {why}" if why else "") + f"; approval required{when}")
+        elif dec.verdict == Verdict.HELD:
+            notify(inc, dec, f"⏸ {who} asked for {ACTION_TEXT.get(action, action)} on {job_id} → held: {dec.explain[-1]}")
+        else:
+            notify(inc, dec, f"⛔ {who} asked for {ACTION_TEXT.get(action, action)} on {job_id} → denied: {dec.explain[-1]}")
     return {"ok": True, "incident_id": inc.incident_id, "decision_id": dec.decision_id, "verdict": str(dec.verdict), "explain": dec.explain}

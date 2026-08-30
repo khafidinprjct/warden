@@ -148,7 +148,7 @@ async def jobs_propose(job_id: str, req: Request, x_warden_signature: str | None
     if not ing.verify(job_id.encode(), x_warden_signature or "") and os.getenv("WARDEN_DEV") != "1":
         raise HTTPException(401, "HMAC salah")
     body = await req.json()
-    return approvals.propose(job_id, str(body.get("action", "")), body.get("params") or {}, str(body.get("who", "dashboard")), str(body.get("why", ""))[:300])
+    return approvals.propose(job_id, str(body.get("action", "")), body.get("params") or {}, str(body.get("who", "dashboard")), str(body.get("why", ""))[:300], notify=_notify)
 
 
 @app.post("/jobs/launch")

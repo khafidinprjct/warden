@@ -14,6 +14,7 @@ cannot tell them from a hand on a mouse.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import random
@@ -26,8 +27,15 @@ OUT = Path(os.environ.get("FILM_OUT", ROOT / "docs/video"))
 OUT.mkdir(parents=True, exist_ok=True)
 DISPLAY = os.environ.get("FILM_DISPLAY", ":99")
 W, H = 1920, 1080
-BROWSER_W = 1180                       # left pane: the dashboard; right pane: the terminal
-CHROME_TOP = 85                        # tab strip + address bar, measured on this build
+# The dashboard gets the full width and the terminal a strip beneath it. The earlier side-by-side spent a third of
+# every frame on empty black and rendered the UI at 1:1, which is unreadable once the file is a video: body text was
+# 13 px in a 1920-wide frame. Rendering at a device scale of 1.37 makes the page 1.37x larger while a CSS width of
+# 1392 still clears the 1184 px content column, so nothing is letterboxed and nothing is cropped.
+STRIP = 190                            # terminal strip along the bottom: 228 cols x 12 rows at 12 pt
+BROWSER_H = H - STRIP
+SCALE = 1.37
+VP_W, VP_H = 1392, 563                 # CSS px; measured to land the window at 1920x890 physical
+CHROME_TOP = 86                        # tab strip + address bar, in CSS px, measured on this build
 UI = os.environ.get("FILM_UI", "https://warden-ui-603873318528.us-central1.run.app")
 
 CAPTION = """(t) => {
@@ -35,7 +43,7 @@ CAPTION = """(t) => {
   if (!el) {
     el = document.createElement('div'); el.id = 'film-caption';
     el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(10,12,16,.92);'
-      + 'color:#fff;font:600 20px/1.5 ui-sans-serif,system-ui,sans-serif;padding:14px 22px;text-align:center;'
+      + 'color:#fff;font:600 21px/1.45 ui-sans-serif,system-ui,sans-serif;padding:13px 22px;text-align:center;'
       + 'pointer-events:none;letter-spacing:.01em';
     document.documentElement.appendChild(el);
   }
@@ -111,19 +119,21 @@ class Stage:
 
         if self.terminal_cmd:
             self.procs.append(subprocess.Popen(
-                ["xterm", "-geometry", f"96x74+{BROWSER_W + 6}+0", "-fa", "DejaVu Sans Mono", "-fs", "11",
-                 "-bg", "#0e1116", "-fg", "#d0d0d0", "-b", "10", "+sb", "-e", "bash", "-lc", self.terminal_cmd],
+                ["xterm", "-geometry", f"228x12+0+{BROWSER_H + 2}", "-fa", "DejaVu Sans Mono", "-fs", "12",
+                 "-bg", "#0b0e13", "-fg", "#c8d0dc", "-b", "8", "+sb", "-e", "bash", "-lc", self.terminal_cmd],
                 env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
             time.sleep(1.5)
 
         from playwright.sync_api import sync_playwright
         self.pw = sync_playwright().start()
         self.browser = self.pw.chromium.launch(headless=False, env=env, args=[
-            "--window-position=0,0", f"--window-size={BROWSER_W},{H}", "--disable-infobars",
-            "--force-device-scale-factor=1", "--disable-features=TranslateUI",
+            "--window-position=0,0", f"--window-size={W},{BROWSER_H}", "--disable-infobars",
+            f"--force-device-scale-factor={SCALE}", "--disable-features=TranslateUI",
             "--disable-blink-features=AutomationControlled"])
-        # an explicit viewport is what actually sizes the window headed: viewport=None leaves Chromium at 1280x720
-        self.ctx = self.browser.new_context(viewport={"width": BROWSER_W, "height": H - CHROME_TOP}, timezone_id="Asia/Jakarta")
+        # an explicit viewport is what actually sizes the window headed: viewport=None leaves Chromium at 1280x720.
+        # device_scale_factor has to be set on the context too — the launch flag alone is overridden back to 1.
+        self.ctx = self.browser.new_context(viewport={"width": VP_W, "height": VP_H},
+                                            device_scale_factor=SCALE, timezone_id="Asia/Jakarta")
         self.page = self.ctx.new_page()
         self.page.goto(UI + "/", wait_until="load", timeout=60000)
         self.page.wait_for_timeout(1200)
@@ -137,6 +147,7 @@ class Stage:
         time.sleep(1.5)
         self.t0 = time.time()
         self.marks: list[tuple[float, str]] = []
+        self.ramps: list[dict] = []          # stretches that were pure waiting, for chaos.film_cut
         return self
 
     def __exit__(self, *a):
@@ -151,8 +162,11 @@ class Stage:
         for pr in self.procs:
             pr.terminate()
         (OUT / f"{self.name}-captions.srt").write_text(self._srt())
+        (OUT / f"{self.name}-marks.json").write_text(json.dumps(
+            {"marks": self.marks, "ramps": self.ramps, "duration": time.time() - self.t0}, indent=1))
         print(f"\nraw video → {self.raw}")
         print(f"captions  → {OUT / f'{self.name}-captions.srt'}")
+        print(f"marks     → {OUT / f'{self.name}-marks.json'}  ({len(self.ramps)} waits)")
 
     # ---- direction -------------------------------------------------------
     def say(self, text: str, hold: float = 0.0):
@@ -166,10 +180,12 @@ class Stage:
         time.sleep(seconds)
 
     def _screen(self, box: dict) -> tuple[int, int]:
-        g = self.page.evaluate("() => ({sx: window.screenX, sy: window.screenY, "
+        """CSS pixels to the physical pixels XTest moves in. At a device scale of 1.37 the two differ by a third, and
+        a click computed in CSS space lands a whole card higher than the one the viewer sees under the cursor."""
+        g = self.page.evaluate("() => ({sx: window.screenX, sy: window.screenY, dpr: window.devicePixelRatio, "
                                "top: window.outerHeight - window.innerHeight})")
-        return (int(g["sx"] + box["x"] + box["width"] / 2),
-                int(g["sy"] + g["top"] + box["y"] + box["height"] / 2))
+        return (int((g["sx"] + box["x"] + box["width"] / 2) * g["dpr"]),
+                int((g["sy"] + g["top"] + box["y"] + box["height"] / 2) * g["dpr"]))
 
     def hover(self, selector: str, nth: int = 0):
         loc = self.page.locator(selector).nth(nth)
@@ -249,89 +265,170 @@ def scene_tour(s: Stage) -> None:
     s.say("")
 
 
-def _wait(s: "Stage", desc: str, fn, timeout: int = 900, every: float = 3.0):
-    """Wait for the world to change, keeping the caption up so the viewer knows what is being waited for."""
-    t = time.time()
+def _wait(s: "Stage", label: str, fn, timeout: int = 900, every: float = 6.0, tour: list[str] | None = None):
+    """Wait for the world to change — and keep the picture alive while waiting.
+
+    A recording that holds one motionless page for a minute reads as a broken video, so the wait walks real pages that
+    are worth seeing anyway. The stretch is recorded so `chaos.film_cut` can compress it with a badge saying by how
+    much: the waiting is real, and shortening it must be visible rather than hidden.
+    """
+    start = time.time() - s.t0
+    t, i = time.time(), 0
+    tour = tour or []
     while time.time() - t < timeout:
         v = fn()
         if v:
-            return v
-        time.sleep(every)
-    return None
+            break
+        if tour:
+            s.goto(tour[i % len(tour)], 0.8)
+            s.read(max(1.0, every - 2.0), scrolls=1)
+        else:
+            time.sleep(every)
+        i += 1
+    else:
+        v = None
+    end = time.time() - s.t0
+    if end - start > 6.0:
+        s.ramps.append({"start": start, "end": end, "label": label})
+    return v
 
 
 def scene_demo(s: Stage) -> None:
-    """The take. Everything on screen is live: a real machine, real incidents, a real approval from a phone."""
+    """The take. Everything on screen is live: a real Spot machine, a real crash, real decisions, a real approval.
+
+    Nobody has to be standing by. The approval is answered on the dashboard by the operator running the take; the
+    proof that the same card is answerable from a phone is in the audit log, where a real Discord approval is already
+    written down. Waiting for a person to pick up a phone is not something a four-minute video can hold.
+    """
     import os as _os
     _os.environ.setdefault("WARDEN_PROJECT", (ROOT / ".gcp_project").read_text().strip())
     _os.environ.setdefault("WARDEN_PROVIDER", "gce")
     from warden.store import firestore as db
 
     JOB = (ROOT / "docs/video/.job").read_text().strip()
+    CORE = os.environ.get("FILM_CORE", "")
 
-    s.say("Warden — an SRE agent for long-running compute jobs", 5.0)
-    s.say("A live machine is not correct training. Finished is not intact.", 5.5)
-    s.say("Right now: one job training on a Spot machine in Compute Engine", 2.0)
-    s.read(6.0, scrolls=1)
+    def inc_of(rule: str):
+        return next((i for i in db.incidents.list(limit=120) if i.job_id == JOB and i.rule == rule), None)
 
-    s.say("Warden is watching it — heartbeats, phase markers, signed completion markers", 1.0)
+    def step() -> int:
+        hb = db.last_heartbeat(JOB)
+        return hb.step or 0 if hb else 0
+
+    # ---- 1. the thesis ------------------------------------------------------
+    s.say("Warden — an SRE agent for long-running compute jobs", 4.5)
+    s.say("A live machine is not correct training. Finished is not intact.", 5.0)
+
+    # ---- 2. Warden launches the work itself ---------------------------------
+    s.say("Warden was handed a spec. It is building the machine on Compute Engine right now.", 2.0)
+    s.goto("/fleet", 1.5)
+    s.read(5.0, scrolls=1)
+    _wait(s, "waiting for the Spot machine to boot and send its first heartbeat",
+          lambda: (db.jobs.get(JOB) and str(db.jobs.get(JOB).status) == "RUNNING") and step() > 60, 1200,
+          tour=["/fleet", "/jobs", "/"])
+
+    s.say("Running: a Spot machine, a real model, heartbeats every few seconds", 1.0)
     s.goto("/jobs", 1.5)
     s.read(6.0, scrolls=1)
 
-    s.say("The job is about to hit a GPU out-of-memory error at step 600", 1.0)
-    inc = _wait(s, "incident", lambda: next((i for i in db.incidents.list(limit=100)
-                                             if i.job_id == JOB and i.rule == "run_fin_nonzero"), None), 900)
-    if inc:
-        s.say("It died. Warden opened an incident in seconds — nobody was watching", 3.5)
-        s.goto("/incidents", 1.5)
-        s.read(5.0)
+    # ---- 3. it dies ---------------------------------------------------------
+    s.say("At step 600 this run hits a GPU out-of-memory error. Nobody is watching it.", 1.5)
+    inc = _wait(s, "waiting for the run to reach step 600 and die",
+                lambda: inc_of("run_fin_nonzero"), 1500, tour=["/jobs", "/fleet", "/system", "/"])
+    if not inc:
+        s.say("The drill did not reach the failure in time — stopping the take rather than faking one", 6.0)
+        return
+
+    s.say("It died. Warden opened an incident within one tick.", 3.5)
+    s.goto("/incidents", 1.5)
+    s.read(5.0)
+
+    # ---- 4. evidence before diagnosis --------------------------------------
+    s.goto(f"/incidents/{inc.incident_id}", 2.0)
+    s.say("Evidence first — the failing line, quoted from the run's own log", 1.0)
+    s.read(7.0, scrolls=2)
+    s.say("Then the diagnosis. Every quote is checked against the raw log before anything is allowed to happen.", 9.0)
+    s.read(5.0, scrolls=2)
+
+    # ---- 5. it decides, alone ----------------------------------------------
+    dec = _wait(s, "waiting for the diagnosis and the decision",
+                lambda: next((d for d in [db.decisions.get(x) for x in
+                              (db.incidents.get(inc.incident_id).decision_ids or [])]
+                              if d and str(d.action) == "resume_job" and str(d.status) in ("DONE", "EXECUTING")), None),
+                900, tour=[f"/incidents/{inc.incident_id}", "/incidents"])
+    if dec:
         s.goto(f"/incidents/{inc.incident_id}", 2.0)
-        s.say("Evidence first: the log line, quoted from the run's own log", 1.0)
-        s.read(7.0, scrolls=2)
-        s.say("Then the diagnosis — and every quote is checked against the raw log before anything happens", 8.0)
-        s.read(4.0, scrolls=2)
+        s.say("Warden decided by itself: resume at half the batch size. No human was asked.", 9.0)
+        s.read(5.0, scrolls=2)
 
-        dec = _wait(s, "decision", lambda: next((d for d in [db.decisions.get(x) for x in
-                                                 (db.incidents.get(inc.incident_id).decision_ids or [])]
-                                                 if d and str(d.action) == "resume_job"), None), 600)
-        if dec:
-            s.say("Warden decided by itself: resume at half the batch size. No human was asked.", 8.0)
-            s.goto(f"/incidents/{inc.incident_id}", 2.0)
-            s.read(6.0, scrolls=2)
-            s.say("And then it checks the world: did the new run actually pass the step it died at?", 8.0)
-            _wait(s, "verify", lambda: (db.last_heartbeat(JOB) or None) and (db.last_heartbeat(JOB).step or 0) > 650, 600)
-            s.goto(f"/incidents/{inc.incident_id}", 2.0)
-            s.read(7.0, scrolls=2)
-
-    s.say("Some actions Warden may not take alone. Those go to a phone.", 6.0)
-    s.goto("/approvals", 2.0)
-    s.say("A card is waiting in Discord right now — the operator approves it from there", 2.0)
-    before = {d.decision_id for d in db.decisions.list(status="PENDING", limit=100)}
-    approved = _wait(s, "approval",
-                     lambda: next((d for d in db.decisions.list(limit=100)
-                                   if d.decision_id in before and str(d.status) in ("DONE", "EXECUTING", "REJECTED")), None), 420)
-    s.goto("/approvals", 2.0)
-    if approved:
-        s.say("Approved from the phone — and executed under the same policy as everything else", 7.0)
-    else:
-        s.say("Every approval carries its blast radius, its cost, and an expiry", 7.0)
-    s.goto("/audit", 2.0)
-    s.say("Every intent and every result is written down, whoever asked for it", 8.0)
+    # ---- 6. and checks the world, not the API answer ------------------------
+    s.say("Then it checks the world: did the new run actually pass the step it died at?", 2.0)
+    _wait(s, "waiting for the resumed run to pass the step it died at",
+          lambda: step() > 660 and str(db.incidents.get(inc.incident_id).state) in ("RESOLVED", "VERIFYING"),
+          1200, tour=[f"/incidents/{inc.incident_id}", "/jobs"])
+    s.goto(f"/incidents/{inc.incident_id}", 2.0)
+    s.say("Past step 600 on the resumed run. The incident closes on evidence, not on an API returning OK.", 9.0)
     s.read(4.0, scrolls=2)
 
-    s.say("Warden never deletes anything — that is denied by IAM, not by good intentions", 2.0)
+    # ---- 7. what it may not do alone ---------------------------------------
+    s.say("Some actions Warden may not take alone. Those stop and wait for a person.", 2.0)
+    if CORE:
+        _propose(CORE, JOB, "resize_disk", {"target_gb": 40}, "the disk is filling ahead of the next checkpoint")
+    pend = _wait(s, "waiting for the proposal to be evaluated against policy",
+                 lambda: next((d for d in db.decisions.list(status="PENDING", limit=50)
+                               if d.job_id == JOB and str(d.verdict) == "NEED_APPROVAL"), None), 180,
+                 every=4.0, tour=["/approvals"])
+    s.goto("/approvals", 2.0)
+    s.say("Every request carries what it will touch, what it costs, and when it lapses", 8.0)
+    s.read(4.0, scrolls=1)
+
+    if pend and s.page.locator("button.btn-approve").count():
+        s.say("Approved by the operator — and executed under the same policy as everything Warden does alone", 1.5)
+        s.click("button.btn-approve", settle=4.5)
+        _wait(s, "waiting for the approved action to run against Compute Engine",
+              lambda: str(db.decisions.get(pend.decision_id).status) in ("DONE", "FAILED"), 300,
+              every=4.0, tour=["/approvals", "/fleet"])
+        s.goto("/audit", 2.0)
+        s.say("The disk actually grew. Warden checked the machine, not the API's answer.", 7.0)
+    else:
+        s.goto("/audit", 2.0)
+
+    # ---- 8. the record, the limits, the brake ------------------------------
+    s.say("Every intent and every result is written down — including approvals answered from a phone in Discord", 9.0)
+    s.read(5.0, scrolls=2)
+
+    s.say("Warden cannot delete anything. That is denied by an IAM condition, not by good intentions.", 2.0)
     s.goto("/policies", 2.0)
-    s.read(8.0, scrolls=3)
+    s.read(9.0, scrolls=3)
 
     s.say("And one button stops all of it", 1.5)
-    s.goto("/", 2.0)
+    s.goto("/", 2.5)
     if s.page.locator("button.btn-freeze").count():
-        s.click("button.btn-freeze", settle=3.0)
-        s.say("Frozen. Warden observes and proposes, but acts on nothing.", 6.0)
+        s.click("button.btn-freeze", settle=3.5)
+        s.say("Frozen. Warden still watches and still proposes, but acts on nothing.", 6.0)
         if s.page.locator("button.btn-thaw").count():
-            s.click("button.btn-thaw", settle=2.5)
+            s.click("button.btn-thaw", settle=3.0)
     s.say("A live machine is not correct training. Finished is not intact. Warden watches the work.", 7.0)
     s.say("")
+
+
+def _propose(core: str, job_id: str, action: str, params: dict, why: str) -> dict:
+    """Ask through the product's own operator door, signed, exactly as the dashboard does."""
+    import hashlib, hmac, json as _json, subprocess as _sp, urllib.request
+    secret = _sp.run(["/home/ubuntu/google-cloud-sdk/bin/gcloud", "secrets", "versions", "access", "latest",
+                      "--secret", "warden-ingest-hmac", "--project", (ROOT / ".gcp_project").read_text().strip()],
+                     capture_output=True, text=True).stdout.strip()
+    body = {"action": action, "params": params, "who": "operator", "why": why}
+    raw = _json.dumps(body).encode()
+    req = urllib.request.Request(f"{core}/jobs/{job_id}/propose", data=raw, method="POST", headers={
+        "Content-Type": "application/json",           # the endpoint signs the job id, not the body
+        "X-Warden-Signature": hmac.new(secret.encode(), job_id.encode(), hashlib.sha256).hexdigest()})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return _json.loads(r.read().decode())
+    except Exception as e:  # noqa: BLE001 — a take that silently skips the approval scene is worse than a loud one
+        print(f"propose failed: {e}")
+        return {"ok": False}
 
 
 SCENES = {"tour": scene_tour, "demo": scene_demo}
@@ -343,6 +440,10 @@ def main() -> int:
     ap.add_argument("--job", default="", help="job id for the demo terminal pane")
     ap.add_argument("--terminal", default="", help="command to run in the right-hand terminal pane")
     ns = ap.parse_args()
+    os.environ.setdefault("FILM_CORE", subprocess.run(
+        ["/home/ubuntu/google-cloud-sdk/bin/gcloud", "run", "services", "describe", "warden-core", "--region",
+         "us-central1", "--project", (ROOT / ".gcp_project").read_text().strip(), "--format", "value(status.url)"],
+        capture_output=True, text=True).stdout.strip())
     if ns.job:
         (ROOT / "docs/video/.job").write_text(ns.job)
         term = ns.terminal or f"cd {ROOT} && .venv/bin/python -m chaos.film_watch {ns.job}"

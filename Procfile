@@ -1,1 +1,1 @@
-web: python -m warden.ui2.app
+web: uvicorn warden.main:app --host 0.0.0.0 --port $PORT

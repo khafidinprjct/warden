@@ -1,0 +1,42 @@
+{
+ "marks": [
+  [
+   3.337860107421875e-05,
+   "Warden \u2014 an SRE agent for long-running compute jobs"
+  ],
+  [
+   3.0155699253082275,
+   "A live machine is not correct training. Finished is not intact."
+  ],
+  [
+   6.5217297077178955,
+   "The dashboard, served from Cloud Run"
+  ],
+  [
+   11.839726209640503,
+   "Every incident Warden has open, newest first"
+  ],
+  [
+   20.57543134689331,
+   "Filters, because an unfiltered list is not an inbox"
+  ],
+  [
+   24.81937289237976,
+   "One incident: evidence, then diagnosis, then the decision"
+  ],
+  [
+   36.89790344238281,
+   "Warden's own health \u2014 the row that invalidates a drill"
+  ],
+  [
+   45.390499114990234,
+   "Ask Warden reads a photo from the operator's phone"
+  ],
+  [
+   51.55276107788086,
+   ""
+  ]
+ ],
+ "ramps": [],
+ "duration": 52.77828812599182
+}

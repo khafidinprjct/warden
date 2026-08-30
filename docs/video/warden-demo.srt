@@ -1,0 +1,39 @@
+1
+00:00:00,352 --> 00:00:05,359
+Warden — an SRE agent for long-running compute jobs
+
+2
+00:00:05,359 --> 00:00:10,862
+A live machine is not correct training. Finished is not intact.
+
+3
+00:00:10,862 --> 00:00:19,803
+Right now: one job training on a Spot machine in Compute Engine
+
+4
+00:00:19,803 --> 00:00:31,057
+Warden is watching it — heartbeats, phase markers, signed completion markers
+
+5
+00:00:31,057 --> 00:01:34,816
+The job is about to hit a GPU out-of-memory error at step 600
+
+6
+00:01:34,816 --> 00:01:48,027
+It died. Warden opened an incident in seconds — nobody was watching
+
+7
+00:01:48,027 --> 00:01:57,795
+Evidence first: the log line, quoted from the run's own log
+
+8
+00:01:57,795 --> 00:02:38,003
+Then the diagnosis — and every quote is checked against the raw log before anything happens
+
+9
+00:02:38,003 --> 00:02:56,621
+Warden decided by itself: resume at half the batch size. No human was asked.
+
+10
+00:02:56,621 --> 00:04:00,000
+And then it checks the world: did the new run actually pass the step it died at?
