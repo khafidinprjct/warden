@@ -75,12 +75,16 @@ def process_diagnosing(notify: Callable | None = None, max_n: int = 5) -> dict[s
     stats = {"processed": 0, "auto": 0, "approval": 0, "escalated": 0, "llm_usd": 0.0}
     frozen = _is_frozen()
     gh = db.client().collection("health").document("gemini").get()
+    open_circuit = False
     if gh.exists and int(gh.to_dict().get("consecutive_failures", 0)) >= 5:
         from datetime import datetime, timedelta, timezone
         upd = gh.to_dict().get("updated_at")
-        if upd and datetime.now(timezone.utc) - datetime.fromisoformat(upd) < timedelta(minutes=5):
-            db.health("llm_circuit", False, "Gemini failed 5x in a row — circuit OPEN 5 min (deterministic only)")
-            return stats
+        open_circuit = bool(upd and datetime.now(timezone.utc) - datetime.fromisoformat(upd) < timedelta(minutes=5))
+    if open_circuit:
+        db.health("llm_circuit", False, "Gemini failed 5x in a row — circuit OPEN 5 min (deterministic only)")
+        return stats
+    # A breaker that is only ever written when it trips stays red for good; closing it is a state worth recording.
+    db.health("llm_circuit", True)
     for inc in db.incidents.list(state="DIAGNOSING", limit=max_n):
         job = db.jobs.get(inc.job_id) if inc.job_id else None
         inst = compute().describe(inc.instance_ref) if inc.instance_ref else None

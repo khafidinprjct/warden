@@ -24,7 +24,7 @@
   "n": 2,
   "mode": "preempt + disk ikut terhapus (konfigurasi tak aman)",
   "ok": true,
-  "ms": 203,
+  "ms": 169,
   "info": {
    "catatan": "start ditolak sampai konfigurasi aman"
   },
@@ -34,7 +34,7 @@
   "n": 3,
   "mode": "preempt saat fase eval → resume sadar fase",
   "ok": true,
-  "ms": 210,
+  "ms": 134,
   "info": {
    "bukti_fase": "F5-eval"
   },
@@ -44,9 +44,9 @@
   "n": 4,
   "mode": "penjaga mati senyap → denyut Warden + deadman",
   "ok": true,
-  "ms": 81,
+  "ms": 68,
   "info": {
-   "denyut_watcher": "2026-08-30T01:03:18.378294+00:00"
+   "denyut_watcher": "2026-08-30T01:49:33.417368+00:00"
   },
   "error": ""
  },
@@ -54,7 +54,7 @@
   "n": 5,
   "mode": "DONE palsu tanpa exit code",
   "ok": true,
-  "ms": 118,
+  "ms": 115,
   "info": {},
   "error": ""
  },
@@ -62,7 +62,7 @@
   "n": 6,
   "mode": "RUN_FIN dengan tanda tangan salah / basi",
   "ok": true,
-  "ms": 117,
+  "ms": 111,
   "info": {},
   "error": ""
  },
@@ -80,7 +80,7 @@
   "n": 8,
   "mode": "disk penuh → checkpoint 15 % ditolak + disk_low",
   "ok": true,
-  "ms": 121,
+  "ms": 125,
   "info": {
    "verifier": "size_vs_expect: 150000 outside [900000,1100000] (15% of expected)"
   },
@@ -90,7 +90,7 @@
   "n": 9,
   "mode": "OOM di kasus terburuk (regex + cek silang)",
   "ok": true,
-  "ms": 4,
+  "ms": 3,
   "info": {
    "checks": [
     "evidence_lines_in_range",
@@ -116,7 +116,7 @@
   "n": 11,
   "mode": "pip gagal senyap → exit code proses anak ≠ 0 → run_fin_nonzero (LLM)",
   "ok": true,
-  "ms": 85,
+  "ms": 82,
   "info": {},
   "error": ""
  },
@@ -124,7 +124,7 @@
   "n": 12,
   "mode": "image tanpa pip → PREFLIGHT_FAIL marker diterima",
   "ok": true,
-  "ms": 42,
+  "ms": 40,
   "info": {},
   "error": ""
  },
@@ -132,7 +132,7 @@
   "n": 13,
   "mode": "fallback kernel senyap → 'slow' (basi tapi sibuk), bukan 'stuck'",
   "ok": true,
-  "ms": 121,
+  "ms": 113,
   "info": {},
   "error": ""
  },
@@ -140,7 +140,7 @@
   "n": 14,
   "mode": "instance yatim → STOP otomatis (bukan delete)",
   "ok": true,
-  "ms": 48,
+  "ms": 42,
   "info": {},
   "error": ""
  },
@@ -148,7 +148,7 @@
   "n": 15,
   "mode": "VM idle (job selesai, mesin diam ≥15 mnt) → STOP",
   "ok": true,
-  "ms": 133,
+  "ms": 124,
   "info": {
    "rules": {
     "complete_running": "VERIFYING"
@@ -160,7 +160,7 @@
   "n": 16,
   "mode": "create gagal per-item → OpResult.error terstruktur, bukan stderr dipangkas",
   "ok": true,
-  "ms": 176,
+  "ms": 163,
   "info": {
    "error": "ZONE_RESOURCE_POOL_EXHAUSTED"
   },
@@ -199,7 +199,7 @@
   "n": 19,
   "mode": "badai preempt → batas 3 start/jam menahan yang ke-4",
   "ok": true,
-  "ms": 488,
+  "ms": 448,
   "info": {
    "start": 2,
    "storm": 1
@@ -210,7 +210,7 @@
   "n": 20,
   "mode": "proses ganda → dup_process",
   "ok": true,
-  "ms": 117,
+  "ms": 111,
   "info": {},
   "error": ""
  },
@@ -218,7 +218,7 @@
   "n": 21,
   "mode": "selesai tapi artefak tidak mendarat → verifikasi menandai hilang",
   "ok": true,
-  "ms": 145,
+  "ms": 138,
   "info": {
    "tenggang": {
     "verified": 1,
@@ -235,7 +235,7 @@
   "n": 22,
   "mode": "smoke lolos palsu → SMOKE_FIN tanpa member yang dideklarasikan",
   "ok": true,
-  "ms": 45,
+  "ms": 50,
   "info": {
    "hilang": [
     "tabicl"
@@ -255,7 +255,7 @@
   "n": 24,
   "mode": "nohup via ssh gantung → tidak ada ssh di jalur kritis (mailbox)",
   "ok": true,
-  "ms": 58,
+  "ms": 49,
   "info": {
    "plan": {
     "channel": "mailbox",
@@ -275,7 +275,7 @@
   "n": 25,
   "mode": "operator sedang di mesin → tindakan ditahan",
   "ok": true,
-  "ms": 53,
+  "ms": 44,
   "info": {
    "explain": "HOLD: operator active on machine (ssh session)"
   },
