@@ -10,6 +10,8 @@ import httpx
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
 
+from google.cloud.firestore_v1 import FieldFilter
+
 from warden.config import settings
 from warden.core.models import Decision, Incident, now
 from warden.executor import approvals
@@ -131,10 +133,69 @@ def handle_interaction(body: dict[str, Any]) -> dict[str, Any]:
         # tipe 7 = UPDATE_MESSAGE: kartu asli diperbarui, tombol dinonaktifkan (klik ganda idempoten)
         return {"type": 7, "data": {"content": f"{status} by {uname} · {r.get('observed', '')}"[:1900], "components": []}}
     if t == 2:
-        name = body.get("data", {}).get("name"); opts = {o["name"]: o.get("value") for o in body.get("data", {}).get("options", [])}
-        sub = opts.get("perintah", "") or (body.get("data", {}).get("options") or [{}])[0].get("name", "")
+        data = body.get("data", {})
+        name = data.get("name")
+        top = (data.get("options") or [{}])[0]
+        sub = top.get("name", "") or ""
+        opts = {o["name"]: o.get("value") for o in (top.get("options") or data.get("options") or [])}
+        if sub == "ask":
+            return _defer_ask(body, opts, uname)
         return {"type": 4, "data": {"content": slash(sub or name, opts, uname)[:1900]}}
     return {"type": 4, "data": {"content": "unsupported interaction type", "flags": 64}}
+
+
+def _defer_ask(body: dict[str, Any], opts: dict[str, Any], who: str) -> dict[str, Any]:
+    """Discord wants an answer in 3 seconds; the Concierge needs ten to thirty.
+
+    So acknowledge immediately (type 5 = "Warden is thinking…") and park the question. The tick picks it up within a
+    minute and posts the answer as a follow-up, which the interaction token accepts for fifteen minutes. No background
+    thread on Cloud Run, where the CPU is throttled the moment the response is written.
+    """
+    att_url = ""
+    ref = opts.get("image")
+    if ref:
+        att = ((body.get("data", {}).get("resolved") or {}).get("attachments") or {}).get(str(ref)) or {}
+        att_url = str(att.get("url", ""))
+    db.client().collection("discord_asks").document(str(body.get("id"))).set({
+        "question": str(opts.get("question", ""))[:1000], "job_id": str(opts.get("job", "") or ""),
+        "image_url": att_url, "token": body.get("token"), "who": who,
+        "application_id": str(body.get("application_id", "")), "created_at": now().isoformat(), "state": "pending"})
+    return {"type": 5}
+
+
+def answer_pending_asks(limit: int = 3) -> dict[str, Any]:
+    """Run from the tick: answer the questions asked with /warden ask and post them back to the interaction."""
+    import httpx
+    out = {"answered": 0, "failed": 0}
+    for d in db.client().collection("discord_asks").where(filter=FieldFilter("state", "==", "pending")).limit(limit).get():
+        rec = d.to_dict() or {}
+        d.reference.set({"state": "working"}, merge=True)
+        image = None
+        try:
+            if rec.get("image_url"):
+                r = httpx.get(rec["image_url"], timeout=30)
+                r.raise_for_status()
+                image = r.content[:6_000_000]
+            from warden.agents.concierge import ask
+            res = ask(rec.get("question", ""), job_id=rec.get("job_id", ""), image=image,
+                      image_mime="image/png" if not image else "image/jpeg" if image[:2] == b"\xff\xd8" else "image/png")
+            text = res.get("answer", "") or "(no answer)"
+            db.health("gemini", True)
+            out["answered"] += 1
+        except Exception as e:  # noqa: BLE001
+            text = f"Could not answer: {type(e).__name__}: {e}"[:400]
+            db.health("gemini", False, str(e)[:200])
+            out["failed"] += 1
+        body = {"content": (f"**{rec.get('question','')}**\n{text}")[:1900]}
+        try:
+            httpx.post(f"https://discord.com/api/v10/webhooks/{rec['application_id']}/{rec['token']}",
+                       json=body, timeout=30).raise_for_status()
+        except Exception as e:  # noqa: BLE001
+            log_err = str(e)[:120]
+            d.reference.set({"state": "failed", "error": log_err}, merge=True)
+            continue
+        d.reference.delete()
+    return out
 
 
 def slash(cmd: str, opts: dict[str, Any], who: str) -> str:

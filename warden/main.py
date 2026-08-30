@@ -76,6 +76,13 @@ def tick(authorization: str | None = Header(default=None)):
     stats["verify"] = process_pending(notify=_notify)
     from warden.executor.recovery import process_verifying
     stats["recovery"] = process_verifying(notify=_notify)
+    # /warden ask parks its question and is answered here: Discord wants a reply in 3 s, the Concierge needs longer,
+    # and a background thread on Cloud Run loses its CPU the moment the response is written.
+    try:
+        from warden.concierge import discord as _dc
+        stats["asks"] = _dc.answer_pending_asks()
+    except Exception as e:  # noqa: BLE001
+        stats["errors"].append(f"discord asks: {e}")
     return stats
 
 
