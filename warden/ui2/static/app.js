@@ -38,7 +38,8 @@
     const fd = new FormData(f);
     try {
       const r = await fetch("/act", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: f.dataset.propose, key: f.dataset.key || "", json: { action: fd.get("action"), why: fd.get("why") || "", who: "dashboard" } }) });
+        body: JSON.stringify({ path: f.dataset.propose, key: f.dataset.key || "", json: { action: fd.get("action"), why: fd.get("why") || "", who: "dashboard",
+          params: fd.get("params") ? JSON.parse(fd.get("params")) : {} } }) });
       const j = await r.json();
       toast(j.ok ? ("Proposed: " + (j.verdict || "") + (j.observed ? " · " + j.observed : "")) : ("Failed: " + (j.error || "")), !!j.ok);
       if (j.ok && j.incident_id) setTimeout(function () { location.href = "/incidents/" + j.incident_id; }, 900);

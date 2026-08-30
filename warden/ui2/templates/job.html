@@ -29,7 +29,7 @@
         {% else %}<button class="btn btn-secondary" data-act="/jobs/{{ job.job_id }}/hold?minutes=120&who=dashboard" data-key="{{ job.job_id }}">Hold 2 h (manual mode)</button>{% endif %}
       </div></div></div>
     <div class="card"><div class="card-head"><div class="h">Request an action</div></div><div class="card-body">
-      <div class="s12 muted" style="margin-bottom:8px">Goes through the same policy and approval path as Warden's own proposals.</div>
+      <div class="s12 muted" style="margin-bottom:8px">Goes through the same policy and approval path as Warden’s own proposals.</div>
       <form data-propose="/jobs/{{ job.job_id }}/propose" data-key="{{ job.job_id }}" style="display:flex;flex-direction:column;gap:8px">
         <select name="action" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit;background:#fff">{% for v, l in actions %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
         <input name="why" maxlength="200" aria-label="Why this action is being requested" placeholder="Why (recorded in the audit log)" style="height:36px;padding:0 10px;border:1px solid var(--control);border-radius:6px;font:inherit">

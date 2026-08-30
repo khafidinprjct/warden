@@ -102,3 +102,11 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Fix now:** deploy the UI with `Procfile.ui` in place (`cat Procfile.ui > Procfile`, deploy, restore), which is what earlier deploys did by hand.
 - **Detection rule:** a Cloud Run deploy is not verified by a green revision or a 200 on `/health` — both services answer that. The gate is a response only that service can give: `curl -s $UI_URL/ | grep '<title>Overview · Warden'`.
 - **Cost:** ~1 minute of dashboard downtime, caught immediately because the deploy was followed by opening the page rather than trusting the "Done."
+
+## #40 · The tour tested a stale server and reported its failures as the product's (30 Aug 2026)
+- **Symptom:** a tour run reported `/incidents` as HTTP 500 with `jinja2.exceptions.UndefinedError: 'f' is undefined`, on code that had just passed the lint, the screenshots and a direct functional check.
+- **Cause:** `chaos/ui_tour.py` and `chaos/ui_serve.py` used the same ports (8099/18099). A long-lived `ui_serve` — started for the owner to browse, before the filter work — still held the port. The tour's own servers failed to bind, and Playwright then drove **that** process: an older `app.py` that does not pass the `f` context, rendering the **current** templates read fresh from disk, which expect it. The tour was measuring a server it did not start.
+- **Why it was dangerous rather than merely annoying:** every result in that run was about the wrong process. A failing test that fails for an invented reason is worse than no test, because the next move is to "fix" code that was never broken.
+- **Fix:** `ui_serve` runs on its own ports (8098/18098), both are overridable through `WARDEN_TOUR_UI_PORT` / `WARDEN_TOUR_CORE_PORT`, and `serve()` now refuses to start when the port already answers instead of quietly inheriting someone else's server.
+- **Cost:** ~20 minutes and one wasted tour run. No production impact.
+- **Operator rule:** a harness that starts its own server must prove the server it talks to is the one it started. Silent port reuse turns a test into a coin toss.

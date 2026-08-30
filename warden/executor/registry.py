@@ -24,7 +24,8 @@ def _mailbox(dec: Decision, cmd: str, args: dict[str, Any], dry_run: bool) -> Op
     if not dec.job_id:
         return OpResult(False, f"{cmd} ?", error="no job_id — mailbox commands need a job", plan=plan)
     doc = db.mailbox_post(dec.job_id, cmd, args, dec.decision_id, signer=ing.sign_cmd)
-    return OpResult(True, f"{cmd} {dec.job_id}", observed=f"queued nonce={doc['nonce']}", op_id=doc["nonce"], plan=plan)
+    # the nonce stays in op_id, where it is useful; the audit column reads as prose
+    return OpResult(True, f"{cmd} {dec.job_id}", observed="Queued for the machine", op_id=doc["nonce"], plan=plan)
 
 
 def _notify(dec: Decision, compute, dry_run: bool) -> OpResult:

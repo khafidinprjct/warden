@@ -53,6 +53,9 @@ LINT = r"""(vw) => {
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden' || r.width === 0 || r.height === 0) return;
+    // a closed <details> still reports boxes for its children in Chromium, but nobody can see them
+    const d = el.closest('details:not([open])');
+    if (d && !el.closest('summary')) return;
     const own = Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim());
 
     // 1. anything crossing the viewport edge

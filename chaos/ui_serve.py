@@ -4,13 +4,18 @@ Same seeded board as the recorded tour — 23 failure modes opened by the real r
 of driving a browser it just stays up until you stop it. Nothing here touches the real project: emulator, fake fleet, no
 Gemini call. The diagnoses in the reasoning panels are seeded by this script, not model output.
 
-    python -m chaos.ui_serve            # http://127.0.0.1:8099  (Ctrl-C to stop)
+    python -m chaos.ui_serve            # http://127.0.0.1:8098  (Ctrl-C to stop)
 """
 from __future__ import annotations
 
+import os
 import signal
 import sys
 import time
+
+# Distinct ports from the recorded tour: a long-lived browsing session must never collide with a test run.
+os.environ.setdefault("WARDEN_TOUR_CORE_PORT", "18098")
+os.environ.setdefault("WARDEN_TOUR_UI_PORT", "8098")
 
 from chaos.ui_tour import CORE_PORT, UI_PORT, enrich, seed, serve
 

@@ -119,6 +119,24 @@ select { width: 100%; }
 .step-rail { display: flex; flex-direction: column; align-items: center; } .step-rail .n { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; } .step-rail .l { width: 2px; height: 26px; background: var(--control); }
 .n-done { background: var(--ok); } .n-current { background: var(--warn); box-shadow: 0 0 0 4px var(--warn-bg); } .n-todo { border: 2px solid var(--control); } .n-failed { background: var(--crit); }
 .step .t { font-weight: 600; } .step .d { color: var(--muted); } .step.todo { color: var(--dim); } .step.current .t { color: var(--warn-text); }
+/* filters — a list of 29 incidents or 23 machines is not usable without them */
+.filters { display: grid; grid-template-columns: minmax(0, 1.4fr) 150px 170px 170px auto auto; gap: 12px; align-items: end;
+           padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.filters label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.filters input, .filters select { height: 34px; padding: 0 10px; border: 1px solid var(--control); border-radius: 6px; font: inherit; background: var(--surface); }
+.filters label.check { flex-direction: row; align-items: center; gap: 8px; height: 34px; white-space: nowrap; }
+.filters label.check input { height: auto; width: auto; }
+.filter-actions { display: flex; gap: 8px; }
+
+/* a group of repeats of one rule, collapsed like an alert console folds a flapping signature */
+.tr-group > summary { cursor: pointer; list-style: none; }
+.tr-group > summary::-webkit-details-marker { display: none; }
+.tr-group > summary::before { content: "▸"; position: absolute; left: 6px; color: var(--muted); font-size: 11px; }
+.tr-group[open] > summary::before { content: "▾"; }
+.tr-group > summary.tr { padding-left: 22px; }
+.tr-group .tr.nested { padding-left: 34px; background: var(--canvas); }
+.inline-propose { display: inline-block; margin-left: 10px; }
+
 .empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px; color: var(--muted); } .empty b { color: var(--text-2); }
 .alert { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px solid #f1c9c9; border-radius: 8px; background: var(--crit-bg); color: var(--crit-text); }
 .chart { width: 100%; height: 170px; }
@@ -168,6 +186,8 @@ select { width: 100%; }
   .props, .props.narrow, .props-wide { grid-template-columns: 1fr; gap: 2px 0; }
   .props .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
   .props .v { margin-bottom: 6px; }
+  .filters { grid-template-columns: 1fr; gap: 10px; }
+  .tr-group > summary.tr, .tr-group .tr.nested { padding-left: 26px; }
   /* The chart is drawn in a 640-unit viewBox scaled to ~330 px, so 10-unit labels render at about 5 px. */
   .card svg text { font-size: 19px; } .chart-x { font-size: 19px; }
   /* When a decision is waiting, it is the reason the operator opened the page — put it first on a phone. */

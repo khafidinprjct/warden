@@ -1,0 +1,578 @@
+[aria       ] Close menu
+[aria       ] Cumulative spend against the budget cap
+[aria       ] Menu
+[aria       ] Step over the last 60 heartbeats
+[aria       ] Why this action is being requested
+[body       ] $0
+[body       ] $0.000
+[body       ] $0.034/h
+[body       ] $0.502
+[body       ] $0.502/h
+[body       ] $0.80 per day
+[body       ] $10.00
+[body       ] $150
+[body       ] $2.08
+[body       ] $2.600
+[body       ] $3.400
+[body       ] $361.80
+[body       ] / INC-6PAS
+[body       ] / Launch
+[body       ] / vision-7b
+[body       ] /h
+[body       ] 0
+[body       ] 0%
+[body       ] 0% · 0.0 h of 0.65 h paid, 7 days
+[body       ] 0.0 h
+[body       ] 0.25
+[body       ] 0.65 h
+[body       ] 0.87 h
+[body       ] 06:52 GMT+7 · 1.2 h ago
+[body       ] 07:09 GMT+7
+[body       ] 07:37 GMT+7
+[body       ] 07:37 GMT+7 · 25 min ago
+[body       ] 08-30
+[body       ] 08:01 GMT+7
+[body       ] 08:01 GMT+7 · 1 min ago
+[body       ] 08:02 GMT+7
+[body       ] 08:02 GMT+7 · 11 s ago
+[body       ] 08:02 GMT+7 · 12 s ago
+[body       ] 08:02 GMT+7 · 13 s ago
+[body       ] 08:02 GMT+7 · 4 s ago
+[body       ] 08:02 GMT+7 · 5 s ago
+[body       ] 08:02:37 GMT+7
+[body       ] 08:02:38 GMT+7
+[body       ] 1
+[body       ] 1 min ago
+[body       ] 1,950
+[body       ] 1.2 h ago
+[body       ] 1/day · max $2.00
+[body       ] 1/hour
+[body       ] 10 min
+[body       ] 10 s ago
+[body       ] 100 % · 0.87 h of 0.87 h paid, 7 days
+[body       ] 100%
+[body       ] 100% · 0.87 h of 0.87 h paid, 7 days
+[body       ] 100% · 2.5 h of 2.5 h paid, 7 days
+[body       ] 11 s ago
+[body       ] 13.81 h of 15.11 h paid, 7 days
+[body       ] 15
+[body       ] 15 min
+[body       ] 18 s ago
+[body       ] 19 s ago
+[body       ] 2
+[body       ] 2.5 h
+[body       ] 2/day
+[body       ] 2/day · max +50% price
+[body       ] 2/hour
+[body       ] 20
+[body       ] 23
+[body       ] 23 managed instances · 15 running
+[body       ] 23 registered
+[body       ] 25 min ago
+[body       ] 29 total · 23 open
+[body       ] 3
+[body       ] 3,900
+[body       ] 3/hour
+[body       ] 3/hour · 12/day
+[body       ] 3/hour · 8/day · max $2.00
+[body       ] 30 Aug 2026, 08:02 GMT+7
+[body       ] 30 Aug 2026, 08:02 GMT+7 · 10 s ago
+[body       ] 30 Aug 2026, 08:02 GMT+7 · 15 s ago
+[body       ] 30 Aug 2026, 08:02 GMT+7 · 17 s ago
+[body       ] 30 Aug 2026, 08:02 GMT+7 · 8 s ago
+[body       ] 30 Aug 2026, 08:02 GMT+7 · 9 s ago
+[body       ] 30 min
+[body       ] 34 entries
+[body       ] 40.0 GB
+[body       ] 5 pending
+[body       ] 6 resolved today
+[body       ] 6,500
+[body       ] 60 min
+[body       ] 8 components
+[body       ] 91%
+[body       ] a run at half the batch size passing the same step would refute this
+[body       ] Abandoned · F3
+[body       ] Active overrides
+[body       ] Approvals
+[body       ] Ask Warden
+[body       ] Audit log
+[body       ] auto-delete disk
+[body       ] Autonomy by action
+[body       ] Autonomy for this job
+[body       ] Awaiting approval
+[body       ] bad-marker
+[body       ] bert-qa
+[body       ] bert-qa: spent $3.40 = 85% of budget $4.00
+[body       ] Budget
+[body       ] Budget $150
+[body       ] Cap $150
+[body       ] Change machine type
+[body       ] Circuit breaker
+[body       ] Clean disk (checkpoints already in Storage)
+[body       ] climate-eks
+[body       ] Cloud Storage
+[body       ] Complete · export
+[body       ] complete-1
+[body       ] complete-1 is complete and verified — stopping us-central1-b/warden-complete-1 ($0.034/h)
+[body       ] Compute Engine API
+[body       ] Cost while open
+[body       ] CPU 1 % · disk 35.0 GB free
+[body       ] CPU 15 % · disk 30.0 GB free
+[body       ] CPU 2 % · disk 18.0 GB free
+[body       ] CPU 60 % · disk 22.0 GB free
+[body       ] CPU 70 % · disk 28.0 GB free
+[body       ] CPU 70 % · disk 30.0 GB free
+[body       ] CPU 72 % · disk 26.0 GB free
+[body       ] CPU 75 % · disk 25.0 GB free
+[body       ] CPU 80 % · disk 10.0 GB free
+[body       ] CPU 80 % · disk 40.0 GB free
+[body       ] CPU 85 % · disk 1.4 GB free
+[body       ] CPU 88 % · disk 30.0 GB free
+[body       ] CPU 90 % · disk 20.0 GB free
+[body       ] CPU 91 % · disk 24.0 GB free
+[body       ] Critical
+[body       ] Cumulative spend
+[body       ] Decision
+[body       ] Delete disk
+[body       ] Delete instance
+[body       ] Detected → Triaged
+[body       ] diffusion-lora
+[body       ] diffusion-lora: disk free 1.4 GB (need ≥ 5.0)
+[body       ] Discord
+[body       ] dup-0
+[body       ] dup-0: 2 entrypoint processes running concurrently
+[body       ] dup-1
+[body       ] dup-1: 2 entrypoint processes running concurrently
+[body       ] dup-2
+[body       ] dup-2: 2 entrypoint processes running concurrently
+[body       ] e2-medium
+[body       ] Effective training time by job · 7 days
+[body       ] Escalated
+[body       ] Evidence
+[body       ] Expires
+[body       ] F3-train
+[body       ] finished-ok
+[body       ] Fleet
+[body       ] Gemini
+[body       ] Global caps
+[body       ] Goes through the same policy and approval path as Warden’s own proposals.
+[body       ] GPU out of memory, transient · confidence 0.91 · cross-check passed · $0.014
+[body       ] Group repeats
+[body       ] Healthy
+[body       ] Heartbeat
+[body       ] Heartbeat ·
+[body       ] held-job
+[body       ] in 30 min
+[body       ] Incident memory
+[body       ] Incidents
+[body       ] Info
+[body       ] Instance
+[body       ] Instrumented
+[body       ] Intent
+[body       ] Job
+[body       ] Job dup-0 · Autonomy L1 · Affects this run only
+[body       ] Job dup-0 · Autonomy L1 · Affects this run only · Costs $0.00 to run
+[body       ] Job dup-1 · Autonomy L1 · Affects this run only
+[body       ] Job dup-1 · Autonomy L1 · Affects this run only · Costs $0.00 to run
+[body       ] Job dup-2 · Autonomy L1 · Affects this run only
+[body       ] Job dup-2 · Autonomy L1 · Affects this run only · Costs $0.00 to run
+[body       ] job finished-ok exit 0 — awaiting artifact verification
+[body       ] Job rec-sys · Autonomy L1 · Affects this run only
+[body       ] Job rec-sys · Autonomy L1 · Affects this run only · Costs $0.00 to run
+[body       ] job speech-ft ended with exit=1
+[body       ] job speech-ft ended with exit=1 · Warden proposes: Resume with smaller batch
+[body       ] Job storm-42 · Autonomy L1 · Affects this job only
+[body       ] Job storm-42 · Autonomy L1 · Affects this job only · Costs $0.00 to run
+[body       ] Jobs
+[body       ] Jobs needing attention
+[body       ] Kill process
+[body       ] Kill process · warden-dup-0
+[body       ] Kill process · warden-dup-1
+[body       ] Kill process · warden-dup-2
+[body       ] Kill process · warden-rec-sys
+[body       ] L1 · Propose, approval required
+[body       ] L2 · Act, then report
+[body       ] L3 · Act silently
+[body       ] Last 24 hours
+[body       ] Launch job
+[body       ] legacy-eks
+[body       ] legacy-eks: DONE marker without RUN_FIN or an exit code — not accepted
+[body       ] Live state
+[body       ] llama-sft
+[body       ] llama-sft: spent $2.60 ≥ budget $2.00 — stopping
+[body       ] LLM diagnosis required
+[body       ] Log parser
+[body       ] max +50% price · 2/day
+[body       ] nan-job
+[body       ] nan-job: non-finite loss at step 1040
+[body       ] nan-job: non-finite loss at step 1040 · Warden proposes: Roll back to last good checkpoint
+[body       ] Needs your decision
+[body       ] Never, by anyone, through Warden
+[body       ] nlp-pretrain
+[body       ] No active overrides
+[body       ] No decision recorded
+[body       ] No decisions
+[body       ] No heartbeat
+[body       ] None
+[body       ] None — global policy applies
+[body       ] Notify
+[body       ] ocr-train
+[body       ] ocr-train: preflight failed on us-central1-b/warden-ocr-train: libcudnn.so.8 missing in the image
+[body       ] of 23
+[body       ] of —
+[body       ] One spec — Warden creates the machine, installs the harness, guards the run, verifies the artifacts and stops the machine when it is done.
+[body       ] Open
+[body       ] Open incidents
+[body       ] Opened
+[body       ] Overview
+[body       ] Passed — action matches category
+[body       ] Passed — evidence lines exist
+[body       ] Passed — quotes in log
+[body       ] Policies
+[body       ] Quarantine artifact
+[body       ] Queued for the machine
+[body       ] r1
+[body       ] Read-only answers from the concierge agent
+[body       ] rec-sys
+[body       ] rec-sys: 2 entrypoint processes running concurrently
+[body       ] Recent activity
+[body       ] Relocate zone
+[body       ] Relocate zone · warden-storm-42
+[body       ] Request an action
+[body       ] Resize disk
+[body       ] Resolved
+[body       ] Result
+[body       ] Resume job
+[body       ] Resume with smaller batch
+[body       ] Roll back to last good checkpoint
+[body       ] Rule
+[body       ] Rule evidence
+[body       ] rule run_fin_nonzero
+[body       ] Rule · Duplicate process
+[body       ] Rule · Preempt storm
+[body       ] Rule: run exited with error · job speech-ft ended with exit=1
+[body       ] Run
+[body       ] Run exited with error on warden-speech-ft
+[body       ] RUN_FIN invalid: signature mismatch
+[body       ] run_fin_nonzero
+[body       ] Running
+[body       ] Running · export
+[body       ] Running · F1
+[body       ] Running · F2
+[body       ] Running · F3
+[body       ] Running · F3-train
+[body       ] Running · F4
+[body       ] Running · preflight
+[body       ] Running · smoke
+[body       ] Runway 12.3 days
+[body       ] sent
+[body       ] smoke-job
+[body       ] smoke-job: smoke did not load dataset, model — not accepted
+[body       ] speech-ft
+[body       ] Spent
+[body       ] Spot (preemptible) — Warden restarts and resumes it
+[body       ] Stale
+[body       ] Stale ·
+[body       ] Start instance
+[body       ] Step 1,040 · loss nan
+[body       ] Step 1,170 · loss 0.600
+[body       ] Step 1,300 · loss 1.100
+[body       ] Step 1,560 · loss 0.550
+[body       ] Step 1,950 · loss 0.450
+[body       ] Step 2,500 · loss 0.250
+[body       ] Step 2,600 · loss 0.700
+[body       ] Step 3,900 · loss 0.400
+[body       ] Step 4,200 · loss 0.310
+[body       ] Step 520 · loss 0.800
+[body       ] Step 6,500 · loss 0.250
+[body       ] Step 9,100 · loss 0.500
+[body       ] Step 900 · loss 0.200
+[body       ] Step 910 · loss 0.500
+[body       ] Steward
+[body       ] Stop instance
+[body       ] Stopped
+[body       ] storm-42
+[body       ] Summary
+[body       ] sweep-42
+[body       ] sweep-42: heartbeat 25 min stale (threshold 9 min) and the machine is idle · Warden proposes: Resume job
+[body       ] System health
+[body       ] tabular-xgb
+[body       ] tabular-xgb: heartbeat 70 min stale (threshold 9 min) and the machine is idle · Warden proposes: Resume job
+[body       ] torch.cuda.OutOfMemoryError: CUDA out of memory Tried to allocate 2.00 GiB
+[body       ] Training heartbeat · last 60
+[body       ] trend-job
+[body       ] trend-job: 1.4 step/s vs baseline 5 (−72%) while busy
+[body       ] trend-job: disk free 10.0 GB falling 12.00 GB/h → below 5 GB in 0.4 h
+[body       ] trend-job: grad_norm 22 = 55× median 0.4 at step 2500
+[body       ] trend-job: loss flat at 0.25 for 1.9 h (steps 1360→2500)
+[body       ] trend-job: VRAM 9000→15500 MB rising monotonically (+72%)
+[body       ] Triaged → Diagnosing
+[body       ] Updated
+[body       ] us-central1-a · Spot
+[body       ] us-central1-a/warden-storm-42 TERMINATED without RUN_FIN (preempted 4× in 60 min — storm); job storm-42 phase F1
+[body       ] us-central1-a/warden-storm-42 TERMINATED without RUN_FIN (preempted 4× in 60 min — storm); job storm-42 phase F1 · Warden proposes: Relocate zone
+[body       ] us-central1-b · Spot
+[body       ] us-central1-b · Spot ·
+[body       ] us-central1-b/warden-bad-marker
+[body       ] us-central1-b/warden-bert-qa
+[body       ] us-central1-b/warden-climate-eks
+[body       ] us-central1-b/warden-climate-eks running at $0.034/h with no active job
+[body       ] us-central1-b/warden-complete-1
+[body       ] us-central1-b/warden-diffusion-lora
+[body       ] us-central1-b/warden-legacy-eks
+[body       ] us-central1-b/warden-llama-sft
+[body       ] us-central1-b/warden-nlp-pretrain
+[body       ] us-central1-b/warden-nlp-pretrain TERMINATED without RUN_FIN (preempted); job nlp-pretrain phase F2
+[body       ] us-central1-b/warden-nlp-pretrain TERMINATED without RUN_FIN (preempted); job nlp-pretrain phase F2 · Warden proposes: Start instance
+[body       ] us-central1-b/warden-nlp-pretrain: auto-delete disk / termination DELETE
+[body       ] us-central1-b/warden-ocr-train
+[body       ] us-central1-b/warden-smoke-job
+[body       ] us-central1-b/warden-speech-ft
+[body       ] us-central1-b/warden-sweep-42
+[body       ] us-central1-b/warden-sweep-42: job sweep-42 idle ≥ 15 min
+[body       ] us-central1-b/warden-tabular-xgb
+[body       ] us-central1-b/warden-tabular-xgb: job tabular-xgb idle ≥ 15 min
+[body       ] us-central1-b/warden-trend-job
+[body       ] us-central1-b/warden-vision-7b
+[body       ] us-central1-b/warden-vision-7b TERMINATED without RUN_FIN (preempted); job vision-7b phase F3-train
+[body       ] Verifying
+[body       ] vision-7b
+[body       ] Warden
+[body       ] warden-bad-marker
+[body       ] warden-bad-marker · Running · Spot · $0.034/h
+[body       ] warden-bert-qa
+[body       ] warden-bert-qa · Running · Spot · $0.034/h
+[body       ] warden-climate-eks
+[body       ] warden-climate-eks · Stopped · Spot · $0.034/h
+[body       ] warden-complete-1
+[body       ] warden-complete-1 · Stopped · Spot · $0.034/h
+[body       ] warden-diffusion-lora
+[body       ] warden-diffusion-lora · Running · Spot · $0.034/h
+[body       ] warden-dup-0
+[body       ] warden-dup-0 · Running · Spot · $0.034/h
+[body       ] warden-dup-1
+[body       ] warden-dup-1 · Running · Spot · $0.034/h
+[body       ] warden-dup-2
+[body       ] warden-dup-2 · Running · Spot · $0.034/h
+[body       ] warden-finished-ok
+[body       ] warden-finished-ok · Running · Spot · $0.034/h
+[body       ] warden-held-job
+[body       ] warden-held-job · Running · Spot · $0.034/h
+[body       ] warden-legacy-eks
+[body       ] warden-legacy-eks · Running · Spot · $0.034/h
+[body       ] warden-llama-sft
+[body       ] warden-llama-sft · Stopped · Spot · $0.034/h
+[body       ] warden-nan-job
+[body       ] warden-nan-job · Running · Spot · $0.034/h
+[body       ] warden-nlp-pretrain
+[body       ] warden-nlp-pretrain · Stopped · Spot · $0.034/h
+[body       ] warden-ocr-train
+[body       ] warden-ocr-train · Stopped · Spot · $0.034/h
+[body       ] warden-rec-sys
+[body       ] warden-rec-sys · Running · Spot · $0.034/h
+[body       ] warden-smoke-job
+[body       ] warden-smoke-job · Running · Spot · $0.034/h
+[body       ] warden-speech-ft
+[body       ] warden-speech-ft · Running · Spot · $0.034/h
+[body       ] warden-storm-42
+[body       ] warden-storm-42 · Stopped · Spot · $0.034/h
+[body       ] warden-sweep-42
+[body       ] warden-sweep-42 · Stopped · Spot · $0.034/h
+[body       ] warden-tabular-xgb
+[body       ] warden-tabular-xgb · Stopped · Spot · $0.034/h
+[body       ] warden-trend-job
+[body       ] warden-trend-job · Running · Spot · $0.034/h
+[body       ] warden-vision-7b
+[body       ] warden-vision-7b · Running · Spot · $0.034/h
+[body       ] Warning
+[body       ] Watchdog
+[body       ] Watcher
+[body       ] ·
+[body       ] —
+[control    ] Apply
+[control    ] Approve
+[control    ] Ask
+[control    ] Deny
+[control    ] Freeze
+[control    ] Hold 2 h (manual mode)
+[control    ] Launch
+[control    ] Launch job
+[control    ] Propose
+[control    ] Request this action
+[control    ] Review
+[control    ] Run steward sweep
+[header     ] Action
+[header     ] Actor
+[header     ] Effective
+[header     ] ETTR
+[header     ] Heartbeat
+[header     ] Incident
+[header     ] Job
+[header     ] Last seen
+[header     ] Level
+[header     ] Limits
+[header     ] Machine
+[header     ] Note
+[header     ] Opened
+[header     ] Paid
+[header     ] Phase
+[header     ] Price
+[header     ] Result
+[header     ] Severity
+[header     ] Spent
+[header     ] Status
+[header     ] Target
+[header     ] Time
+[header     ] Transition
+[header     ] Type
+[label      ] 30-day projection
+[label      ] Acted automatically
+[label      ] Approval expires after
+[label      ] Automatic actions, per hour
+[label      ] Automatic spend, per day
+[label      ] Budget cap USD (0 = none)
+[label      ] Burn rate
+[label      ] Command (runs on the machine under wrun)
+[label      ] Consecutive failures
+[label      ] Cross-check
+[label      ] Denied by policy
+[label      ] Detected by
+[label      ] Diagnosis
+[label      ] Disk free
+[label      ] Disk GB
+[label      ] Effective training time
+[label      ] Entrypoint (for process counting)
+[label      ] Exit code
+[label      ] Expected artifacts (JSON)
+[label      ] Failed verifications before opening
+[label      ] Findings
+[label      ] GPU
+[label      ] Grace after boot
+[label      ] Heartbeat
+[label      ] Held
+[label      ] How to disprove
+[label      ] Idle before flagged
+[label      ] If left as is
+[label      ] Instance
+[label      ] Instances running
+[label      ] Job
+[label      ] Job ID
+[label      ] Last OK
+[label      ] Log excerpt
+[label      ] Loss
+[label      ] Machine type
+[label      ] Machines seen
+[label      ] Mode
+[label      ] New incidents
+[label      ] Open incidents
+[label      ] Orphan before flagged
+[label      ] Overrides
+[label      ] Phase
+[label      ] Photo or screenshot (optional — findings from an image are labelled and never trigger an action)
+[label      ] Progress
+[label      ] Proposed action
+[label      ] Question
+[label      ] Run
+[label      ] Search
+[label      ] Severity
+[label      ] Signal
+[label      ] Spend this month
+[label      ] Spend today
+[label      ] Spent
+[label      ] Status
+[label      ] Stays open for
+[label      ] Step
+[label      ] Step rate
+[label      ] System
+[label      ] Waiting for approval
+[label      ] Zones, in order
+[link       ] 0
+[link       ] 08:02 GMT+7 · 12 s ago
+[link       ] 08:02 GMT+7 · 5 s ago
+[link       ] 1
+[link       ] 13 s ago
+[link       ] 2
+[link       ] 23
+[link       ] 4 jobs
+[link       ] 4×
+[link       ] 5
+[link       ] 6 s ago
+[link       ] All 23 jobs
+[link       ] Approvals
+[link       ] Ask Warden
+[link       ] Audit log
+[link       ] Awaiting approval
+[link       ] bad-marker
+[link       ] bert-qa
+[link       ] Budget
+[link       ] Budget 80% used
+[link       ] Budget exhausted
+[link       ] climate-eks
+[link       ] complete-1
+[link       ] Critical
+[link       ] Decisions
+[link       ] Diagnosed non-finite loss on warden-nan-job as non-finite value in the input · confidence 0.91 · $0.014
+[link       ] diffusion-lora
+[link       ] Disk filling up
+[link       ] Disk space low
+[link       ] DONE marker without exit code
+[link       ] dup-0
+[link       ] dup-1
+[link       ] dup-2
+[link       ] dup-2, dup-1, dup-0, rec-sys · Warden proposes: Kill process
+[link       ] Duplicate process
+[link       ] Evidence
+[link       ] finished-ok
+[link       ] Fleet
+[link       ] GPU memory rising
+[link       ] GPU memory rising on warden-trend-job · Resolved
+[link       ] Gradient spike
+[link       ] held-job
+[link       ] Idle instance
+[link       ] Incidents
+[link       ] Instance preempted
+[link       ] Instance preempted on warden-nlp-pretrain · Escalated · denied by policy
+[link       ] Invalid marker
+[link       ] Job complete, instance still running
+[link       ] Job stuck
+[link       ] Jobs
+[link       ] legacy-eks
+[link       ] llama-sft
+[link       ] Loss plateau
+[link       ] nan-job
+[link       ] nlp-pretrain
+[link       ] Non-finite loss
+[link       ] Notify on warden-trend-job · Verified
+[link       ] ocr-train
+[link       ] Orphan instance
+[link       ] Overview
+[link       ] Policies
+[link       ] Preempt storm
+[link       ] Preempt storm on warden-storm-42 · Awaiting approval
+[link       ] Preflight failed
+[link       ] rec-sys
+[link       ] Run exited with error
+[link       ] Run finished, verification pending
+[link       ] Smoke test incomplete
+[link       ] smoke-job
+[link       ] speech-ft
+[link       ] Start instance on warden-vision-7b · Verified
+[link       ] storm-42
+[link       ] sweep-42
+[link       ] System health
+[link       ] tabular-xgb
+[link       ] Throughput dropped
+[link       ] Timeline
+[link       ] trend-job
+[link       ] Unsafe instance configuration
+[link       ] us-central1-b/warden-vision-7b TERMINATED without RUN_FIN (preempted); job vision-7b phase F3-train
+[link       ] Verifying
+[link       ] View all incidents
+[link       ] vision-7b
+[placeholder] bash /opt/warden-src/toy_bootstrap.sh
+[placeholder] job, rule, machine or text
+[placeholder] machine, job or zone
+[placeholder] toy-2
+[placeholder] toy_train.py
+[placeholder] Why (recorded in the audit log)
+[placeholder] Why did toy-train stop at step 1742?

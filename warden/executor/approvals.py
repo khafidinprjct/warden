@@ -134,6 +134,13 @@ def false_positive(incident_id: str, who: str, reason: str = "") -> dict:
     return {"ok": True, "incident_id": incident_id}
 
 
+# The operator reads this sentence in the incident list; the action's storage id does not belong in it.
+ACTION_TEXT = {"notify": "Notify", "start_instance": "Start instance", "resume_job": "Resume job", "stop_instance": "Stop instance",
+               "quarantine_artifact": "Quarantine artifact", "rollback_last_good": "Roll back to last good checkpoint",
+               "relocate_zone": "Relocate zone", "resize_disk": "Resize disk", "kill_process": "Kill process",
+               "change_machine_type": "Change machine type", "clean_disk": "Clean disk"}
+
+
 def propose(job_id: str, action: str, params: dict | None, who: str, why: str = "") -> dict:
     """A human (dashboard / Ask Warden) asks for an action. It goes through the SAME policy and approval path as Warden's own
     proposals: policy-evaluated, dry-run planned, then executed (AUTO) or queued for approval — never a side door."""
@@ -149,9 +156,11 @@ def propose(job_id: str, action: str, params: dict | None, who: str, why: str = 
     if job is None:
         return {"ok": False, "error": "job not found"}
     inst = compute().describe(job.instance_ref) if job.instance_ref else None
-    inc = Incident(job_id=job_id, instance_ref=job.instance_ref, rule="operator_request", severity="info", summary=f"{who} requested {action} on {job_id}: {why}"[:300],
+    inc = Incident(job_id=job_id, instance_ref=job.instance_ref, rule="operator_request", severity="info", summary=(f"Operator requested {ACTION_TEXT.get(action, action.replace('_', ' ').capitalize())} on {job_id}"
+                            + (f" — {why}" if why else ""))[:300],
                    dedupe_key=f"operator:{job_id}:{action}:{now().strftime('%Y%m%d%H%M%S')}")
-    transition(inc, S.TRIAGED, note=f"requested by {who}", actor=f"human:{who}")
+    transition(inc, S.TRIAGED, note=f"Requested {ACTION_TEXT.get(action, action).lower()} from the {who}",
+               actor=f"human:{who}")
     dec = policy_eval(act, _ctx_for(job, inst, act, _is_frozen()), _policy_for(job))
     dec.incident_id = inc.incident_id; dec.job_id = job_id
     dec.params = {"instance_ref": job.instance_ref, "run_id": job.run_id, **(params or {}), "reason": why or f"requested by {who}"}

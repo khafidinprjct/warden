@@ -80,7 +80,7 @@ def evaluate(f: Facts) -> list[Finding]:
 
     # R3 marker
     if f.done_legacy and f.run_fin is None:
-        out.append(Finding("done_without_exit", "warning", f"{job.job_id if job else '?'}: DONE marker without RUN_FIN/exit code — NOT accepted",
+        out.append(Finding("done_without_exit", "warning", f"{job.job_id if job else '?'}: DONE marker without RUN_FIN or an exit code — not accepted",
                            f"donenoexit:{f.done_legacy.job_id}:{f.done_legacy.run_id}", suggested_action="notify"))
     if f.run_fin and not f.run_fin.valid:
         out.append(Finding("marker_invalid", "warning", f"RUN_FIN invalid: {f.run_fin.invalid_reason}",
@@ -96,7 +96,7 @@ def evaluate(f: Facts) -> list[Finding]:
 
     # A6 close-out: job COMPLETE (artifacts VERIFIED) but the machine still runs → stop it now, do not wait for idle grace
     if inst and inst.status == InstanceStatus.RUNNING and job and job.status == JobStatus.COMPLETE and f.boot_age_min > 2:
-        out.append(Finding("complete_running", "info", f"{job.job_id} is COMPLETE (verified) — stopping {inst.ref} (${inst.hourly_price_usd:.3f}/h)",
+        out.append(Finding("complete_running", "info", f"{job.job_id} is complete and verified — stopping {inst.ref} (${inst.hourly_price_usd:.3f}/h)",
                            f"complete:{inst.ref}:{job.run_id}", suggested_action="stop_instance", evidence={"hourly": inst.hourly_price_usd}))
     # A3 preflight failed on the machine → nothing expensive should start; stop the spend and tell the human what is missing
     if f.preflight_fail and job and job.status in (JobStatus.PENDING, JobStatus.RUNNING) and inst and inst.status == InstanceStatus.RUNNING:
@@ -106,7 +106,7 @@ def evaluate(f: Facts) -> list[Finding]:
     if f.smoke_fin and job:
         want = set((job.expect or {}).get("smoke_members", [])); got = set(f.smoke_fin.evidence.get("members", []))
         if want and not want <= got:
-            out.append(Finding("smoke_invalid", "critical", f"{job.job_id}: smoke missing members {sorted(want - got)} — not accepted",
+            out.append(Finding("smoke_invalid", "critical", f"{job.job_id}: smoke did not load {', '.join(sorted(want - got))} — not accepted",
                                f"smoke:{job.job_id}:{f.smoke_fin.run_id}", suggested_action="notify", evidence={"want": sorted(want), "got": sorted(got)}))
     # J3 job budget: 80 % warn, 100 % stop
     if job and job.budget_cap_usd > 0 and job.status == JobStatus.RUNNING and inst and inst.status == InstanceStatus.RUNNING:
@@ -124,7 +124,7 @@ def evaluate(f: Facts) -> list[Finding]:
         thr = _stale_threshold(f.hbs, hb.phase)
         quiet = (hb.gpu_util is not None and hb.gpu_util < 5) or (hb.cpu_pct is not None and hb.cpu_pct < 10)
         if age > thr and quiet:
-            out.append(Finding("stuck", "critical", f"{job.job_id}: heartbeat stale {age.total_seconds()/60:.0f} min (> {thr.total_seconds()/60:.0f}) AND machine idle",
+            out.append(Finding("stuck", "critical", f"{job.job_id}: heartbeat {age.total_seconds()/60:.0f} min stale (threshold {thr.total_seconds()/60:.0f} min) and the machine is idle",
                                f"stuck:{job.job_id}:{hb.run_id}", needs_llm=True, suggested_action="resume_job",
                                evidence={"age_s": age.total_seconds(), "thr_s": thr.total_seconds(), "gpu": hb.gpu_util, "cpu": hb.cpu_pct}))
         elif age > thr:

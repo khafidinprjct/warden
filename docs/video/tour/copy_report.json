@@ -1,0 +1,13 @@
+{
+ "strings": 578,
+ "findings": [],
+ "by_role": {
+  "link": 83,
+  "placeholder": 7,
+  "label": 61,
+  "body": 386,
+  "header": 24,
+  "control": 12,
+  "aria": 5
+ }
+}

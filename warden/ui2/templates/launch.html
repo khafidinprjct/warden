@@ -6,7 +6,7 @@
 {% elif error %}<section class="alert"><b>Launch failed</b><span>{{ error }}</span></section>{% endif %}
 <section class="card"><div class="card-body">
   <form method="post" action="/jobs/launch" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
-    <label style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Job id</span><input name="job_id" required pattern="[A-Za-z0-9_-]+" placeholder="toy-2" style="height:40px;padding:0 12px;border:1px solid var(--control);border-radius:6px;font:inherit"></label>
+    <label style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Job ID</span><input name="job_id" required pattern="[A-Za-z0-9_-]+" placeholder="toy-2" style="height:40px;padding:0 12px;border:1px solid var(--control);border-radius:6px;font:inherit"></label>
     <label style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Machine type</span><input name="machine_type" value="e2-medium" style="height:40px;padding:0 12px;border:1px solid var(--control);border-radius:6px;font:inherit"></label>
     <label style="display:flex;flex-direction:column;gap:4px;grid-column:1 / -1"><span class="eyebrow">Command (runs on the machine under wrun)</span><input name="command" required placeholder="bash /opt/warden-src/toy_bootstrap.sh" style="height:40px;padding:0 12px;border:1px solid var(--control);border-radius:6px;font:inherit"></label>
     <label style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Zones, in order</span><input name="zones" value="us-central1-a,us-central1-b,us-central1-c" style="height:40px;padding:0 12px;border:1px solid var(--control);border-radius:6px;font:inherit"></label>

@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<header class="page-head"><div><div class="title">Fleet</div><div class="s12 muted num">{{ rows|length }} managed instances · {{ running }} running</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+<header class="page-head"><div><div class="title">Fleet</div><div class="s12 muted num">{% if filtered %}{{ rows|length }} of {{ total }} match · {% endif %}{{ total }} managed instances · {{ running }} running</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+
+<form class="filters" method="get" action="/fleet">
+  <label><span class="eyebrow">Search</span><input name="q" value="{{ f.q }}" placeholder="machine, job or zone"></label>
+  <label><span class="eyebrow">Status</span><select name="status"><option value="">Any</option>{% for s in statuses %}<option value="{{ s }}"{% if f.status == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+  <div class="filter-actions"><button class="btn btn-secondary" type="submit">Apply</button>{% if filtered %}<a class="btn btn-secondary" href="/fleet">Clear</a>{% endif %}</div>
+</form>
 <section class="card table stack scroll">
   <div class="th cols-fleet"><div>Machine</div><div>Status</div><div>Job</div><div>Type</div><div>Price</div><div>Heartbeat</div><div>Last seen</div></div>
   {% for r in rows %}<div class="tr cols-fleet">
@@ -11,6 +17,6 @@
     <div class="num" data-l="Price">{{ r.price }}/h</div>
     <div class="{{ r.hb_cls }}" data-l="Heartbeat">{{ r.hb_text }}{% if r.h %}<div class="sub num">CPU {{ '%.0f' % (r.h.cpu_pct or 0) }} % · disk {{ '%.1f' % (r.h.disk_avail_gb or 0) }} GB free</div>{% endif %}</div>
     <div class="num muted" data-l="Last seen"><time data-utc="{{ r.seen_iso }}" data-fmt="long" data-rel="1"></time></div>
-  </div>{% else %}<div class="empty"><b>No managed instances</b><span>Machines Warden creates or adopts appear here.</span></div>{% endfor %}
+  </div>{% else %}<div class="empty"><b>{% if filtered %}Nothing matches those filters{% else %}No managed instances{% endif %}</b><span>{% if filtered %}<a href="/fleet">Clear the filters</a> to see all {{ total }}.{% else %}Machines Warden creates or adopts appear here.{% endif %}</span></div>{% endfor %}
 </section>
 {% endblock %}

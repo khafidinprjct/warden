@@ -23,8 +23,8 @@
       <div class="s14">{{ summary }}</div>
       <div class="props">
         <div class="k">Detected by</div><div class="v">{{ detected_by }}</div>
-        {% if diag %}<div class="k">Diagnosis</div><div class="v"><span class="actor actor-gemini" style="margin-right:6px">Gemini</span>{{ diag.category }}, {{ diag.transient_or_permanent }} · confidence {{ cc.adjusted_confidence if cc.adjusted_confidence is defined else diag.confidence }} · cross-check {{ 'passed' if cc.passed else 'failed' }} · {{ llm }}</div>{% endif %}
-        <div class="k">Proposed action</div><div class="v">{{ proposed }}{% if pending %} · Autonomy {{ pending[0].autonomy }} · {{ pending[0].radius|lower }}{% endif %}</div>
+        {% if diag %}<div class="k">Diagnosis</div><div class="v"><span class="actor actor-gemini" style="margin-right:6px">Gemini</span>{{ diag.category_label }}, {{ diag.transient_or_permanent }} · confidence {{ cc.adjusted_confidence if cc.adjusted_confidence is defined else diag.confidence }} · cross-check {{ 'passed' if cc.passed else 'failed' }} · {{ llm }}</div>{% endif %}
+        <div class="k">Proposed action</div><div class="v">{{ proposed }}{% if pending %} · Autonomy {{ pending[0].autonomy }} · {{ pending[0].radius|lower }}{% endif %}{% if proposed_action and job_id %}<form data-propose="/jobs/{{ job_id }}/propose" data-key="{{ job_id }}" class="inline-propose"><input type="hidden" name="action" value="{{ proposed_action }}"><input type="hidden" name="params" value="{{ proposed_params }}"><input type="hidden" name="why" value="requested from incident {{ inc.ref }}"><button class="btn btn-secondary" type="submit">Request this action</button></form>{% endif %}</div>
         {% if inc.burn != '$0.000' %}<div class="k">If left as is</div><div class="v num">{{ daily }} per day</div>{% endif %}
       </div>
     </div></div>

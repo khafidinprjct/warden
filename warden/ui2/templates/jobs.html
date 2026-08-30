@@ -6,7 +6,7 @@
     {% if j.pct is not none %}<div class="progress"><i class="{{ 'done' if j.pct >= 100 else '' }}" style="width:{{ j.pct }}%"></i></div>{% endif %}
     <div class="props"><div class="k">Progress</div><div class="v num">{{ j.line }}</div><div class="k">Heartbeat</div><div class="v {{ j.hb_cls }}">{{ j.hb_text }}{% if j.hb_iso %} · <time data-utc="{{ j.hb_iso }}" data-rel="1"></time>{% endif %}</div><div class="k">Mode</div><div class="v">{{ j.mode }}</div>
     {% if j.ettr is not none %}<div class="k">Effective training time</div><div class="v num">{{ (j.ettr * 100)|round|int }}% · {{ j.eff_h }} h of {{ j.paid_h }} h paid, 7 days</div>{% endif %}
-    {% if j.instance %}<div class="k">Instance</div><div class="v">{{ j.instance.name }} · {{ j.instance.status.value if j.instance.status.value is defined else j.instance.status }} · {{ 'Spot' if j.instance.spot else 'On-demand' }} · ${{ '%.3f' % j.instance.hourly_price_usd }}/h</div>{% endif %}
+    {% if j.instance %}<div class="k">Instance</div><div class="v">{{ j.instance.name }} · {{ j.instance_status }} · {{ 'Spot' if j.instance.spot else 'On-demand' }} · ${{ '%.3f' % j.instance.hourly_price_usd }}/h</div>{% endif %}
     <div class="k">Run</div><div class="v mono">{{ j.run_id or '—' }}</div><div class="k">Spent</div><div class="v num">{{ j.spent }}</div></div>
   </div></section>{% else %}<section class="card"><div class="empty"><b>No jobs registered</b></div></section>{% endfor %}
 {% endblock %}

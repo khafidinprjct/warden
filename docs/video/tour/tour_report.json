@@ -62,6 +62,30 @@
    "detail": "preempted,stuck,disk,budget,orphan,dup,nan,smoke,preflight"
   },
   {
+   "control": "Group repeats",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": "29 rows \u2192 26"
+  },
+  {
+   "control": "Filter by severity",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": "16 of 29"
+  },
+  {
+   "control": "Search",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": "3 match 'disk'"
+  },
+  {
+   "control": "Empty filter state",
+   "page": "desktop: incidents",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "control": "tab summary",
    "page": "desktop: incident",
    "ok": true,
@@ -84,6 +108,18 @@
    "page": "desktop: incident",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "Proposed action is offered, not just named",
+   "page": "desktop: incident",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "Request this action",
+   "page": "desktop: incident",
+   "ok": false,
+   "detail": "23 \u2192 23 decisions"
   },
   {
    "control": "Approve",
@@ -249,7 +285,61 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D",
+   "page": "phone: /incidents?group=",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents?group=1",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "Group repeats",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": "30 rows \u2192 27"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents?sev=critical&group=",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "Filter by severity",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": "16 of 30"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents?q=disk&group=",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "Search",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": "3 match 'disk'"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents?q=zzzznomatch&group=",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "Empty filter state",
+   "page": "phone: incidents",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -261,7 +351,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=timeline",
+   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=timeline",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -273,7 +363,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=decisions",
+   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=decisions",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -285,7 +375,7 @@
   },
   {
    "control": "no horizontal scroll",
-   "page": "phone: /incidents/inc_01M12M1D1DG9QYW9QMB3N43X9D?tab=evidence",
+   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z?tab=evidence",
    "ok": true,
    "detail": "scrollWidth 390"
   },
@@ -294,6 +384,24 @@
    "page": "phone: incident",
    "ok": true,
    "detail": "HTTP 200"
+  },
+  {
+   "control": "no horizontal scroll",
+   "page": "phone: /incidents/inc_01M18256EAVJCFNHMYEJ3G1B6Z",
+   "ok": true,
+   "detail": "scrollWidth 390"
+  },
+  {
+   "control": "Proposed action is offered, not just named",
+   "page": "phone: incident",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "control": "Request this action",
+   "page": "phone: incident",
+   "ok": false,
+   "detail": "24 \u2192 24 decisions"
   },
   {
    "control": "no horizontal scroll",
@@ -440,8 +548,8 @@
    "detail": ""
   }
  ],
- "passed": 69,
- "failed": 0,
+ "passed": 85,
+ "failed": 2,
  "videos": [
   "/home/ubuntu/warden/docs/video/tour/warden-desktop.webm",
   "/home/ubuntu/warden/docs/video/tour/warden-phone.webm"

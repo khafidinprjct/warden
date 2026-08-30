@@ -1,12 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
-<header class="page-head"><div><div class="title">Incidents</div><div class="s12 muted num">{{ rows|length }} total · {{ n_open }} open</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
-<section class="card">
+<header class="page-head"><div><div class="title">Incidents</div><div class="s12 muted num">{% if filtered %}{{ matched }} of {{ incs|length }} match · {% endif %}{{ incs|length }} total · {{ n_open }} open</div></div><div class="actions">{% include "_freeze.html" %}</div></header>
+
+<form class="filters" method="get" action="/incidents">
+  <label><span class="eyebrow">Search</span><input name="q" value="{{ f.q }}" placeholder="job, rule, machine or text"></label>
+  <label><span class="eyebrow">Severity</span><select name="sev"><option value="">Any</option>{% for s in ['critical','warning','info'] %}<option value="{{ s }}"{% if f.sev == s %} selected{% endif %}>{{ s|capitalize }}</option>{% endfor %}</select></label>
+  <label><span class="eyebrow">Status</span><select name="state"><option value="">Any</option>{% for s in states %}<option value="{{ s }}"{% if f.state == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+  <label><span class="eyebrow">Job</span><select name="job"><option value="">Any</option>{% for j in jobs %}<option value="{{ j }}"{% if f.job == j %} selected{% endif %}>{{ j }}</option>{% endfor %}</select></label>
+  <label class="check"><input type="checkbox" name="group" value="1"{% if f.group == '1' %} checked{% endif %}><span>Group repeats</span></label>
+  <div class="filter-actions"><button class="btn btn-secondary" type="submit">Apply</button>{% if filtered %}<a class="btn btn-secondary" href="/incidents">Clear</a>{% endif %}</div>
+</form>
+
+<section class="card table stack">
   <div class="th cols-incidents"><div>Severity</div><div>Incident</div><div>Job</div><div>Status</div><div>Opened</div></div>
-  {% for i in rows %}<div class="tr cols-incidents">
-    <div><span class="sev sev-{{ i.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[i.severity] }}"></span>{{ i.severity_label }}</span></div>
-    <div class="cell-2"><a class="plain" href="/incidents/{{ i.id }}">{{ i.title }}</a><div class="sub">{{ i.sub }}</div></div>
-    <div>{{ i.job }}</div><div><span class="pill pill-{{ i.state_cls }}">{{ i.state }}</span></div><div class="num muted"><time data-utc="{{ i.opened_iso }}" data-rel="1"></time></div>
-  </div>{% else %}<div class="empty"><b>No incidents recorded</b></div>{% endfor %}
+  {% for i in rows %}
+  {% if i.group %}
+  <details class="tr-group">
+    <summary class="tr cols-incidents">
+      <div data-l="Severity"><span class="sev sev-{{ i.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[i.severity] }}"></span>{{ i.severity_label }}</span></div>
+      <div class="cell-2" data-l="Incident"><span class="strong">{{ i.title }}</span> <span class="pill pill-grey">{{ i.n }}×</span><div class="sub">{{ i.jobs }}{% if i.proposed %} · Warden proposes: {{ i.proposed }}{% endif %}</div></div>
+      <div data-l="Job">{{ i.n }} jobs</div><div data-l="Status"><span class="pill pill-{{ i.state_cls }}">{{ i.state }}</span></div>
+      <div class="num muted" data-l="Opened"><time data-utc="{{ i.opened_iso }}" data-rel="1"></time></div>
+    </summary>
+    {% for m in i.group %}<div class="tr cols-incidents nested">
+      <div data-l="Severity"><span class="sev sev-{{ m.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[m.severity] }}"></span>{{ m.severity_label }}</span></div>
+      <div class="cell-2" data-l="Incident"><a class="plain" href="/incidents/{{ m.id }}">{{ m.title }}</a><div class="sub">{{ m.sub }}{% if m.proposed %} · Warden proposes: {{ m.proposed }}{% endif %}</div></div>
+      <div data-l="Job">{{ m.job }}</div><div data-l="Status"><span class="pill pill-{{ m.state_cls }}">{{ m.state }}</span></div>
+      <div class="num muted" data-l="Opened"><time data-utc="{{ m.opened_iso }}" data-rel="1"></time></div>
+    </div>{% endfor %}
+  </details>
+  {% else %}
+  <div class="tr cols-incidents">
+    <div data-l="Severity"><span class="sev sev-{{ i.severity }}"><span class="dot dot-{{ {'critical':'crit','warning':'warn','info':'grey'}[i.severity] }}"></span>{{ i.severity_label }}</span></div>
+    <div class="cell-2" data-l="Incident"><a class="plain" href="/incidents/{{ i.id }}">{{ i.title }}</a><div class="sub">{{ i.sub }}{% if i.proposed %} · Warden proposes: {{ i.proposed }}{% endif %}</div></div>
+    <div data-l="Job">{{ i.job }}</div><div data-l="Status"><span class="pill pill-{{ i.state_cls }}">{{ i.state }}</span></div>
+    <div class="num muted" data-l="Opened"><time data-utc="{{ i.opened_iso }}" data-rel="1"></time></div>
+  </div>
+  {% endif %}
+  {% else %}<div class="empty"><b>{% if filtered %}Nothing matches those filters{% else %}No incidents recorded{% endif %}</b><span>{% if filtered %}<a href="/incidents">Clear the filters</a> to see all {{ incs|length }}.{% else %}Warden opens an incident when a rule fires.{% endif %}</span></div>{% endfor %}
 </section>
 {% endblock %}

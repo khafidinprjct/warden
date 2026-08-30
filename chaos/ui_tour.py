@@ -24,7 +24,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = Path(os.environ.get("TOUR_OUT", ROOT / "docs/video/tour"))
 OUT.mkdir(parents=True, exist_ok=True)
 STATE = OUT / "fleet.json"
-CORE_PORT, UI_PORT = "18099", "8099"
+CORE_PORT = os.environ.get("WARDEN_TOUR_CORE_PORT", "18099")
+UI_PORT = os.environ.get("WARDEN_TOUR_UI_PORT", "8099")
 os.environ.update({
     "FIRESTORE_EMULATOR_HOST": "127.0.0.1:8081", "WARDEN_PROJECT": "warden-local", "WARDEN_FIRESTORE_DB": "warden-tour",
     "WARDEN_PROVIDER": "fake", "WARDEN_DEV": "1", "WARDEN_FAKE_STATE": str(STATE),
@@ -261,6 +262,13 @@ def expire_one() -> str:
 # ---------------------------------------------------------------- servers
 
 def serve() -> list[subprocess.Popen]:
+    # A busy port means someone else answers, quite possibly running different code. That produced a whole run of
+    # "500, 'f' is undefined" against a stale process. Refuse loudly instead of testing the wrong server.
+    import socket
+    for port in (CORE_PORT, UI_PORT):
+        with socket.socket() as sk:
+            if sk.connect_ex(("127.0.0.1", int(port))) == 0:
+                raise SystemExit(f"port {port} is already serving — stop it, or set WARDEN_TOUR_UI_PORT / WARDEN_TOUR_CORE_PORT")
     env = dict(os.environ)
     logs = open(OUT / "servers.log", "w")
     core = subprocess.Popen([sys.executable, "-m", "uvicorn", "warden.main:app", "--port", CORE_PORT, "--log-level", "warning"],
@@ -346,6 +354,22 @@ def walk(pg, say, mobile: bool = False) -> None:
     for _ in range(4):
         pg.mouse.wheel(0, 800); pg.wait_for_timeout(450)
 
+    # 3b. Filters and grouping — an unfiltered list of 29 is not an inbox
+    def _rowcount() -> int:
+        # what the reader actually sees: top-level rows plus each group's summary line, never the folded members
+        return pg.locator(".tr.cols-incidents:not(.nested)").count()
+    go("/incidents?group=", "Every incident, ungrouped", 900)
+    all_rows = _rowcount()
+    go("/incidents?group=1", "Repeats of one rule fold into a single line", 1400)
+    check("Group repeats", f"{tag}: incidents", _rowcount() < all_rows, f"{all_rows} rows → {_rowcount()}")
+    go("/incidents?sev=critical&group=", "Filtered to critical only", 1400)
+    crit = _rowcount()
+    check("Filter by severity", f"{tag}: incidents", 0 < crit < all_rows, f"{crit} of {all_rows}")
+    go("/incidents?q=disk&group=", "Search across job, rule, machine and text", 1400)
+    check("Search", f"{tag}: incidents", 0 < _rowcount() < all_rows, f"{_rowcount()} match 'disk'")
+    go("/incidents?q=zzzznomatch&group=", "An empty result says how to get back", 1200)
+    check("Empty filter state", f"{tag}: incidents", "Nothing matches those filters" in pg.inner_text("body"))
+
     # 4. One incident, all four tabs
     inc = next((i for i in db.incidents.list(limit=400) if i.diagnosis), db.incidents.list(limit=1)[0])
     for tab, cap in (("", "Incident — evidence, then diagnosis, then the decision rail"),
@@ -356,6 +380,20 @@ def walk(pg, say, mobile: bool = False) -> None:
         check(f"tab {tab or 'summary'}", f"{tag}: incident", r.status == 200, f"HTTP {r.status}")
         for _ in range(3):
             pg.mouse.wheel(0, 700); pg.wait_for_timeout(400)
+
+    # 4b. A named next step must be takeable from the page that names it
+    act_inc = next((i for i in db.incidents.list(limit=400)
+                    if (i.diagnosis or {}).get("recommended_action") not in (None, "", "notify")
+                    and not [d for d in db.decisions.list(status="PENDING", limit=200) if d.incident_id == i.incident_id]), None)
+    if act_inc:
+        go(f"/incidents/{act_inc.incident_id}", "The summary names the next step — and offers it", 1600)
+        btn = pg.locator("form.inline-propose button")
+        if check("Proposed action is offered, not just named", f"{tag}: incident", btn.count() == 1):
+            before = len(db.decisions.list(limit=300))
+            say("Requesting the proposed action through the same policy path")
+            btn.first.click(); pg.wait_for_timeout(3200)
+            check("Request this action", f"{tag}: incident", len(db.decisions.list(limit=300)) > before,
+                  f"{before} → {len(db.decisions.list(limit=300))} decisions")
 
     # 5. Approve — and check the world, not the toast
     pend = [d for d in db.decisions.list(status="PENDING", limit=200) if d.verdict == "NEED_APPROVAL"]

@@ -37,13 +37,19 @@ ACTION_REVERSIBLE = {"start_instance": "Yes — instance can be stopped again", 
 INSTANCE_STATUS = {"RUNNING": ("Running", "ok"), "STARTING": ("Starting", "warn"), "STOPPING": ("Stopping", "warn"),
                    "TERMINATED": ("Stopped", "grey"), "STOPPED": ("Stopped", "grey"),
                    "DELETED": ("Gone", "grey"), "UNKNOWN": ("Unknown", "grey")}
-JOB_STATUS = {"PENDING": ("Pending", "grey"), "RUNNING": ("Running", "ok"), "COMPLETE": ("Complete", "grey"), "FINISHED_UNVERIFIED": ("Finished, unverified", "warn"), "FAILED": ("Failed", "crit"), "STOPPED": ("Stopped", "grey")}
+JOB_STATUS = {"PENDING": ("Pending", "grey"), "RUNNING": ("Running", "ok"), "COMPLETE": ("Complete", "grey"), "FINISHED_UNVERIFIED": ("Finished, unverified", "warn"), "FAILED": ("Failed", "crit"), "STOPPED": ("Stopped", "grey"), "ABANDONED": ("Abandoned", "grey"), "PAUSED": ("Paused", "warn")}
 RULE_LABEL = {"stopped_external": "Instance stopped externally", "preempted": "Instance preempted", "orphan": "Orphan instance", "idle": "Idle instance",
               "fin_ok_pending_verify": "Run finished, verification pending", "artifact_unverified": "Artifact verification failed", "run_fin_nonzero": "Run exited with error",
               "marker_invalid": "Invalid marker", "done_without_exit": "DONE marker without exit code", "stuck": "Job stuck", "slow": "Job slow", "harness_dead": "Harness heartbeat lost",
               "disk_low": "Disk space low", "dup_process": "Duplicate process", "nan_loss": "Non-finite loss", "unsafe_config": "Unsafe instance configuration", "instance_missing": "Instance missing",
-              "complete_running": "Job complete, instance still running", "preflight_fail": "Preflight failed", "smoke_invalid": "Smoke test incomplete", "budget_80": "Budget 80 % used",
+              "complete_running": "Job complete, instance still running", "preflight_fail": "Preflight failed", "smoke_invalid": "Smoke test incomplete", "budget_80": "Budget 80% used",
               "budget_exhausted": "Budget exhausted", "throughput_drop": "Throughput dropped", "grad_spike": "Gradient spike", "plateau": "Loss plateau", "disk_trend": "Disk filling up", "vram_creep": "GPU memory rising"}
+# Diagnosis categories are model output in the Diagnostician's vocabulary; the operator reads plain words.
+CATEGORY_LABEL = {"oom_gpu": "GPU out of memory", "oom_host": "Host out of memory", "nan_divergence": "Loss diverged to NaN",
+                  "nan_input": "Non-finite value in the input", "plateau": "Loss plateau", "dependency_missing": "Missing dependency",
+                  "env_broken": "Broken environment", "kernel_fallback": "Silent kernel fallback", "disk_full": "Disk full",
+                  "data_error": "Bad data", "network_transient": "Transient network failure", "preempt": "Preemption",
+                  "config_error": "Configuration error", "code_bug": "Bug in the job's code", "unknown": "Not determined"}
 STEP_LABEL = {"DETECTED": "Detected", "TRIAGED": "Triaged", "DIAGNOSING": "Diagnosing", "DIAGNOSED": "Diagnosed", "DECIDED": "Decided", "AWAITING_APPROVAL": "Approval required",
               "EXECUTING": "Executing", "VERIFYING": "Verifying", "RESOLVED": "Resolved", "ESCALATED": "Escalated", "HELD": "Held", "FAILED_ACTION": "Action failed", "CLOSED": "Closed", "FALSE_POSITIVE": "False positive"}
 
@@ -177,11 +183,11 @@ def decision_view(dec, inc, inst=None) -> dict:
     target = dec.params.get("instance_ref") or (inc.instance_ref if inc else "") or dec.job_id
     hourly = inst.hourly_price_usd if inst else (inc.cost_burning_usd_per_hour if inc else 0.0)
     if _s(dec.action) == "stop_instance":
-        cost_impact = f"Saves {usd(hourly, 3)}/h · action {usd(dec.cost_usd, 2)}"
+        cost_impact = f"Saves {usd(hourly, 3)}/h · costs {usd(dec.cost_usd, 2)} to run"
     elif _s(dec.action) == "start_instance":
-        cost_impact = f"Adds {usd(hourly, 3)}/h · action {usd(dec.cost_usd, 2)}"
+        cost_impact = f"Adds {usd(hourly, 3)}/h · costs {usd(dec.cost_usd, 2)} to run"
     else:
-        cost_impact = f"Action {usd(dec.cost_usd, 2)}"
+        cost_impact = f"Costs {usd(dec.cost_usd, 2)} to run"
     exp = dec.expires_at
     return {"decision_id": dec.decision_id, "incident_id": dec.incident_id, "action": _s(dec.action), "action_label": label(ACTION_LABEL, dec.action),
             "verb": ACTION_VERB.get(_s(dec.action), "run"), "job_id": dec.job_id, "target": target, "target_short": target.split("/")[-1],
@@ -194,11 +200,72 @@ def decision_view(dec, inc, inst=None) -> dict:
             "result": dec.result or {}, "plan_rows": [(k.upper(), _s(v) if not isinstance(v, (dict, list)) else json.dumps(v)) for k, v in (plan or {}).items()] if isinstance(plan, dict) else []}
 
 
-def incident_row(inc) -> dict:
+def proposed_actions(incs, decs) -> dict[str, str]:
+    """What Warden proposes per incident: the decision it is waiting on, else the diagnosis it reached."""
+    out: dict[str, str] = {}
+    for d in decs:
+        if d.incident_id and _s(d.status) == "PENDING" and _s(d.action) != "notify":
+            out.setdefault(d.incident_id, label(ACTION_LABEL, d.action))
+    for i in incs:
+        a = (i.diagnosis or {}).get("recommended_action")
+        if a and a != "notify":
+            out.setdefault(i.incident_id, label(ACTION_LABEL, a))
+    return out
+
+
+def incident_row(inc, proposed: str = "") -> dict:
     st = label(STATE_LABEL, inc.state)
     return {"id": inc.incident_id, "ref": "INC-" + inc.incident_id[-4:].upper(), "severity": inc.severity, "severity_label": inc.severity.capitalize(),
             "title": label(RULE_LABEL, inc.rule), "sub": inc.summary[:120], "job": inc.job_id or "—", "instance": inc.instance_ref, "state": st, "state_cls": STATE_CLS.get(st, "grey"),
-            "opened_iso": iso(inc.created_at), "updated_iso": iso(inc.updated_at), "burn": usd(inc.cost_burning_usd_per_hour, 3), "llm": usd(inc.llm_cost_usd, 3), "rule": inc.rule}
+            "opened_iso": iso(inc.created_at), "updated_iso": iso(inc.updated_at), "burn": usd(inc.cost_burning_usd_per_hour, 3), "llm": usd(inc.llm_cost_usd, 3), "rule": inc.rule,
+            "proposed": proposed}
+
+
+SEV_RANK = {"critical": 0, "warning": 1, "info": 2}
+
+
+def filter_incidents(incs, sev: str = "", state: str = "", job: str = "", q: str = "") -> list:
+    """Server-side filtering: 29 rows today, and a real fleet makes an unfiltered list unusable."""
+    out = list(incs)
+    if sev:
+        out = [i for i in out if _s(i.severity) == sev]
+    if state:
+        out = [i for i in out if label(STATE_LABEL, i.state) == state]
+    if job:
+        out = [i for i in out if i.job_id == job]
+    if q:
+        ql = q.lower()
+        out = [i for i in out if ql in (i.summary or "").lower() or ql in (i.job_id or "").lower()
+               or ql in i.rule.lower() or ql in (i.instance_ref or "").lower()]
+    return out
+
+
+def group_incidents(rows: list[dict], threshold: int = 3) -> list[dict]:
+    """Fold repeats of the same rule into one row, the way an alert console groups a flapping signature.
+
+    Order is preserved: a group takes the position of its first member, so the list still reads newest first.
+    """
+    by_rule: dict[str, list[dict]] = {}
+    for r in rows:
+        by_rule.setdefault(r["rule"], []).append(r)
+    out: list[dict] = []
+    done: set[str] = set()
+    for r in rows:
+        rule = r["rule"]
+        members = by_rule[rule]
+        if len(members) < threshold:
+            out.append(r | {"group": None})
+            continue
+        if rule in done:
+            continue
+        done.add(rule)
+        sev = min((m["severity"] for m in members), key=lambda x: SEV_RANK.get(x, 3))
+        states = sorted({m["state"] for m in members})
+        out.append(members[0] | {"group": members, "n": len(members), "severity": sev, "severity_label": sev.capitalize(),
+                                 "jobs": ", ".join(m["job"] for m in members[:6]) + ("…" if len(members) > 6 else ""),
+                                 "state": states[0] if len(states) == 1 else f"{len(states)} states",
+                                 "state_cls": STATE_CLS.get(states[0], "grey") if len(states) == 1 else "grey"})
+    return out
 
 
 def activity_rows(incs, decs, limit: int = 12) -> list[dict]:
@@ -210,14 +277,19 @@ def activity_rows(incs, decs, limit: int = 12) -> list[dict]:
         for t in inc.timeline:
             actor = str(t.get("actor", "")); to = _s(t.get("to", "")); note = str(t.get("note", ""))
             if actor.startswith("human"):
-                out.append({"ts": t.get("ts"), "actor": "Operator", "cls": "operator", "text": f"{(note[:1].upper() + note[1:])[:110]} — {title.lower()} on {tgt}", "inc": inc.incident_id, "ok": True})
+                # The actor chip already says Operator, and an operator request's note already names the act:
+                # "Requested by dashboard — operator request on x" said the same thing three times.
+                line = (note[:1].upper() + note[1:])[:110] if note else title
+                if inc.rule != "operator_request":
+                    line = f"{line} — {title.lower()}"
+                out.append({"ts": t.get("ts"), "actor": "Operator", "cls": "operator", "text": f"{line} on {tgt}", "inc": inc.incident_id, "ok": True})
             elif to in ("RESOLVED", "ESCALATED", "FAILED_ACTION", "AWAITING_APPROVAL", "HELD"):
                 res = {"RESOLVED": "Resolved", "ESCALATED": "Escalated", "FAILED_ACTION": "Action failed", "AWAITING_APPROVAL": "Awaiting approval", "HELD": "Held"}[to]
                 out.append({"ts": t.get("ts"), "actor": "Warden", "cls": "warden", "text": f"{title} on {tgt} · {res}" + (f" · {note}" if note and to not in ("RESOLVED",) else ""), "inc": inc.incident_id, "ok": to in ("RESOLVED", "AWAITING_APPROVAL", "HELD")})
         if inc.diagnosis:
             d = inc.diagnosis; cc = inc.crosscheck or {}
             out.append({"ts": inc.updated_at.isoformat(), "actor": "Gemini", "cls": "gemini",
-                        "text": f"Diagnosed {title.lower()} on {tgt} as {d.get('category', '?')} · confidence {cc.get('adjusted_confidence', d.get('confidence', '?'))} · {usd(inc.llm_cost_usd, 3)}", "inc": inc.incident_id, "ok": bool(cc.get("passed", True))})
+                        "text": f"Diagnosed {title.lower()} on {tgt} as {label(CATEGORY_LABEL, d.get('category', '')).lower()} · confidence {cc.get('adjusted_confidence', d.get('confidence', '?'))} · {usd(inc.llm_cost_usd, 3)}", "inc": inc.incident_id, "ok": bool(cc.get("passed", True))})
         for did in inc.decision_ids:
             dd = dec_by_id.get(did)
             if dd and dd.result and _s(dd.status) in ("DONE", "FAILED"):
@@ -263,6 +335,7 @@ def overview_context() -> dict:
     resolved_today = sum(1 for i in ctx["incs"] if label(STATE_LABEL, i.state) in ("Resolved", "Closed") and i.updated_at >= day_start)
     ettrs = {j.job_id: ledger.ettr(j.job_id, 168) for j in jobs}
     eff = sum(e.get("effective_h") or 0 for e in ettrs.values()); paid = sum(e.get("paid_h") or 0 for e in ettrs.values())
+    props = proposed_actions(ctx["incs"], ctx["decs"])
     decisions = []
     for d in ctx["pending"]:
         inc = inc_by_id.get(d.incident_id); ref = d.params.get("instance_ref") or (inc.instance_ref if inc else "")
@@ -283,15 +356,35 @@ def overview_context() -> dict:
         e = ettrs.get(j.job_id) or {}
         job_rows.append({"job_id": j.job_id, "status": st, "status_cls": scls, "phase": j.phase, "pct": pct, "line": line, "hb_text": txt, "hb_cls": cls, "hb_iso": ts,
                          "mode": "Log parser" if j.legacy else "Instrumented", "ettr": e.get("ettr"), "eff_h": e.get("effective_h"), "paid_h": e.get("paid_h"),
-                         "instance": inst_by_job.get(j.job_id), "run_id": j.run_id, "spent": usd(j.spent_usd, 3)})
+                         "instance": inst_by_job.get(j.job_id), "run_id": j.run_id, "spent": usd(j.spent_usd, 3),
+                         "instance_status": (INSTANCE_STATUS.get(_s(inst_by_job[j.job_id].status), (_s(inst_by_job[j.job_id].status).capitalize(), ""))[0]
+                                             if inst_by_job.get(j.job_id) else "—")})
     ctx.update({"decisions": decisions, "stats": {"open": len(ctx["open_incs"]), "resolved_today": resolved_today, "running": len(running), "instances": len(insts),
                                                    "burn": usd(proj["burn_usd_per_hour"], 3), "mtd": usd(proj["month_to_date_usd"]), "cap": usd(proj["cap_usd"], 0),
                                                    "cap_pct": max(1, round(100 * proj["month_to_date_usd"] / max(proj["cap_usd"], 1))) if proj["month_to_date_usd"] > 0 else 0,
                                                    "ettr_pct": round(100 * eff / paid) if paid else None, "eff_h": round(eff, 2), "paid_h": round(paid, 2), "today": usd(proj["today_usd"])},
                 # Owner's call (30 Aug): incidents read newest first everywhere, so the order never changes between pages.
-                "open_rows": [incident_row(i) for i in ctx["open_incs"][:8]],
+                "open_rows": [incident_row(i, props.get(i.incident_id, "")) for i in ctx["open_incs"][:8]],
                 "jobs": job_rows, "jobs_shown": _needs_attention(job_rows), "activity": activity_rows(ctx["incs"], ctx["decs"], 6), "proj": proj})
     return ctx
+
+
+def proposed_offer(diag: dict | None, pending: list) -> dict:
+    """Translate a Diagnostician recommendation into something the executor will actually accept.
+
+    The recommendation vocabulary is larger than the Action enum — `resume_smaller_batch` is a *rung*, not an action, and
+    proposing it verbatim is rejected. The recovery ladder already owns that mapping; reuse it rather than keep a second
+    copy that can drift.
+    """
+    rec = str((diag or {}).get("recommended_action") or "")
+    if pending or rec in ("", "notify"):
+        return {"proposed_action": "", "proposed_params": ""}
+    from warden.executor.recovery import REC2RUNG
+    action, params = REC2RUNG.get(rec, (rec, {}))
+    from warden.core.models import Action
+    if action not in {a.value for a in Action}:
+        return {"proposed_action": "", "proposed_params": ""}
+    return {"proposed_action": action, "proposed_params": json.dumps(params)}
 
 
 def incident_context(incident_id: str) -> dict | None:
@@ -353,9 +446,11 @@ def incident_context(incident_id: str) -> dict | None:
                 "ladder": [{"action": label(ACTION_LABEL, r.get("action", "")), "why": r.get("why", ""), "params": ", ".join(f"{k} {val}" for k, val in (r.get("params") or {}).items())} for r in (inc.ladder or [])],
                 "memory_ref": inc.memory_ref, "can_false_positive": _s(inc.state) in ("AWAITING_APPROVAL", "ESCALATED"),
                 "hypotheses_done": [{"action": x["action_label"], "status": x["status"], "why": next((e[len("hypothesis "):] for e in x["explain"] if e.startswith("hypothesis ")), "")} for x in past if x["status_raw"] in ("DONE", "FAILED")]}
-    ctx.update({"inc": row, "summary": d.get("human_summary") or inc.summary, "diag": d, "cc": cc, "llm": usd(inc.llm_cost_usd, 3), "pending": pending, "past": past, "evidence": evidence, "recovery": recovery,
+    ctx.update({"inc": row, "summary": d.get("human_summary") or inc.summary, "diag": (d | {"category_label": label(CATEGORY_LABEL, d.get("category", ""))}) if d else d, "cc": cc, "llm": usd(inc.llm_cost_usd, 3), "pending": pending, "past": past, "evidence": evidence, "recovery": recovery,
                 "chart": chart, "contract": contract, "rail": rail, "timeline": tl, "daily": usd(inc.cost_burning_usd_per_hour * 24),
-                "detected_by": f"Rule {inc.rule}" + (f" · {inc.summary}" if inc.summary else ""), "proposed": (label(ACTION_LABEL, d.get("recommended_action")) if d else (pending[0]["action_label"] if pending else "—"))})
+                "detected_by": f"Rule: {label(RULE_LABEL, inc.rule).lower()}" + (f" · {inc.summary}" if inc.summary else ""), "proposed": (label(ACTION_LABEL, d.get("recommended_action")) if d else (pending[0]["action_label"] if pending else "—")),
+                # the raw action so the page can offer it through the same policy path, instead of naming a step it refuses to take
+                **proposed_offer(d, pending), "job_id": inc.job_id})
     return ctx
 
 

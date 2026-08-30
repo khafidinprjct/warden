@@ -59,9 +59,17 @@ def incident(request: Request, incident_id: str, tab: str = "overview"):
 
 
 @app.get("/incidents", response_class=HTMLResponse)
-def incidents(request: Request):
+def incidents(request: Request, sev: str = "", state: str = "", job: str = "", q: str = "", group: str = "1"):
     ctx = data.base_context()
-    return render(request, "incidents.html", "incidents", "Incidents", ctx, rows=[data.incident_row(i) for i in ctx["incs"][:200]])
+    props = data.proposed_actions(ctx["incs"], ctx["decs"])
+    matched = data.filter_incidents(ctx["incs"], sev, state, job, q)
+    rows = [data.incident_row(i, props.get(i.incident_id, "")) for i in matched[:200]]
+    grouped = data.group_incidents(rows) if group == "1" else [r | {"group": None} for r in rows]
+    return render(request, "incidents.html", "incidents", "Incidents", ctx, rows=grouped, matched=len(matched),
+                  jobs=sorted({i.job_id for i in ctx["incs"] if i.job_id}),
+                  states=sorted({data.label(data.STATE_LABEL, i.state) for i in ctx["incs"]}),
+                  f={"sev": sev, "state": state, "job": job, "q": q, "group": group},
+                  filtered=bool(sev or state or job or q))
 
 
 @app.get("/approvals", response_class=HTMLResponse)
@@ -114,7 +122,7 @@ def job_detail(request: Request, job_id: str):
 
 
 @app.get("/fleet", response_class=HTMLResponse)
-def fleet(request: Request):
+def fleet(request: Request, status: str = "", q: str = ""):
     ctx = data.base_context()
     rows = []
     for i in sorted(data.db.fleet.list(limit=200), key=lambda x: x.ref):
@@ -124,8 +132,17 @@ def fleet(request: Request):
                      "status_cls": data.INSTANCE_STATUS.get(data._s(i.status), (None, "grey"))[1],
                      "seen_iso": data.iso(i.last_seen), "price": data.usd(i.hourly_price_usd, 3),
                      "unsafe": i.termination_action == "DELETE" or bool(i.boot_disk_auto_delete)})
-    return render(request, "fleet.html", "fleet", "Fleet", ctx, rows=rows,
-                  running=sum(1 for r in rows if r["status"] == "RUNNING"))
+    total = len(rows)
+    running = sum(1 for r in rows if r["status"] == "RUNNING")
+    if status:
+        rows = [r for r in rows if r["status_text"] == status]
+    if q:
+        ql = q.lower()
+        rows = [r for r in rows if ql in r["i"].name.lower() or ql in (r["i"].job_id or "").lower() or ql in r["i"].zone.lower()]
+    return render(request, "fleet.html", "fleet", "Fleet", ctx, rows=rows, running=running, total=total,
+                  statuses=sorted({data.INSTANCE_STATUS.get(data._s(i.status), (data._s(i.status).capitalize(), ""))[0]
+                                   for i in data.db.fleet.list(limit=200)}),
+                  f={"status": status, "q": q}, filtered=bool(status or q))
 
 
 @app.get("/budget", response_class=HTMLResponse)
@@ -158,9 +175,12 @@ def audit(request: Request):
     for r in rows:
         r["actor_label"] = "Operator" if str(r.get("actor", "")).startswith("human") else str(r.get("actor", "")).capitalize()
         r["action_label"] = data.label(data.ACTION_LABEL, r.get("action", "")); ok = r.get("ok")
-        r["result"] = "—" if ok is None else (str((r.get("after") or {}).get("observed") or "Done")[:60] if ok else "Failed · " + str(r.get("error", ""))[:60])
+        # the observed value is a provider state; the audit reads it back in the product's own words
+        obs = str((r.get("after") or {}).get("observed") or "")
+        obs = data.INSTANCE_STATUS.get(obs, (obs, ""))[0] if obs else ""
+        r["result"] = "—" if ok is None else ((obs or "Done")[:60] if ok else "Failed · " + str(r.get("error", ""))[:60])
         r["result_cls"] = "" if ok is None else ("ok" if ok else "crit")
-    return render(request, "audit.html", "audit", "Audit Log", data.base_context(), rows=rows)
+    return render(request, "audit.html", "audit", "Audit log", data.base_context(), rows=rows)
 
 
 @app.get("/ask", response_class=HTMLResponse)
@@ -196,7 +216,7 @@ async def ask_post(request: Request, question: str = Form(""), job_id: str = For
 @app.get("/system", response_class=HTMLResponse)
 def health_page(request: Request):
     ctx = data.base_context()
-    return render(request, "health.html", "health", "System Health", ctx)
+    return render(request, "health.html", "health", "System health", ctx)
 
 
 def run():
