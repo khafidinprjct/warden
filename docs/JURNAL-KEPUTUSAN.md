@@ -343,3 +343,12 @@ Percobaan #2 dengan drill yang diperbaiki (`chaos/live_phase_resume.py`, laporan
 - **Yang selesai hari ini:** katalog #44 (`Procfile` ter-commit milik dashboard → deploy core menyajikan dashboard; core mati ±11 menit) diperbaiki dan dipatok tes; `approvals.propose` yang membuat keputusan NEED_APPROVAL tanpa memberi tahu siapa pun kini mengumumkan (3 tes baru).
 - **Yang belum selesai:** video demo (syarat wajib Devpost), unggah video + submit Devpost (milik pemilik), J4 ekspor billing.
 - **Tidak ada pekerjaan lanjutan yang dijalankan tanpa perintah baru dari pemilik.**
+
+### 30 Agu 2026 ~13:20 WIB — armada GCE dinolkan atas perintah pemilik
+**Perintah pemilik:** "matikan semuanya biar nol biaya" → lalu "cek 3 disk tersebut apakah aman dihapus" → "hapus 3 disk itu dan snapshotnya".
+- **Scheduler:** 6 job (`tick`, `deadman`, `steward`, `digest`, `gold-eval`, `soak`) di-PAUSE, diverifikasi satu per satu → semua `PAUSED`. Tidak ada lagi pemanggilan Cloud Run, tidak ada panggilan Gemini.
+- **Pemeriksaan sebelum menghapus (bukan asumsi):** ketiga disk `users` kosong dan instance-nya sudah terhapus; tiap job punya **43 objek di Cloud Storage** termasuk 3 objek log — checkpoint `.npz`, `.meta.json`, `.sha256`; bukti insiden (traceback, diagnosis, cross-check) ada di Firestore, bukan di disk; `demo-0414` dan `demo-0458` COMPLETE dengan 22 artefak terverifikasi. Kesimpulan: tidak ada bukti yang hanya hidup di disk.
+- **Dihapus:** 3 instance, 3 disk (90 GB pd-balanced), 1 snapshot 20 GB. Diverifikasi: daftar instance, disk, dan snapshot **kosong**.
+- **Ledger direkonsiliasi manual** karena tick sedang PAUSED: 3 baris fleet → `DELETED`, 0 RUNNING. Baris tidak dihapus — itu bukti.
+- **Sisa tagihan:** image build `cloud-run-source-deploy` ≈ 6,6 GB (~$0,67/bln), 6 job Scheduler paused (~$0,30/bln), bucket 28 MB (~$0,001/bln), Firestore kecil, Cloud Run idle $0. Turun dari ≈$10,5/bln ke ≈**$1/bln**.
+- **Cloud Run sengaja dibiarkan hidup** — idle-nya $0 dan URL dashboard adalah syarat submisi Devpost.
