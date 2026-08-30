@@ -54,6 +54,14 @@ Billing Budgets, and Discord for approvals from a phone. Python 3.12, FastAPI, J
   fabricated citations, $0.07 a night, scheduled and unattended.
 - **A 7-day soak: 30 incidents, 0 false actions.**
 
+**A decision worth naming.** Discord is the phone channel — cards, approvals, and `/warden ask` with a photo
+attachment. It is built on slash commands and the HTTP interactions endpoint, not on a gateway socket, because a
+persistent WebSocket would mean a service that never scales to zero. Warden's core costs almost nothing when the fleet
+is quiet, and that property was worth more than the ability to type a bare sentence at the bot. The cost of the choice
+is one keystroke: `/warden ask` instead of just typing. Discord requires an answer within three seconds and the
+Concierge needs ten to thirty, so the interaction is acknowledged immediately and the tick posts the answer within the
+minute — no background thread on Cloud Run, where the CPU is taken away as soon as the response is written.
+
 **Challenges.** Google's frontend answers `/healthz` with its own 404, so a deploy gate that trusted it passed silently.
 A nightly job reported `ENABLED` with a fresh `lastAttemptTime` for five days while every run returned 401. The gold
 evaluation set was in the repository but not in the container image — and then not in the repository either, because a
