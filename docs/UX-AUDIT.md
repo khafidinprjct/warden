@@ -34,9 +34,11 @@ in the reasoning panels are seeded by the tour, not model output.
    minutes 30", "per hour 3, per day 8, max cost usd 2.0". Labels now say what the limit means and the unit travels with
    the value: "Automatic spend, per day $10.00", "Approval expires after 30 min", "3/hour · 8/day · max $2.00".
 
-4. **The overview was ranked by the wrong thing.** It listed all 23 jobs alphabetically, burying the incidents, and
-   sorted open incidents by arrival time — which put an operator request above a preempt storm. Jobs are now the ones a
-   human would look at first (no heartbeat, then stale) with a link to the rest; incidents sort by severity, then recency.
+4. **The overview listed all 23 jobs alphabetically**, burying the incidents. It now shows the ones a human would look
+   at first (no heartbeat, then stale) with a link to the rest.
+   *Incident order was briefly changed to severity-first and then reverted on the owner's instruction (30 Aug): incidents
+   read newest first on every page, so the order never changes between the overview and the list. Severity stays visible
+   as a dot and a word on each row.*
 
 5. **Phone legibility.** Property labels sat in a 110 px column that wrapped log excerpts mid-token
    (`torch.cuda.OutOfMe` / `moryError`); they now sit above their values. Chart axis labels were drawn at 10 units inside
