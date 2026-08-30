@@ -89,3 +89,49 @@ def test_a_failed_answer_still_replies(monkeypatch):
     out = dc.answer_pending_asks()
     assert out["failed"] == 1
     assert "Could not answer" in posted["json"]["content"], "silence on a phone is worse than an error"
+
+
+def test_a_button_press_is_acknowledged_before_the_work_starts():
+    """Approving calls Compute Engine, which outlives Discord's three-second window.
+
+    The button showed "WARDEN didn't respond in time" while the disk had already grown to 30 GB — the action was fine,
+    the acknowledgement was late. Type 6 keeps the card and marks it working; the tick does the work.
+    """
+    for d in db.client().collection("discord_actions").limit(50).stream():
+        d.reference.delete()
+    out = dc.handle_interaction({
+        "id": "B1", "token": "btok", "application_id": "app", "type": 3,
+        "member": {"user": {"id": "u1", "username": "owner"}},
+        "data": {"custom_id": "warden:approve:dec_X"}})
+    assert out == {"type": 6}, "Discord must be answered before Compute Engine is called"
+    rec = db.client().collection("discord_actions").document("B1").get().to_dict()
+    assert rec["verb"] == "approve" and rec["decision_id"] == "dec_X" and rec["state"] == "pending"
+
+
+def test_the_tick_runs_the_press_and_edits_the_card(monkeypatch):
+    for d in db.client().collection("discord_actions").limit(50).stream():
+        d.reference.delete()
+    dc.handle_interaction({"id": "B2", "token": "btok", "application_id": "app", "type": 3,
+                           "member": {"user": {"id": "u1", "username": "owner"}},
+                           "data": {"custom_id": "warden:approve:dec_Y"}})
+    posted = {}
+
+    class R:
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(dc.httpx, "patch", lambda url, **kw: (posted.update({"url": url, "json": kw.get("json")}), R())[1])
+    monkeypatch.setattr(dc.approvals, "approve", lambda did, who: {"ok": True, "observed": "30 GB"})
+
+    out = dc.run_pending_actions()
+    assert out["done"] == 1
+    assert "30 GB" in posted["json"]["content"] and "owner" in posted["json"]["content"]
+    assert posted["json"]["components"] == [], "a decided card must not keep its buttons"
+
+
+def test_an_unknown_button_is_refused_without_parking_work():
+    out = dc.handle_interaction({"id": "B3", "token": "t", "application_id": "app", "type": 3,
+                                 "member": {"user": {"id": "u1", "username": "owner"}},
+                                 "data": {"custom_id": "warden:destroy:dec_Z"}})
+    assert out["type"] == 4 and "unknown" in out["data"]["content"]
+    assert not db.client().collection("discord_actions").document("B3").get().exists

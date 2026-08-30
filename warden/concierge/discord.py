@@ -120,28 +120,17 @@ def handle_interaction(body: dict[str, Any]) -> dict[str, Any]:
             _, verb, decision_id = cid.split(":", 2)
         except ValueError:
             return {"type": 4, "data": {"content": "unknown custom_id", "flags": 64}}
-        if verb == "approve":
-            r = approvals.approve(decision_id, f"discord:{uname}")
-        elif verb == "deny":
-            r = approvals.deny(decision_id, f"discord:{uname}")
-        elif verb == "always":
-            r = approvals.approve(decision_id, f"discord:{uname}")
-            dec = db.decisions.get(decision_id)
-            if dec and dec.job_id:
-                job = db.jobs.get(dec.job_id)
-                if job:
-                    job.autonomy_overrides[dec.action.value] = "L2"; db.jobs.put(job)   # 24 jam: dicatat, dilepas oleh digest (Fase 12: TTL)
-                    db.client().collection("policy_overrides").document(f"{dec.job_id}:{dec.action.value}").set({"level": "L2", "until": (now().timestamp() + 86400), "by": uname})
-        elif verb == "reevaluate":
-            r = approvals.reevaluate(decision_id, f"discord:{uname}")
-        else:
-            r = {"ok": False, "error": "verb"}
-        if verb == "reevaluate":
-            status = (f"🔁 re-evaluated → {r.get('verdict', '?')}" if r.get("ok") else f"❌ {r.get('error')}")
-        else:
-            status = "✅ approved & executed" if r.get("ok") and verb != "deny" else ("🚫 denied" if verb == "deny" else f"❌ {r.get('error')}")
-        # tipe 7 = UPDATE_MESSAGE: kartu asli diperbarui, tombol dinonaktifkan (klik ganda idempoten)
-        return {"type": 7, "data": {"content": f"{status} by {uname} · {r.get('observed', '')}"[:1900], "components": []}}
+        if verb not in ("approve", "deny", "always", "reevaluate"):
+            return {"type": 4, "data": {"content": "unknown action", "flags": 64}}
+        # Approving really calls Compute Engine, which takes longer than the three seconds Discord allows — the button
+        # showed "WARDEN didn't respond in time" even though the disk had already grown. Acknowledge now (type 6 keeps
+        # the card and shows it working), do the work on the tick, then edit the card with the result.
+        db.client().collection("discord_actions").document(str(body.get("id"))).set({
+            "decision_id": decision_id, "verb": verb, "who": uname, "state": "pending",
+            "token": body.get("token"), "application_id": str(body.get("application_id", "")),
+            "created_at": now().isoformat()})
+        return {"type": 6}
+
     if t == 2:
         data = body.get("data", {})
         name = data.get("name")
@@ -171,6 +160,42 @@ def _defer_ask(body: dict[str, Any], opts: dict[str, Any], who: str) -> dict[str
         "image_url": att_url, "token": body.get("token"), "who": who,
         "application_id": str(body.get("application_id", "")), "created_at": now().isoformat(), "state": "pending"})
     return {"type": 5}
+
+
+def run_pending_actions(limit: int = 5) -> dict[str, Any]:
+    """Run from the tick: execute the button presses acknowledged in the last three seconds, then edit the card."""
+    out = {"done": 0, "failed": 0}
+    for d in db.client().collection("discord_actions").where(filter=FieldFilter("state", "==", "pending")).limit(limit).get():
+        rec = d.to_dict() or {}
+        d.reference.set({"state": "working"}, merge=True)
+        who, verb, did = f"discord:{rec.get('who')}", rec.get("verb"), rec.get("decision_id")
+        try:
+            if verb == "approve":
+                r = approvals.approve(did, who)
+            elif verb == "deny":
+                r = approvals.deny(did, who)
+            elif verb == "always":
+                r = approvals.always(did, who)
+            else:
+                r = approvals.reevaluate(did, who)
+            if verb == "reevaluate":
+                line = f"🔁 re-evaluated → {r.get('verdict', '?')}" if r.get("ok") else f"❌ {r.get('error')}"
+            elif verb == "deny":
+                line = f"🚫 denied by {rec.get('who')}" if r.get("ok") else f"❌ {r.get('error')}"
+            else:
+                line = (f"✅ approved by {rec.get('who')} · {r.get('observed', '')}" if r.get("ok")
+                        else f"❌ {r.get('error')}")
+            out["done" if r.get("ok") else "failed"] += 1
+        except Exception as e:  # noqa: BLE001
+            line = f"❌ {type(e).__name__}: {e}"[:300]
+            out["failed"] += 1
+        try:
+            httpx.patch(f"https://discord.com/api/v10/webhooks/{rec['application_id']}/{rec['token']}/messages/@original",
+                        json={"content": line[:1900], "components": []}, timeout=30).raise_for_status()
+            d.reference.delete()
+        except Exception as e:  # noqa: BLE001
+            d.reference.set({"state": "failed", "error": str(e)[:120]}, merge=True)
+    return out
 
 
 def answer_pending_asks(limit: int = 3) -> dict[str, Any]:

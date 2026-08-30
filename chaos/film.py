@@ -249,17 +249,106 @@ def scene_tour(s: Stage) -> None:
     s.say("")
 
 
-SCENES = {"tour": scene_tour}
+def _wait(s: "Stage", desc: str, fn, timeout: int = 900, every: float = 3.0):
+    """Wait for the world to change, keeping the caption up so the viewer knows what is being waited for."""
+    t = time.time()
+    while time.time() - t < timeout:
+        v = fn()
+        if v:
+            return v
+        time.sleep(every)
+    return None
+
+
+def scene_demo(s: Stage) -> None:
+    """The take. Everything on screen is live: a real machine, real incidents, a real approval from a phone."""
+    import os as _os
+    _os.environ.setdefault("WARDEN_PROJECT", (ROOT / ".gcp_project").read_text().strip())
+    _os.environ.setdefault("WARDEN_PROVIDER", "gce")
+    from warden.store import firestore as db
+
+    JOB = (ROOT / "docs/video/.job").read_text().strip()
+
+    s.say("Warden — an SRE agent for long-running compute jobs", 5.0)
+    s.say("A live machine is not correct training. Finished is not intact.", 5.5)
+    s.say("Right now: one job training on a Spot machine in Compute Engine", 2.0)
+    s.read(6.0, scrolls=1)
+
+    s.say("Warden is watching it — heartbeats, phase markers, signed completion markers", 1.0)
+    s.goto("/jobs", 1.5)
+    s.read(6.0, scrolls=1)
+
+    s.say("The job is about to hit a GPU out-of-memory error at step 600", 1.0)
+    inc = _wait(s, "incident", lambda: next((i for i in db.incidents.list(limit=100)
+                                             if i.job_id == JOB and i.rule == "run_fin_nonzero"), None), 900)
+    if inc:
+        s.say("It died. Warden opened an incident in seconds — nobody was watching", 3.5)
+        s.goto("/incidents", 1.5)
+        s.read(5.0)
+        s.goto(f"/incidents/{inc.incident_id}", 2.0)
+        s.say("Evidence first: the log line, quoted from the run's own log", 1.0)
+        s.read(7.0, scrolls=2)
+        s.say("Then the diagnosis — and every quote is checked against the raw log before anything happens", 8.0)
+        s.read(4.0, scrolls=2)
+
+        dec = _wait(s, "decision", lambda: next((d for d in [db.decisions.get(x) for x in
+                                                 (db.incidents.get(inc.incident_id).decision_ids or [])]
+                                                 if d and str(d.action) == "resume_job"), None), 600)
+        if dec:
+            s.say("Warden decided by itself: resume at half the batch size. No human was asked.", 8.0)
+            s.goto(f"/incidents/{inc.incident_id}", 2.0)
+            s.read(6.0, scrolls=2)
+            s.say("And then it checks the world: did the new run actually pass the step it died at?", 8.0)
+            _wait(s, "verify", lambda: (db.last_heartbeat(JOB) or None) and (db.last_heartbeat(JOB).step or 0) > 650, 600)
+            s.goto(f"/incidents/{inc.incident_id}", 2.0)
+            s.read(7.0, scrolls=2)
+
+    s.say("Some actions Warden may not take alone. Those go to a phone.", 6.0)
+    s.goto("/approvals", 2.0)
+    s.say("A card is waiting in Discord right now — the operator approves it from there", 2.0)
+    before = {d.decision_id for d in db.decisions.list(status="PENDING", limit=100)}
+    approved = _wait(s, "approval",
+                     lambda: next((d for d in db.decisions.list(limit=100)
+                                   if d.decision_id in before and str(d.status) in ("DONE", "EXECUTING", "REJECTED")), None), 420)
+    s.goto("/approvals", 2.0)
+    if approved:
+        s.say("Approved from the phone — and executed under the same policy as everything else", 7.0)
+    else:
+        s.say("Every approval carries its blast radius, its cost, and an expiry", 7.0)
+    s.goto("/audit", 2.0)
+    s.say("Every intent and every result is written down, whoever asked for it", 8.0)
+    s.read(4.0, scrolls=2)
+
+    s.say("Warden never deletes anything — that is denied by IAM, not by good intentions", 2.0)
+    s.goto("/policies", 2.0)
+    s.read(8.0, scrolls=3)
+
+    s.say("And one button stops all of it", 1.5)
+    s.goto("/", 2.0)
+    if s.page.locator("button.btn-freeze").count():
+        s.click("button.btn-freeze", settle=3.0)
+        s.say("Frozen. Warden observes and proposes, but acts on nothing.", 6.0)
+        if s.page.locator("button.btn-thaw").count():
+            s.click("button.btn-thaw", settle=2.5)
+    s.say("A live machine is not correct training. Finished is not intact. Warden watches the work.", 7.0)
+    s.say("")
+
+
+SCENES = {"tour": scene_tour, "demo": scene_demo}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenes", default="tour", choices=sorted(SCENES))
+    ap.add_argument("--job", default="", help="job id for the demo terminal pane")
     ap.add_argument("--terminal", default="", help="command to run in the right-hand terminal pane")
     ns = ap.parse_args()
-    term = ns.terminal or "watch -n 2 -t 'gcloud run services list --region us-central1 " \
-                          "--format=\"table(metadata.name,status.latestReadyRevisionName,status.url)\" 2>/dev/null; " \
-                          "echo; gcloud compute instances list 2>/dev/null || echo \"no machines\"'"
+    if ns.job:
+        (ROOT / "docs/video/.job").write_text(ns.job)
+        term = ns.terminal or f"cd {ROOT} && .venv/bin/python -m chaos.film_watch {ns.job}"
+    else:
+        term = ns.terminal or "watch -n 3 -t 'gcloud run services list --region us-central1 " \
+                              "--format=\"table(metadata.name,status.latestReadyRevisionName,status.url)\" 2>/dev/null'"
     with Stage(ns.scenes, terminal_cmd=term) as s:
         SCENES[ns.scenes](s)
     return 0

@@ -81,6 +81,7 @@ def tick(authorization: str | None = Header(default=None)):
     try:
         from warden.concierge import discord as _dc
         stats["asks"] = _dc.answer_pending_asks()
+        stats["buttons"] = _dc.run_pending_actions()
     except Exception as e:  # noqa: BLE001
         stats["errors"].append(f"discord asks: {e}")
     return stats
