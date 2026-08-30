@@ -117,7 +117,9 @@ async def ask(req: Request, x_warden_signature: str | None = Header(default=None
         except Exception:  # noqa: BLE001
             raise HTTPException(400, "image_b64 invalid")
     try:
-        return await ask_async(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")), image=img, image_mime=mime)
+        out = await ask_async(q, job_id=str(body.get("job_id", "")), incident_id=str(body.get("incident_id", "")), image=img, image_mime=mime)
+        db.health("gemini", True)          # success has to leave a trace too, or one failure leaves the row red forever
+        return out
     except Exception as e:  # noqa: BLE001
         db.health("gemini", False, str(e)[:200])
         return {"ok": False, "error": str(e)[:200]}
