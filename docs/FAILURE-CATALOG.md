@@ -117,3 +117,11 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Why it hid:** the failure is invisible unless somebody asks a question. Nothing in the drills, the gold evaluation or the chaos suite calls `/ask`, and the health row was the only witness — a red row nobody read, which is the same shape as catalogue #33 and #35.
 - **Fix:** the endpoint awaits `ask_async` directly. `tests/test_ask_endpoint.py` asserts it, and — the general rule — that **no** async endpoint calls one of the sync agent wrappers; verified to fail when the fix is reverted.
 - **Cost:** $0. Ask Warden, one of the three checklist items under K3, has never answered a question in production.
+
+## #42 · A read-only tool raised instead of answering, and the request hung (30 Aug 2026)
+- **Symptom:** with #41 fixed, `/ask` still failed — `400 Document parent name ".../documents/runs/" has invalid trailing "/"` — and the HTTP request then hung until the 180 s client timeout.
+- **Cause:** the question was fleet-wide ("which jobs needed a human?") and named no job, so the model called `get_heartbeats(job_id="")`. That reached Firestore as the document path `runs/`, which is invalid. The tool raised, the raise propagated out of the agent turn, and the run never completed. Worse, the agent had **no way** to answer such a question at all: every tool required a `job_id`, and nothing listed the jobs.
+- **Fix:** every job-scoped tool now returns `{"error": ..., "jobs": [...]}` for a missing or unknown job instead of raising — an error a model can act on, with the job ids it needs — and two discovery tools were added, `list_jobs` and `list_incidents(state=…)`, so a question that names no job has a first move.
+- **Test:** `tests/test_investigator_tools.py` calls every job-scoped tool with an empty, blank and unknown job id and requires a dict with an error and the job list.
+- **Cost:** $0 in money; one Gemini call wasted, and Ask Warden still could not answer a fleet-wide question.
+- **Operator rule:** a tool handed to an agent is an API for something that will pass it wrong arguments. It must fail like an API — a value the caller can read — not like a library.

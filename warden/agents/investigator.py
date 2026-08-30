@@ -18,6 +18,38 @@ PRICE = {"gemini-3.5-flash": (1.5, 9.0), "gemini-3.5-flash-lite": (0.3, 2.5), "g
 
 
 # ---------- read-only tools (plain functions → ADK FunctionTools) ----------
+def _known_jobs() -> list[str]:
+    return [j.job_id for j in db.jobs.list(limit=200)]
+
+
+def _bad_job(job_id: str) -> dict | None:
+    """A tool that raises kills the turn; a tool that returns an error lets the agent correct itself.
+
+    An empty job id used to reach Firestore as the path `runs/`, which answers 400 — the agent had asked a fleet-wide
+    question and had no job to name (catalogue #42).
+    """
+    if not (job_id or "").strip():
+        return {"error": "job_id is required. Call list_jobs first to get the job ids.", "jobs": _known_jobs()[:40]}
+    if job_id not in _known_jobs():
+        return {"error": f"no job named {job_id}", "jobs": _known_jobs()[:40]}
+    return None
+
+
+def list_jobs() -> dict:
+    """Every job Warden knows, with status and phase. Start here for a question that does not name a job."""
+    return {"jobs": [{"job_id": j.job_id, "status": str(j.status), "phase": j.phase, "run_id": j.run_id,
+                      "last_step": j.last_step, "spent_usd": round(j.spent_usd, 4)} for j in db.jobs.list(limit=200)]}
+
+
+def list_incidents(state: str = "", n: int = 40) -> dict:
+    """Recent incidents, newest first; pass state to filter (for example ESCALATED for the ones that needed a human)."""
+    incs = db.incidents.list(limit=300)
+    if state:
+        incs = [i for i in incs if str(i.state).upper() == state.upper()]
+    incs = sorted(incs, key=lambda i: i.created_at, reverse=True)[: min(int(n), 60)]
+    return {"incidents": [{"incident_id": i.incident_id, "job_id": i.job_id, "rule": i.rule, "severity": i.severity,
+                           "state": str(i.state), "summary": i.summary[:200], "opened": i.created_at.isoformat()} for i in incs]}
+
 def _log_lines(job_id: str, run_id: str = "") -> list[str]:
     from warden.agents.pipeline import read_log_tail
     return read_log_tail(job_id, n=100000, run_id=run_id)
@@ -25,6 +57,9 @@ def _log_lines(job_id: str, run_id: str = "") -> list[str]:
 
 def get_log_window(job_id: str, start_line: int, end_line: int, run_id: str = "") -> dict:
     """Return numbered log lines [start_line, end_line] (1-based, inclusive, at most 120 lines) of the job's log; pass run_id to read a specific run's log."""
+    bad = _bad_job(job_id)
+    if bad:
+        return bad
     lines = _log_lines(job_id, run_id)
     s = max(1, int(start_line)); e = min(len(lines), int(end_line), s + 119)
     return {"job_id": job_id, "total_lines": len(lines), "lines": [f"{i:5d}| {lines[i - 1][:300]}" for i in range(s, e + 1)]}
@@ -32,6 +67,9 @@ def get_log_window(job_id: str, start_line: int, end_line: int, run_id: str = ""
 
 def search_log(job_id: str, pattern: str, max_hits: int = 20, run_id: str = "") -> dict:
     """Regex search over the job's log (case-insensitive); pass run_id to search a specific run's log. Returns line numbers and text."""
+    bad = _bad_job(job_id)
+    if bad:
+        return bad
     lines = _log_lines(job_id, run_id)
     try:
         rx = re.compile(pattern, re.I)
@@ -43,6 +81,9 @@ def search_log(job_id: str, pattern: str, max_hits: int = 20, run_id: str = "") 
 
 def get_heartbeats(job_id: str, n: int = 30) -> dict:
     """Recent heartbeats (oldest first): ts, run_id, phase, step, loss, grad_norm, cpu_pct, gpu_util, disk_avail_gb, synthetic."""
+    bad = _bad_job(job_id)
+    if bad:
+        return bad
     hbs = db.recent_heartbeats(job_id, min(int(n), 80))
     return {"job_id": job_id, "heartbeats": [{"ts": h.ts.isoformat(), "run_id": h.run_id, "phase": h.phase, "step": h.step, "loss": h.loss, "grad_norm": h.grad_norm,
                                               "cpu_pct": h.cpu_pct, "gpu_util": h.gpu_util, "disk_avail_gb": h.disk_avail_gb, "synthetic": h.synthetic} for h in hbs]}
@@ -50,6 +91,9 @@ def get_heartbeats(job_id: str, n: int = 30) -> dict:
 
 def get_artifacts(job_id: str) -> dict:
     """Artifacts declared by the latest RUN_FIN (name, bytes, sha256), the last VERIFIED marker and the last known-good checkpoint."""
+    bad = _bad_job(job_id)
+    if bad:
+        return bad
     job = db.jobs.get(job_id)
     if not job:
         return {"error": "job not found"}
@@ -62,6 +106,9 @@ def get_artifacts(job_id: str) -> dict:
 
 def get_incident_history(job_id: str, n: int = 5) -> dict:
     """Past incidents of this job (rule, state, diagnosis category, action, outcome) and remembered postmortems of similar incidents."""
+    bad = _bad_job(job_id)
+    if bad:
+        return bad
     from warden.agents import memory
     incs = sorted(db.incidents.list(job_id=job_id, limit=50), key=lambda i: i.created_at)[-int(n):]
     out = []
@@ -82,7 +129,7 @@ def get_instance(instance_ref: str) -> dict:
             "last_stop_at": i.last_stop_at.isoformat() if i.last_stop_at else None, "boot_id": i.boot_id, "termination_action": i.termination_action}
 
 
-TOOLS = [get_log_window, search_log, get_heartbeats, get_artifacts, get_incident_history, get_instance]
+TOOLS = [list_jobs, list_incidents, get_log_window, search_log, get_heartbeats, get_artifacts, get_incident_history, get_instance]
 
 SYSTEM = (
     "You are the investigator of an SRE system for long-running compute jobs. You are given an incident summary and a job id. "
