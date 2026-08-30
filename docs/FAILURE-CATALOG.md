@@ -125,3 +125,10 @@ Found by fixing #35 — the 401 had been hiding everything behind it.
 - **Test:** `tests/test_investigator_tools.py` calls every job-scoped tool with an empty, blank and unknown job id and requires a dict with an error and the job list.
 - **Cost:** $0 in money; one Gemini call wasted, and Ask Warden still could not answer a fleet-wide question.
 - **Operator rule:** a tool handed to an agent is an API for something that will pass it wrong arguments. It must fail like an API — a value the caller can read — not like a library.
+
+## #43 · Health rows that only the failure path ever wrote (30 Aug 2026)
+- **Symptom:** after `/ask` was fixed and answered correctly, the `gemini` row stayed red. After the Gemini breaker closed, `llm_circuit` stayed red. Both described a state that had already ended.
+- **Cause:** each row was written only when something went wrong. `db.health(source, ok)` resets the failure streak on a `True`, but nothing ever passed `True` on those two paths, so the first bad minute pinned the row red for good.
+- **Why it matters more than it looks:** a row that no success can clear is a row people stop reading, which is exactly how catalogue #33 (25 consecutive silent GCS failures) and #35 (401 every night) stayed hidden. The rule "success must leave a trace" exists for the same reason.
+- **Fix:** `/ask` records `gemini` healthy on the way out, and `process_diagnosing` records `llm_circuit` healthy whenever it runs with the breaker closed. `tests/test_llm_circuit.py` opens the breaker with five failures and then closes it with one success.
+- **Proof:** all 11 health rows green after the next tick.
