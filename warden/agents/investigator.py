@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import functools
 import re
 from typing import Any
 
@@ -129,7 +130,24 @@ def get_instance(instance_ref: str) -> dict:
             "last_stop_at": i.last_stop_at.isoformat() if i.last_stop_at else None, "boot_id": i.boot_id, "termination_action": i.termination_action}
 
 
-TOOLS = [list_jobs, list_incidents, get_log_window, search_log, get_heartbeats, get_artifacts, get_incident_history, get_instance]
+def _never_raises(fn):
+    """Any tool exception becomes a value the model can read.
+
+    A raise ends the agent turn and the request hangs; the model cannot see what went wrong or try something else. This
+    caught a 403 from `compute.instances.get` on a machine the IAM condition forbids and that no longer exists —
+    a perfectly reasonable thing for the agent to have asked, and not a reason to kill the answer (catalogue #42).
+    """
+    @functools.wraps(fn)
+    def wrapper(*a, **kw):
+        try:
+            return fn(*a, **kw)
+        except Exception as e:  # noqa: BLE001
+            return {"error": f"{type(e).__name__}: {e}"[:300], "tool": fn.__name__}
+    return wrapper
+
+
+TOOLS = [_never_raises(f) for f in (list_jobs, list_incidents, get_log_window, search_log, get_heartbeats,
+                                    get_artifacts, get_incident_history, get_instance)]
 
 SYSTEM = (
     "You are the investigator of an SRE system for long-running compute jobs. You are given an incident summary and a job id. "

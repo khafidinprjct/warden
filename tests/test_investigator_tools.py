@@ -44,3 +44,23 @@ def test_discovery_tools_exist_for_a_question_that_names_no_job():
     names = [t.__name__ for t in I.TOOLS]
     assert "list_jobs" in names and "list_incidents" in names
     assert any(j["job_id"] == "known-job" for j in I.list_jobs()["jobs"])
+
+
+def test_no_tool_can_raise(monkeypatch):
+    """A tool that raises ends the agent turn; every one must return the failure as a value."""
+    import warden.agents.investigator as I
+
+    def boom(*a, **kw):
+        raise RuntimeError("403 Required 'compute.instances.get' permission")
+
+    for target, name in ((I.db.jobs, "list"), (I.db.incidents, "list"), (I.db, "recent_heartbeats"), (I, "_log_lines")):
+        monkeypatch.setattr(target, name, boom)
+    import warden.providers.registry as reg
+    monkeypatch.setattr(reg, "compute", boom)
+
+    args = {"get_log_window": ("known-job", 1, 5), "search_log": ("known-job", "x"),
+            "get_instance": ("us-central1-a/nope",), "list_jobs": (), "list_incidents": ()}
+    for tool in I.TOOLS:
+        out = tool(*args.get(tool.__name__, ("known-job",)))
+        assert isinstance(out, dict), f"{tool.__name__} returned {type(out)}"
+        assert out.get("error"), f"{tool.__name__} did not report the failure as a value"
