@@ -47,7 +47,13 @@ def freeze(who: str, on: bool) -> dict:
     return {"ok": True, "frozen": on}
 
 
-def expire_stale() -> int:
+def expire_stale(notify=None) -> int:
+    """A request that times out must say so.
+
+    Letting it lapse in silence is the worst of both worlds: Warden did not act, and the human never learned they were
+    needed — while whatever the action would have stopped keeps running and keeps costing. The operator is told what
+    expired, what it would have done, and what the wait is costing per day, with the option to re-evaluate it now.
+    """
     n = 0
     for dec in db.decisions.list(status="PENDING", limit=200):
         if dec.expires_at and dec.expires_at < now():
@@ -55,6 +61,12 @@ def expire_stale() -> int:
             inc = db.incidents.get(dec.incident_id)
             if inc and inc.state == S.AWAITING_APPROVAL:
                 transition(inc, S.ESCALATED, note="approval expired"); db.incidents.put(inc)
+            if notify:
+                daily = (inc.cost_burning_usd_per_hour * 24) if inc else 0.0
+                cost = f" It is costing ${daily:,.2f} a day while it waits." if daily > 0 else ""
+                notify(inc, dec, f"⏰ Nobody answered in time — **{dec.action.value.replace('_', ' ')}** on "
+                                 f"{dec.job_id or 'the fleet'} was not run.{cost} "
+                                 f"Re-evaluate it to decide again with the policy as it stands now.")
     return n
 
 

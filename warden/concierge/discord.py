@@ -68,6 +68,11 @@ def build_card(inc: Incident | None, dec: Decision | None, text: str) -> dict[st
             {"type": 2, "style": STYLE["approve"], "label": "Approve", "custom_id": f"warden:approve:{dec.decision_id}"},
             {"type": 2, "style": STYLE["deny"], "label": "Deny", "custom_id": f"warden:deny:{dec.decision_id}"},
             {"type": 2, "style": STYLE["always"], "label": "Always 24h", "custom_id": f"warden:always:{dec.decision_id}"}]}]
+    elif dec and str(dec.status) == "EXPIRED":
+        # the request lapsed while nobody was looking; the phone still offers the way back
+        payload["components"] = [{"type": 1, "components": [
+            {"type": 2, "style": STYLE["always"], "label": "Re-evaluate now",
+             "custom_id": f"warden:reevaluate:{dec.decision_id}"}]}]
     return payload
 
 
@@ -127,9 +132,14 @@ def handle_interaction(body: dict[str, Any]) -> dict[str, Any]:
                 if job:
                     job.autonomy_overrides[dec.action.value] = "L2"; db.jobs.put(job)   # 24 jam: dicatat, dilepas oleh digest (Fase 12: TTL)
                     db.client().collection("policy_overrides").document(f"{dec.job_id}:{dec.action.value}").set({"level": "L2", "until": (now().timestamp() + 86400), "by": uname})
+        elif verb == "reevaluate":
+            r = approvals.reevaluate(decision_id, f"discord:{uname}")
         else:
             r = {"ok": False, "error": "verb"}
-        status = "✅ approved & executed" if r.get("ok") and verb != "deny" else ("🚫 denied" if verb == "deny" else f"❌ {r.get('error')}")
+        if verb == "reevaluate":
+            status = (f"🔁 re-evaluated → {r.get('verdict', '?')}" if r.get("ok") else f"❌ {r.get('error')}")
+        else:
+            status = "✅ approved & executed" if r.get("ok") and verb != "deny" else ("🚫 denied" if verb == "deny" else f"❌ {r.get('error')}")
         # tipe 7 = UPDATE_MESSAGE: kartu asli diperbarui, tombol dinonaktifkan (klik ganda idempoten)
         return {"type": 7, "data": {"content": f"{status} by {uname} · {r.get('observed', '')}"[:1900], "components": []}}
     if t == 2:

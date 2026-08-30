@@ -68,7 +68,7 @@ def healthz():
 def tick(authorization: str | None = Header(default=None)):
     if not _oidc_ok(authorization):
         raise HTTPException(401, "OIDC diperlukan")
-    approvals.expire_stale()
+    approvals.expire_stale(notify=_notify)
     stats = run_tick(notify=_notify)
     from warden.agents.pipeline import process_diagnosing
     stats["llm"] = process_diagnosing(notify=_notify)
