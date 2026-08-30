@@ -5,7 +5,7 @@ Barbados di `/home/ubuntu/barbados`) tidak disentuh dari sini.
 
 ## 0. Baca DULU, sebelum bertindak
 1. `docs/CEKLIS-WARDEN.md` — status resmi 61 butir A–N (✅/◐/☐) dengan bukti tiap butir.
-2. `docs/JURNAL-KEPUTUSAN.md` — kronologi; entri terakhir **FREEZE 26 Agu pagi** (dibekukan atas perintah pemilik).
+2. `docs/JURNAL-KEPUTUSAN.md` — kronologi; entri terakhir **FREEZE 30 Agu ~13:00 WIB** (dibekukan atas perintah pemilik setelah dua percobaan video gagal).
 3. `docs/FAILURE-CATALOG.md` (36 cacat nyata yang ditemukan drill/gerbang hidup), `docs/RUNBOOK.md`, `docs/SUBMISSION.md`, `docs/SECURITY-REVIEW.md`, `docs/OBSERVABILITY.md`, `docs/DEMO.md`.
 4. Rencana induk (Fase 0–14, prinsip P1–P14, katalog 25 mode kegagalan): `/home/ubuntu/.claude/plans/witty-jingling-whisper.md`.
 
@@ -14,7 +14,7 @@ Barbados di `/home/ubuntu/barbados`) tidak disentuh dari sini.
 - Rumah: akun inyongkhafid@gmail.com, project GCP `warden-260825-a1446f`; Cloud Run `warden-core` (rev ≥00021), `warden-ui` (00010), `warden-deadman`; Scheduler tick 1 mnt, steward 10 mnt, digest, gold-eval 02:00 WIB, soak 02:30 WIB. Repo GitHub `khafidinprjct/warden` (pushed).
 - Kredit GCP $150 → hemat: uji pada komponen NYATA (Firestore prod, VM asli) tapi STOP setelah uji, deploy per batch. Model Gemini: jangan "lite" untuk penalaran agen.
 
-## 2. Status terakhir (27 Agu 2026 ~21:45 WIB, AKTIF — beku dibuka)
+## 2. Status terakhir (30 Agu 2026 ~13:00 WIB — **DIBEKUKAN atas perintah pemilik**; jangan lanjutkan apa pun tanpa perintah baru)
 - Ceklis **68 butir** (angka "61" yang lama basi): ✅ 63 · ◐ 4 (H5 soak s/d 1 Sep — 27 Agu: 26 insiden/12 tindakan/**0 palsu**; J4 ekspor billing = pemilik; K1 audit desktop = pemilik; N2 separuh project-segar) · ☐ 1 (K4 Discord + video — TERAKHIR).
 - **27 Agu:** katalog #35 (gold-eval & soak 401 tiap malam sejak lahir — audience OIDC menunjuk nama host lama) + #36 (set emas tak pernah sampai ke image; TIGA lapis: salah direktori → crash tanpa jejak → aturan `*.log`) ditemukan & ditutup. Core **rev 00023-pl5**. Nightly gold eval berjalan untuk pertama kalinya lewat Scheduler: **11/11, accuracy 1,0, 0 palsu, $0,0695**. pytest 83, chaos 25/25.
 - Bukti kunci: drill hidup #5 LULUS PENUH (`chaos/live_lifecycle_report.json`: spec→VM→OOM→resume batch 0,5→verifikasi→COMPLETE→laporan→stop); IAM condition I2 terbukti; gold eval 11/11 (terjadwal); pytest 83; chaos 25/25.

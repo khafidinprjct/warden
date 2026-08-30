@@ -334,3 +334,12 @@ Percobaan #2 dengan drill yang diperbaiki (`chaos/live_phase_resume.py`, laporan
 - **Cacat produk ditutup:** `approvals.propose` membuat keputusan NEED_APPROVAL lalu **tidak memberi tahu siapa pun** — permintaan menunggu sampai kedaluwarsa sementara yang berhak menyetujui ada di HP. Kini mengumumkan untuk tiap verdict; `tests/test_propose_notifies.py` (3 tes).
 - **Biaya:** dua mesin e2-medium Spot (dua take, take pertama gugur karena balapan navigasi setelah klik Approve — `ERR_ABORTED`, kini `goto` mencoba ulang) ≈ $0,015 + Gemini ≈ $0,16. Armada: tiga mesin **TERMINATED**, nol RUNNING; disk ditahan sebagai bukti.
 - pytest **120** lulus.
+
+### 30 Agu 2026 ~13:00 WIB — FREEZE atas perintah pemilik
+**Perintah pemilik:** "bekukan proyek ini, saya tidak akan mengerjakan lagi denganmu."
+- **Sebab langsung:** dua percobaan video demo, masing-masing lebih dari satu jam, dua-duanya ditolak pemilik. Cacat yang pemilik sebutkan dan saya konfirmasi di frame resolusi penuh: gambar berjalan terlalu cepat (percepatan jeda sampai ×66), strip terminal terpotong di tepi kanan, **mouse tidak pernah bergerak dan tombol tidak pernah ditekan** karena adegan hampir seluruhnya `goto(url)` alih-alih klik, subtitle menutupi bagian bawah halaman, dan pada detik 62 subtitle menyebut "Evidence first" sementara kartu Evidence di layar masih kosong. Hasilnya terbaca sebagai rangkaian gambar diam, bukan demo.
+- **Kesalahan proses saya:** menilai hasil dari lembar kontak kecil yang menyembunyikan cacat, bukan dari frame ukuran asli; menghabiskan satu jam penuh sebelum meminta vonis; dan menahan terminal pemilik dengan perintah panjang di latar depan.
+- **Keadaan saat dibekukan:** repo bersih dan ter-push (`41ab4f5`). Armada GCE **tiga mesin TERMINATED, nol RUNNING**; disk ditahan. pytest 120 lulus. Cloud Run: core `00040-fzt`, ui `00013-2dm`, deadman `00001-szl`. Scheduler tetap jalan (tick, steward, digest, gold eval, soak).
+- **Yang selesai hari ini:** katalog #44 (`Procfile` ter-commit milik dashboard → deploy core menyajikan dashboard; core mati ±11 menit) diperbaiki dan dipatok tes; `approvals.propose` yang membuat keputusan NEED_APPROVAL tanpa memberi tahu siapa pun kini mengumumkan (3 tes baru).
+- **Yang belum selesai:** video demo (syarat wajib Devpost), unggah video + submit Devpost (milik pemilik), J4 ekspor billing.
+- **Tidak ada pekerjaan lanjutan yang dijalankan tanpa perintah baru dari pemilik.**
