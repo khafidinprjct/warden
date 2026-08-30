@@ -23,6 +23,7 @@ class InstanceStatus(StrEnum):
     STOPPING = "STOPPING"
     STARTING = "STARTING"
     TERMINATED = "TERMINATED"
+    DELETED = "DELETED"                        # gone from the provider; the ledger row is kept as evidence
     UNKNOWN = "UNKNOWN"
 
 

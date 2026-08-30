@@ -28,6 +28,10 @@ ACTION_CHANGE = {"start_instance": "TERMINATED → RUNNING", "stop_instance": "R
 ACTION_REVERSIBLE = {"start_instance": "Yes — instance can be stopped again", "stop_instance": "Yes — instance can be started again; disk retained",
                      "resume_job": "Yes — job can be stopped", "quarantine_artifact": "Yes — file is renamed, not deleted", "rollback_ckpt": "Yes — later checkpoints are kept",
                      "kill_process": "Partially — the run must be resumed", "notify": "Not applicable"}
+# GCE calls a stopped machine TERMINATED; "Gone" is reserved for a machine that no longer exists at the provider.
+INSTANCE_STATUS = {"RUNNING": ("Running", "ok"), "STARTING": ("Starting", "warn"), "STOPPING": ("Stopping", "warn"),
+                   "TERMINATED": ("Stopped", "grey"), "STOPPED": ("Stopped", "grey"),
+                   "DELETED": ("Gone", "grey"), "UNKNOWN": ("Unknown", "grey")}
 JOB_STATUS = {"PENDING": ("Pending", "grey"), "RUNNING": ("Running", "ok"), "COMPLETE": ("Complete", "grey"), "FINISHED_UNVERIFIED": ("Finished, unverified", "warn"), "FAILED": ("Failed", "crit"), "STOPPED": ("Stopped", "grey")}
 RULE_LABEL = {"stopped_external": "Instance stopped externally", "preempted": "Instance preempted", "orphan": "Orphan instance", "idle": "Idle instance",
               "fin_ok_pending_verify": "Run finished, verification pending", "artifact_unverified": "Artifact verification failed", "run_fin_nonzero": "Run exited with error",

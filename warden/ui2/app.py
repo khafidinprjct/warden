@@ -119,7 +119,10 @@ def fleet(request: Request):
     rows = []
     for i in sorted(data.db.fleet.list(limit=200), key=lambda x: x.ref):
         h = data.db.last_heartbeat(i.job_id) if i.job_id else None; txt, cls, ts = data.hb_state(h)
-        rows.append({"i": i, "hb_text": txt, "hb_cls": cls, "hb_iso": ts, "h": h, "status": data._s(i.status), "seen_iso": data.iso(i.last_seen), "price": data.usd(i.hourly_price_usd, 3),
+        rows.append({"i": i, "hb_text": txt, "hb_cls": cls, "hb_iso": ts, "h": h, "status": data._s(i.status),
+                     "status_text": data.INSTANCE_STATUS.get(data._s(i.status), (data._s(i.status).capitalize(), "grey"))[0],
+                     "status_cls": data.INSTANCE_STATUS.get(data._s(i.status), (None, "grey"))[1],
+                     "seen_iso": data.iso(i.last_seen), "price": data.usd(i.hourly_price_usd, 3),
                      "unsafe": i.termination_action == "DELETE" or bool(i.boot_disk_auto_delete)})
     return render(request, "fleet.html", "fleet", "Fleet", ctx, rows=rows)
 

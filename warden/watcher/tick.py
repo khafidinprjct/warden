@@ -117,6 +117,17 @@ def run_tick(notify=None) -> dict[str, Any]:
         instances = []
     jobs = {j.job_id: j for j in db.jobs.list(limit=500)}
     seen_jobs: set[str] = set()
+    # A machine deleted outside Warden simply stops appearing in the listing, so its ledger row kept whatever status it
+    # last had — the dashboard went on reporting a deleted VM as RUNNING. Reconcile it, but only when the listing is
+    # trustworthy: on a compute-API failure `instances` is empty and marking the whole fleet gone would be a lie.
+    if not stats["errors"]:
+        live = {i.ref for i in instances}
+        for row in db.fleet.list(limit=500):
+            if row.ref not in live and str(row.status) != "DELETED":
+                row.status = InstanceStatus.DELETED
+                db.fleet.put(row)
+                stats.setdefault("reconciled", 0)
+                stats["reconciled"] += 1
     for inst in instances:
         stats["instances"] += 1
         if not inst.managed:
