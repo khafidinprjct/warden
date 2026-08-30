@@ -61,12 +61,13 @@ def test_the_tick_answers_and_posts_a_follow_up(monkeypatch):
         def raise_for_status(self):
             return None
 
-    monkeypatch.setattr(dc.httpx, "post", lambda url, **kw: (posted.update({"url": url, "json": kw.get("json")}), R())[1])
+    monkeypatch.setattr(dc.httpx, "patch", lambda url, **kw: (posted.update({"url": url, "json": kw.get("json")}), R())[1])
     monkeypatch.setattr("warden.agents.concierge.ask", lambda *a, **kw: {"answer": "The disk filled up.", "ok": True})
 
     out = dc.answer_pending_asks()
     assert out["answered"] == 1 and out["failed"] == 0
-    assert "/webhooks/app/tok" in posted["url"], "the follow-up goes to the interaction webhook"
+    assert posted["url"].endswith("/webhooks/app/tok/messages/@original"), \
+        "editing the deferred reply is what keeps the question visible above the answer"
     assert "The disk filled up." in posted["json"]["content"]
     assert not db.client().collection("discord_asks").document("I1").get().exists, "an answered question is cleared"
 
@@ -79,7 +80,7 @@ def test_a_failed_answer_still_replies(monkeypatch):
         def raise_for_status(self):
             return None
 
-    monkeypatch.setattr(dc.httpx, "post", lambda url, **kw: (posted.update({"json": kw.get("json")}), R())[1])
+    monkeypatch.setattr(dc.httpx, "patch", lambda url, **kw: (posted.update({"json": kw.get("json")}), R())[1])
 
     def boom(*a, **kw):
         raise RuntimeError("Gemini unavailable")

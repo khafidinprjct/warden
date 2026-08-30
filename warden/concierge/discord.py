@@ -196,10 +196,12 @@ def answer_pending_asks(limit: int = 3) -> dict[str, Any]:
             text = f"Could not answer: {type(e).__name__}: {e}"[:400]
             db.health("gemini", False, str(e)[:200])
             out["failed"] += 1
-        body = {"content": (f"**{rec.get('question','')}**\n{text}")[:1900]}
+        # PATCH the deferred reply, do not POST a new message: editing the original keeps Discord's
+        # "<user> used /warden ask" header, so the exchange reads as a conversation instead of the bot
+        # talking to itself with the question missing.
         try:
-            httpx.post(f"https://discord.com/api/v10/webhooks/{rec['application_id']}/{rec['token']}",
-                       json=body, timeout=30).raise_for_status()
+            httpx.patch(f"https://discord.com/api/v10/webhooks/{rec['application_id']}/{rec['token']}/messages/@original",
+                        json={"content": text[:1900]}, timeout=30).raise_for_status()
         except Exception as e:  # noqa: BLE001
             log_err = str(e)[:120]
             d.reference.set({"state": "failed", "error": log_err}, merge=True)
