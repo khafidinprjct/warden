@@ -197,7 +197,7 @@ def decision_view(dec, inc, inst=None) -> dict:
             "change": ACTION_CHANGE.get(_s(dec.action), "—"), "reversible": ACTION_REVERSIBLE.get(_s(dec.action), "—"), "cost_impact": cost_impact,
             "api": (plan or {}).get("api", "") if isinstance(plan, dict) else "", "explain": list(dec.explain), "status": label(DEC_LABEL, dec.status), "status_raw": _s(dec.status),
             "verdict": label(VERDICT_LABEL, dec.verdict), "created_iso": iso(dec.created_at), "approved_by": dec.approved_by,
-            "result": dec.result or {}, "plan_rows": [(k.upper(), _s(v) if not isinstance(v, (dict, list)) else json.dumps(v)) for k, v in (plan or {}).items()] if isinstance(plan, dict) else []}
+            "result": (dec.result | {"observed": observed_text(dec.result.get("observed", ""))}) if dec.result else {}, "plan_rows": [(k.upper(), _s(v) if not isinstance(v, (dict, list)) else json.dumps(v)) for k, v in (plan or {}).items()] if isinstance(plan, dict) else []}
 
 
 def proposed_actions(incs, decs) -> dict[str, str]:
@@ -220,6 +220,14 @@ def incident_row(inc, proposed: str = "") -> dict:
             "opened_iso": iso(inc.created_at), "updated_iso": iso(inc.updated_at), "burn": usd(inc.cost_burning_usd_per_hour, 3), "llm": usd(inc.llm_cost_usd, 3), "rule": inc.rule,
             "proposed": proposed}
 
+
+# the executor stores what the provider said; the reader gets the same word the fleet page uses.
+# Only an exact status is translated — "e2-small RUNNING" is a sentence the executor wrote, not an enum.
+INSTANCE_STATUS_TEXT = {k: v[0] for k, v in INSTANCE_STATUS.items()}
+
+
+def observed_text(v: Any) -> Any:
+    return INSTANCE_STATUS_TEXT.get(str(v).strip(), v)
 
 SEV_RANK = {"critical": 0, "warning": 1, "info": 2}
 
